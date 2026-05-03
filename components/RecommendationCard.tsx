@@ -1,38 +1,35 @@
-import type { Recommendation } from '@/lib/types';
+import React from 'react';
+import { Target } from 'lucide-react';
 
-const ACCENT: Record<Recommendation['type'], { bar: string; icon: string; iconColor: string }> = {
-  'under-extracted': { bar: 'bg-yellow-400/70',  icon: '↑', iconColor: 'text-yellow-400' },
-  'over-extracted':  { bar: 'bg-red-400/70',     icon: '↓', iconColor: 'text-red-400'    },
-  balanced:          { bar: 'bg-green-400/70',   icon: '✓', iconColor: 'text-green-400'  },
-  neutral:           { bar: 'bg-crema/40',        icon: '·', iconColor: 'text-crema'      },
-};
+interface RecommendationCardProps {
+  rec: {
+    diagnosis: string;
+  };
+}
 
-export default function RecommendationCard({ rec }: { rec: Recommendation }) {
-  const { bar, icon, iconColor } = ACCENT[rec.type];
+export default function RecommendationCard({ rec }: RecommendationCardProps) {
+  if (!rec || !rec.diagnosis) return null;
+
   return (
-    <div className="glass rounded-2xl overflow-hidden flex">
-      {/* Colored left accent bar */}
-      <div className={`w-1 shrink-0 ${bar}`} />
+    <div className="relative overflow-hidden rounded-2xl bg-white border border-[#E5E1DA] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+      {/* אלמנט עיצובי עדין ברקע */}
+      <div className="absolute -right-4 -top-4 text-[#F3F1ED] opacity-50">
+        <Target size={120} strokeWidth={1} />
+      </div>
 
-      <div className="flex-1 p-4 space-y-2.5">
+      <div className="relative z-10 space-y-3">
         <div className="flex items-center gap-2">
-          <span className={`text-lg leading-none font-bold ${iconColor}`}>{icon}</span>
-          <span className="font-semibold text-stone-100 text-sm">{rec.title}</span>
-          {rec.isTrend && (
-            <span className="ml-auto text-xs bg-yellow-400/15 text-yellow-400 border border-yellow-400/25 px-2 py-0.5 rounded-full">
-              Trend
-            </span>
-          )}
+          <div className="bg-[#8A7B72] p-1 rounded-md">
+            <Target size={14} className="text-white" />
+          </div>
+          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#8A7B72]">
+            Dialed AI
+          </span>
         </div>
-
-        <ul className="space-y-1.5">
-          {rec.adjustments.map((adj, i) => (
-            <li key={i} className="text-stone-400 text-sm flex gap-2.5">
-              <span className="text-crema/70 shrink-0">→</span>
-              <span>{adj}</span>
-            </li>
-          ))}
-        </ul>
+        
+        <p className="text-[17px] text-[#3E362E] leading-relaxed font-medium">
+          {rec.diagnosis}
+        </p>
       </div>
     </div>
   );

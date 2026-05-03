@@ -1,103 +1,150 @@
 import { supabase } from '@/lib/supabase';
 import ShotCard from '@/components/ShotCard';
-import ActiveEquipmentCard from '@/components/ActiveEquipmentCard';
 import Link from 'next/link';
 import type { Shot } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-function EmptyState() {
+function GlowOrb({ className }: { className?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-      <div className="mb-5 opacity-25">
-        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="#c4873e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 28h24l-3.5 18H23.5L20 28z" />
-          <path d="M44 32h4a5 5 0 0 1 0 10h-4" />
-          <ellipse cx="32" cy="48" rx="16" ry="2.5" />
-          <path d="M26 22c0-5 5-5 5-10" />
-          <path d="M35 24c0-5 5-5 5-10" />
-        </svg>
-      </div>
-      <p className="text-stone-300 font-semibold text-base mb-1">No shots logged yet</p>
-      <p className="text-stone-600 text-sm leading-relaxed max-w-xs">
-        Pull your first shot and dial in your recipe. Every extraction teaches you something.
-      </p>
-    </div>
+    <svg className={className} viewBox="0 0 48 48" fill="none">
+      <circle cx="24" cy="24" r="3.5" fill="#FF4500" />
+      <circle cx="24" cy="24" r="9"  stroke="#FF4500" strokeWidth="0.75" strokeOpacity="0.45" />
+      <circle cx="24" cy="24" r="16" stroke="#FF4500" strokeWidth="0.5"  strokeOpacity="0.22" />
+      <circle cx="24" cy="24" r="23" stroke="#FFC107" strokeWidth="0.5"  strokeOpacity="0.10" />
+    </svg>
   );
 }
 
-export default async function DashboardPage() {
-  const { data } = await supabase
+function EmptyState() {
+  return (
+    <svg viewBox="0 0 120 120" fill="none" className="w-28 h-28">
+      <circle cx="60" cy="60" r="56" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+      <circle cx="60" cy="60" r="42" stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
+      <circle cx="60" cy="60" r="28" stroke="rgba(255,255,255,0.09)" strokeWidth="1" />
+      <circle cx="60" cy="60" r="12" fill="rgba(255,69,0,0.15)" />
+      <circle cx="60" cy="60" r="6"  fill="rgba(255,69,0,0.40)" />
+      <circle cx="60" cy="60" r="3"  fill="#FF4500" />
+      <circle cx="60" cy="4"  r="2.5" fill="#FFC107" opacity="0.75" />
+      <circle cx="116" cy="60" r="2"  fill="#FF4500" opacity="0.50" />
+      <circle cx="4"   cy="60" r="2"  fill="#7B1FA2" opacity="0.60" />
+      <circle cx="60" cy="116" r="2.5" fill="#FFC107" opacity="0.40" />
+      <line x1="60" y1="0"   x2="60" y2="9"   stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
+      <line x1="120" y1="60" x2="111" y2="60" stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
+      <line x1="0"   y1="60" x2="9"   y2="60" stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
+      <line x1="60"  y1="120" x2="60" y2="111" stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
+    </svg>
+  );
+}
+
+export default async function HomePage() {
+  const { data, error } = await supabase
     .from('shots')
     .select('*')
     .order('created_at', { ascending: false })
-    .limit(5);
+    .limit(50);
 
-  const shots = (data ?? []) as Shot[];
-  const avgScore =
-    shots.length > 0
-      ? (shots.reduce((s, sh) => s + (sh.overall_score ?? 0), 0) / shots.length).toFixed(1)
-      : null;
+  const shots  = error ? [] : ((data ?? []) as Shot[]);
+  const recent = shots.slice(0, 3);
+
+  const scoredShots = shots.filter((s) => s.overall_score != null);
+  const avgScore    = scoredShots.length > 0
+    ? (scoredShots.reduce((sum, s) => sum + (s.overall_score ?? 0), 0) / scoredShots.length).toFixed(1)
+    : null;
+  const avgTime = shots.length > 0
+    ? Math.round(shots.reduce((sum, s) => sum + s.extraction_time, 0) / shots.length)
+    : null;
 
   return (
-    <div className="p-4 space-y-5">
-      {/* Header */}
-      <div className="pt-6 pb-1 flex items-start justify-between">
-        <div>
-          <p className="text-crema/55 text-xs font-semibold tracking-[0.22em] uppercase mb-1">Espresso Studio</p>
-          <h1 className="text-stone-50 font-bold text-3xl tracking-tight leading-none">Coffee Dial-in</h1>
-        </div>
-        <Link
-          href="/settings"
-          className="mt-1 p-2 -mr-1 text-stone-600 hover:text-stone-300 transition-colors"
-          aria-label="Settings"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-          </svg>
-        </Link>
-      </div>
+    <div className="max-w-md mx-auto px-4 pt-8 pb-28 space-y-8">
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="glass rounded-2xl p-4">
-          <p className="text-stone-500 text-[10px] font-medium uppercase tracking-widest mb-2">Total Shots</p>
-          <p className="readout text-crema font-bold text-3xl leading-none">{shots.length}</p>
-        </div>
-        <div className="glass rounded-2xl p-4">
-          <p className="text-stone-500 text-[10px] font-medium uppercase tracking-widest mb-2">Avg Score</p>
-          <p className="readout text-crema font-bold text-3xl leading-none">{avgScore ?? '—'}</p>
-        </div>
-      </div>
+      {/* ── Header ────────────────────────────────── */}
+      <header className="relative pt-4">
+        <GlowOrb className="absolute top-2 right-0 w-11 h-11 opacity-80" />
+        <div className="w-16 h-0.5 bg-gradient-to-r from-[#FF4500] to-[#FFC107] mb-3 rounded-full" />
+        <h1 className="text-7xl font-black uppercase tracking-tighter leading-none bg-gradient-to-r from-[#FF4500] via-white to-[#FFC107] bg-clip-text text-transparent">
+          DIALED
+        </h1>
+        <p className="text-[11px] font-black uppercase tracking-[0.35em] text-[#A1A1AA] mt-2">
+          Espresso Journal
+        </p>
+      </header>
 
-      {/* Active rig — client component (reads localStorage) */}
-      <ActiveEquipmentCard />
-
-      {/* CTA */}
+      {/* ── Log Shot CTA ──────────────────────────── */}
       <Link
         href="/shots/new"
-        className="btn-crema block w-full text-espresso font-bold py-4 rounded-2xl text-center text-base tracking-wide"
+        className="flex items-center justify-between w-full rounded-2xl px-6 py-5 bg-gradient-to-r from-[#FF4500] to-[#FFC107] shadow-xl shadow-[#FF4500]/30 active:scale-95 transition-all duration-200"
       >
-        + Log Espresso Shot
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-black/60">Pull a shot</p>
+          <p className="text-2xl font-black uppercase tracking-tight leading-none mt-0.5 text-black">LOG SHOT</p>
+        </div>
+        <span className="text-4xl font-black leading-none text-black/60">+</span>
       </Link>
 
-      {/* Recent shots */}
+      {/* ── Stats ─────────────────────────────────── */}
       {shots.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <h2 className="text-stone-500 font-semibold text-[10px] uppercase tracking-widest">Recent Shots</h2>
-            <Link href="/shots" className="text-crema/70 text-xs font-medium hover:text-crema transition-colors">
-              See all →
-            </Link>
-          </div>
-          {shots.map((shot) => (
-            <ShotCard key={shot.id} shot={shot} />
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: 'Shots',     value: shots.length.toString() },
+            { label: 'Avg Score', value: avgScore ?? '—' },
+            { label: 'Avg Time',  value: avgTime != null ? `${avgTime}s` : '—' },
+          ].map(({ label, value }) => (
+            <div key={label} className="glass rounded-2xl p-3 text-center">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#A1A1AA]">{label}</p>
+              <p className="readout text-2xl font-black mt-0.5 bg-gradient-to-r from-[#FF4500] to-[#FFC107] bg-clip-text text-transparent">
+                {value}
+              </p>
+            </div>
           ))}
         </div>
       )}
 
-      {shots.length === 0 && <EmptyState />}
+      {/* ── Recent ────────────────────────────────── */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#FF4500]" style={{ boxShadow: '0 0 6px #FF4500' }} />
+            <p className="text-[11px] font-black uppercase tracking-[0.25em] text-white">Recent</p>
+          </div>
+          {shots.length > 3 && (
+            <Link
+              href="/shots"
+              className="text-[11px] font-black uppercase tracking-wider text-[#FF4500] hover:opacity-70 transition-opacity"
+            >
+              View all →
+            </Link>
+          )}
+        </div>
+
+        {recent.length === 0 ? (
+          <div className="glass rounded-3xl py-12 px-6 flex flex-col items-center text-center space-y-5">
+            <EmptyState />
+            <div className="space-y-1.5">
+              <p className="font-black text-white uppercase tracking-tight text-xl">No shots yet</p>
+              <p className="text-xs text-[#A1A1AA] font-bold uppercase tracking-[0.25em]">Your espresso journal awaits</p>
+            </div>
+            <Link
+              href="/shots/new"
+              className="bg-gradient-to-r from-[#FF4500] to-[#FFC107] text-black text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl shadow-lg shadow-[#FF4500]/30 active:scale-95 transition-all"
+            >
+              Pull first shot →
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {recent.map((shot) => (
+              <Link
+                key={shot.id}
+                href={`/shots/${shot.id}`}
+                className="block active:scale-[0.99] transition-transform"
+              >
+                <ShotCard shot={shot} />
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

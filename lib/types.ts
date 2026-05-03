@@ -1,4 +1,5 @@
 export type FlavorTag = 'Sour' | 'Bitter' | 'Balanced' | 'Dry';
+export type BrewMethod = 'Espresso' | 'MokaPot' | 'FrenchPress' | 'V60' | 'Aeropress';
 
 export interface Shot {
   id: string;
@@ -14,6 +15,9 @@ export interface Shot {
   bean_id?: string | null;
   equipment_id?: string | null;
   grind_setting?: string | null;
+  brew_method?: BrewMethod | null;
+  has_milk?: boolean | null;
+  recommendation?: string | null;
 }
 
 export interface Bean {
@@ -24,6 +28,9 @@ export interface Bean {
   roast_date: string;
   notes?: string | null;
   is_active: boolean;
+  price_paid?: number | null;
+  weight_grams?: number | null;
+  is_finished?: boolean | null;
 }
 
 export interface EquipmentProfile {

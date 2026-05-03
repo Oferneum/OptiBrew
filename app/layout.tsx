@@ -1,18 +1,28 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist } from 'next/font/google';
+import { Space_Mono, Heebo } from 'next/font/google'; 
 import './globals.css';
 import Nav from '@/components/Nav';
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' });
+const heebo = Heebo({ 
+  subsets: ['hebrew', 'latin'],
+  weight: ['400', '500', '700', '800'],
+  variable: '--font-heebo',
+});
+
+const spaceMono = Space_Mono({
+  subsets: ['latin'],
+  variable: '--font-space-mono',
+  weight: ['400', '700'],
+});
 
 export const metadata: Metadata = {
-  title: 'Coffee Dial-in',
-  description: 'Track your espresso extraction journey',
+  title: 'Dialed', 
+  description: 'Master your espresso extraction',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Coffee Dial-in',
+    title: 'Dialed', 
   },
 };
 
@@ -21,14 +31,16 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#120a04',
+  themeColor: '#050505',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geist.variable} antialiased`}>
-      <body className="bg-espresso min-h-screen pb-24">
-        <main className="max-w-lg mx-auto px-1">{children}</main>
+    <html lang="en" dir="ltr" className={`${heebo.variable} ${spaceMono.variable} antialiased`}>
+      <body className="bg-[#050505] min-h-screen pb-24 font-sans text-white">
+        <main className="max-w-lg mx-auto px-4">
+          {children}
+        </main>
         <Nav />
       </body>
     </html>

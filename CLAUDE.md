@@ -1,131 +1,160 @@
-@AGENTS.md
+## OptiBrew — Project Context
 
----
-
-# Coffee Dial-in — Project Context
-
-## Tech Stack
-
+### Tech Stack
 | Layer | Choice |
 |---|---|
-| Framework | Next.js **16.2.4**, App Router, TypeScript 5 |
-| Styling | Tailwind CSS **v4** — uses `@theme` / `@utility` directives, NOT v3 syntax |
-| Font | Geist Sans via `next/font/google`, exposed as `--font-geist-sans` CSS var |
-| Backend | Supabase (postgres + RLS). Client in `lib/supabase.ts` |
-| Charts | Recharts v3 (installed, not yet wired up — Layer 3) |
+| Framework | Next.js 16.2.4, App Router, TypeScript 5 |
+| Styling | Tailwind CSS v4 — uses `@theme` / `@utility` directives |
+| Font | Plus Jakarta Sans (`--font-jakarta`) + Space Mono (`--font-space-mono`) |
+| Backend | Supabase (PostgreSQL + RLS). Client in `lib/supabase.ts` |
+| Charts | Recharts v3 |
 | Runtime | React 19, Node via Next.js dev server |
 
-### Env vars (`.env.local`, gitignored)
+### Env vars (`.env.local`)
 ```
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 ```
 
+### Dev server access
+`package.json` dev script: `next dev --webpack -H 0.0.0.0`  
+`next.config.ts` includes `allowedDevOrigins` for LAN IP access from iPhone.  
+HMR WebSocket does not work over LAN — manually reload Safari after code changes.
+
 ---
 
-## File Map
+### File Map
 
 ```
 app/
-  globals.css           Design tokens + all custom CSS classes (read this before adding styles)
-  layout.tsx            Geist font, <Nav />, body pb-24
-  page.tsx              Dashboard — server component, fetches shots + current setup
+  globals.css               Design tokens (Premium Spatial UI) + utility classes
+  layout.tsx                Jakarta + Space Mono fonts, <Nav />, #FAF8F5 body
+  page.tsx                  Dashboard — recent shots + analytics entry card
   shots/
-    new/page.tsx        Log Shot flow — client component, shows ShotForm then success state
-    page.tsx            Shot History — server component
-  beans/page.tsx        Placeholder — "Layer 2 coming soon"
+    new/page.tsx            Log Shot flow (ShotForm)
+    page.tsx                Shot History — card list, quality labels
+    [id]/page.tsx           Shot Detail — full data + BaristaBrain (NOT YET BUILT)
+  beans/
+    page.tsx                Bean Inventory — VFM badge, active bag, shot stats
+    vfm/page.tsx            VFM Leaderboard — ranked medals, formula footnote
+  analytics/page.tsx        Dial-in scatter chart + stat strip
+  settings/page.tsx         Equipment management (add, activate rig)
   api/
-    shots/route.ts      GET (list) + POST (insert + recommendation)
-    shots/[id]/route.ts (exists, not yet used in UI)
-    equipment/route.ts  GET (list) + POST (dedup via search_equipment RPC before insert)
-    search/route.ts     GET ?type=beans|equipment&q= → calls Supabase fuzzy RPC
+    shots/route.ts          GET (list) + POST (insert + BaristaBrain diagnosis)
+    shots/[id]/route.ts     GET + PATCH + DELETE individual shot
+    beans/route.ts          POST create bean
+    beans/[id]/route.ts     PATCH update bean fields
+    equipment/route.ts      Equipment CRUD
+    search/route.ts         GET ?type=beans|equipment&q= → fuzzy RPC calls
 
 components/
-  Nav.tsx               Floating glass pill, SVG icons, active dot indicator
-  ShotCard.tsx          Glass card — shows all shot params including grind_setting
-  ShotForm.tsx          Client form — equipment search, grind setting, live ratio, score picker
-  RecommendationCard.tsx Glass card with colored left-accent bar
+  Nav.tsx                   5-tab bottom nav (Home/Shots/Log/Beans/Charts)
+  ShotCard.tsx              White card, quality label, score, extraction data
+  ShotForm.tsx              Full log form — brew method, bean search, timer, score
+                            Timer: requestAnimationFrame loop (never throttled on iOS)
+                            Manual input: always in DOM, off-screen when hidden (iOS focus fix)
+                            Bean dropdown: fixed overlay (z-40) + onClick (no onBlur race)
+  BeanCard.tsx              Bean row with inline edit panel, router.refresh() on save
+  DialInChart.tsx           Recharts ScatterChart — extraction time vs. score
+  RecommendationCard.tsx    BaristaBrain insight display
+  ActiveEquipmentCard.tsx   Active rig display widget
 
 lib/
-  supabase.ts           createClient(url, key) — used on both server and client
-  types.ts              All shared types (Shot, Bean, EquipmentProfile, Recommendation, …)
-  analytics.ts          computeBrewRatio, computeSuccessZone, restDays
-  recommendations.ts    analyzeShot(shot, recentShots) → Recommendation
+  supabase.ts               Standard Supabase client
+  types.ts                  Shot, Bean, Equipment, BaristaBrain, BrewMethod
+  recommendations.ts        BaristaBrain — SCA-based diagnosis (Sour/Bitter/Dry/flow)
+  analytics.ts              computeBrewRatio, computeVFM, computeCostPerShot
+  vfm-actions.ts            'use server' — fetchBeansWithVFM() with React cache() + Zod
 ```
 
 ---
 
-## Database Schema
+### Database Schema
 
-### `shots`
+**shots**
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid PK | |
 | created_at | timestamptz | |
-| dose | numeric | grams in |
-| yield | numeric | grams out |
-| brew_ratio | numeric | yield/dose, computed on insert |
+| bean_id | uuid FK→beans | |
+| equipment_id | uuid FK→equipment_profiles | |
+| brew_method | text | Espresso, V60, MokaPot, FrenchPress, Aeropress |
+| dose | numeric | grams |
+| yield | numeric | grams |
 | extraction_time | int | seconds |
-| brew_temp | numeric | °C, nullable |
-| flavor_tags | text[] | `'Sour' \| 'Bitter' \| 'Balanced' \| 'Astringent'` |
-| overall_score | int | 1–10, nullable |
-| notes | text | nullable |
-| bean_id | uuid FK | → beans, nullable |
-| equipment_id | uuid FK | → equipment_profiles, nullable |
-| grind_setting | text | per-shot override, nullable — **added in Layer 1 migration** |
+| grind_setting | text | |
+| overall_score | int | 1–10 |
+| flavor_tags | text[] | Sour, Bitter, Balanced, Dry |
+| has_milk | boolean | default false |
 
-### `equipment_profiles`
-`id, created_at, machine_name, basket_type, grinder_name, grinder_setting, notes`
-
-### `beans`
-Schema exists (Layer 1 migration), UI is Layer 2.
-
-### Supabase RPCs
-- `search_equipment(query text, threshold float)` → `FuzzyEquipmentMatch[]` — global fuzzy search across all profiles
-- `search_beans(query text, threshold float)` → `FuzzyBeanMatch[]`
+**beans**
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | |
+| roaster | text | |
+| origin | text | |
+| roast_date | date | |
+| price_paid | numeric | ILS, used for VFM |
+| weight_grams | numeric | used for VFM |
+| is_active | boolean | default true |
 
 ---
 
-## Design System (globals.css)
+### Design System (`globals.css`)
 
-### Color tokens (`@theme`)
+**`@theme` tokens**
 | Token | Hex | Use |
 |---|---|---|
-| `espresso` | #120a04 | Page background, button text |
-| `surface` | #2d1a0e | Neutral card background |
-| `surface-raised` | #3d2415 | Elevated surface (legacy — prefer `.glass` now) |
-| `crema` | #c4873e | Primary accent — numbers, active states, CTAs |
+| `--color-espresso` | `#3C2A21` | Primary text |
+| `--color-crema` | `#C85A32` | Accent / CTA |
+| `--color-muted` | `#A39A92` | Labels, secondary text |
+| `--color-surface` | `#FFFFFF` | Cards |
+| `--color-surface-raised` | `#F3EFEA` | Inputs, display areas |
+| `--color-border` | `#E8E2D9` | Dividers |
 
-### CSS classes
+**Background:** `#FAF8F5` (body)
+
+**CSS classes**
 | Class | Purpose |
 |---|---|
-| `.glass` | Standard glass card — white/4.5% + 16px blur + thin white border |
-| `.glass-display` | Amber-tinted instrument panel — crema/5% bg, crema border, inset highlight. Used for Current Rig card and selected-equipment chip in form |
-| `.glass-nav` | Dark-tinted blur — espresso/75% bg, 24px blur. Floating bottom nav only |
-| `.glass-input` | Form field — near-invisible bg, crema focus ring (`0 0 0 3px crema/7%`) |
-| `.btn-crema` | Primary CTA — 3-stop gradient, 28px crema glow, inset highlight, scale-down on press |
-| `.readout` | Tabular numerics (`font-variant-numeric: tabular-nums`) — all shot values, scores |
-| `.status-dot` | Slow 2.4s pulse animation — green "active rig" indicator |
-| `.spin` | 0.75s linear rotation — loading spinner |
-
-Body has a warm radial gradient at top (`#2d1a0e` fading to transparent) for depth.
+| `.glass` | White bg + shadow-only depth (no border) |
+| `.glass-input` | `#F3EFEA` fill, focus ring `#C85A32` |
+| `.readout` | Space Mono, tabular-nums, tracking |
+| `.btn-crema` | Terracotta CTA, scale on active |
 
 ---
 
-## Key Patterns
+### Key Patterns
 
-**Server components** (Dashboard, Shot History): query Supabase directly, no `useEffect`, no `'use client'`.
+**Premium Spatial UI:** Light cream backgrounds, white cards with shadow-only depth (`box-shadow` not borders), large `rounded-3xl` radius, Space Mono for all numeric readouts.
 
-**Client components** (ShotForm, NewShotPage, Nav): `'use client'` at top. ShotForm queries Supabase directly via the client export for the "last used equipment" pre-fill on mount.
+**iOS Mobile:**
+- All inputs: `type="text"` with `inputMode`, `style={{ fontSize: '16px' }}` (prevents zoom)
+- Touch targets: `min-h-[44px]` everywhere
+- Timer: `requestAnimationFrame` loop (not `setInterval` — avoids iOS throttling)
+- Manual input focus: input always in DOM; hidden via `position: fixed; left: -9999px; width: 1px; height: 1px` — iOS allows `.focus()` on it synchronously in the click handler
+- Bean dropdown: fixed `z-40` overlay closes on outside tap; items use `onClick` only
 
-**Equipment search flow**: user types in ShotForm → 280ms debounce → `GET /api/search?type=equipment&q=` → `search_equipment` RPC (global) → fuzzy-matched dropdown → selecting locks in `equipment_id` + shows grind setting field → on submit both are POSTed to `/api/shots`.
+**VFM Index:** `overall_score / (price_paid / (weight_grams / dose))` — ranks beans by sensory quality relative to cost.
 
-**Recommendation engine** (`lib/recommendations.ts`): rule-based, looks at extraction time, brew ratio, and flavor tags. Checks last 2 shots for trending patterns. Returns one of four types: `under-extracted | over-extracted | balanced | neutral`.
+**BaristaBrain:** SCA-based logic differentiating flow issues (fast/slow extraction) from extraction issues (sour/bitter/dry). Returns numbered fixes.
+
+**Server Actions:** `lib/vfm-actions.ts` uses `'use server'` + React `cache()` + Zod v4 (`z.uuid()`) for runtime safety.
 
 ---
 
-## Layer Progress
+### Layer Progress
 
-- **Layer 1 ✅** Shot logging, equipment profiles, grind setting, glassmorphism UI, current rig dashboard display
-- **Layer 2 🔲** Bean inventory — page is placeholder at `/beans`, RPC + schema exist, `Bean` type defined
-- **Layer 3 🔲** Analytics charts — Recharts installed, `computeSuccessZone` in analytics.ts, no UI yet
+**Layer 1 — ✅ Complete**  
+Base shot logging, Supabase connectivity, BaristaBrain, UI shell.
+
+**Layer 2 — ✅ Complete**  
+Premium Spatial UI, ShotForm (timer + stepper + bean search), Bean Inventory, VFM Index, Bean editing, Settings, iOS mobile fixes, cross-device dev server.
+
+**Layer 3 — 🔄 Mostly Complete**  
+- ✅ VFM Leaderboard (`/beans/vfm`)
+- ✅ Analytics scatter chart (`/analytics` + `DialInChart`)
+- ✅ PWA setup (`@ducanh2912/next-pwa`, `manifest.json`)
+- ✅ 5-tab navigation
+- ❌ Shot detail page (`/shots/[id]`) — API ready, UI not built
+- ❌ PWA icons (`icon-192.png`, `icon-512.png` referenced in manifest)

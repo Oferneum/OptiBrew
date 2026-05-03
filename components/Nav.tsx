@@ -38,11 +38,23 @@ function BeanIcon() {
   );
 }
 
+function ChartIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+      <circle cx="7.5" cy="15" r="1.5" fill="currentColor" strokeWidth="0" />
+      <circle cx="12" cy="9" r="1.5" fill="currentColor" strokeWidth="0" />
+      <circle cx="16.5" cy="13" r="1.5" fill="currentColor" strokeWidth="0" />
+      <path d="M3 20h18" />
+    </svg>
+  );
+}
+
 const links = [
-  { href: '/', label: 'Home', Icon: HomeIcon },
-  { href: '/shots/new', label: 'Log', Icon: PlusIcon },
-  { href: '/shots', label: 'History', Icon: ClockIcon },
-  { href: '/beans', label: 'Beans', Icon: BeanIcon },
+  { href: '/',          label: 'Home',    Icon: HomeIcon  },
+  { href: '/shots/new', label: 'Log',     Icon: PlusIcon  },
+  { href: '/shots',     label: 'History', Icon: ClockIcon },
+  { href: '/beans',     label: 'Beans',   Icon: BeanIcon  },
+  { href: '/analytics', label: 'Charts',  Icon: ChartIcon },
 ];
 
 export default function Nav() {
@@ -51,19 +63,23 @@ export default function Nav() {
     <nav className="fixed bottom-4 left-0 right-0 z-50 px-4">
       <div className="max-w-lg mx-auto glass-nav rounded-2xl flex" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
         {links.map(({ href, label, Icon }) => {
-          const active = href === '/' ? path === '/' : path.startsWith(href);
+          const active =
+            href === '/'          ? path === '/' :
+            href === '/shots'     ? path === '/shots' :
+            href === '/analytics' ? path.startsWith('/analytics') :
+            path.startsWith(href);
           return (
             <Link
               key={href}
               href={href}
-              className={`flex-1 flex flex-col items-center pt-3 pb-2 gap-1 text-xs font-medium transition-colors duration-150 ${
-                active ? 'text-crema' : 'text-stone-600 hover:text-stone-400'
+              className={`flex-1 flex flex-col items-center pt-3 pb-2 gap-1 text-[10px] font-medium transition-colors duration-150 ${
+                active ? 'text-crema' : 'text-white/35 hover:text-white'
               }`}
             >
               <Icon />
               <span className="tracking-wide">{label}</span>
               {active && (
-                <span className="w-1 h-1 rounded-full bg-crema opacity-80" />
+                <span className="w-1 h-1 rounded-full bg-crema" />
               )}
             </Link>
           );

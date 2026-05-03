@@ -1,11 +1,11 @@
 {
-  "name": "Coffee Dial-in",
-  "short_name": "Coffee",
-  "description": "Track your espresso extraction journey",
+  "name": "Dialed",
+  "short_name": "Dialed",
+  "description": "Track and perfect your espresso extractions",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1a0f07",
-  "theme_color": "#1a0f07",
+  "background_color": "#FAF8F5",
+  "theme_color": "#FAF8F5",
   "orientation": "portrait",
   "icons": [
     {

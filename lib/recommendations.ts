@@ -1,72 +1,53 @@
-import type { Shot, Recommendation } from './types';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import type { Shot } from './types';
 
-function trending(shots: Shot[], check: (s: Shot) => boolean): boolean {
-  return shots.length >= 2 && shots.slice(0, 2).every(check);
-}
+// GEMINI_API_KEY only — never NEXT_PUBLIC_ (would expose key in client bundle)
+const genAI = process.env.GEMINI_API_KEY
+  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+  : null;
 
-export function analyzeShot(shot: Shot, recentShots: Shot[]): Recommendation {
-  const { extraction_time, brew_ratio, flavor_tags, overall_score } = shot;
-
-  const sour = flavor_tags.includes('Sour');
-  const bitter = flavor_tags.includes('Bitter');
-  const astringent = flavor_tags.includes('Dry') || (flavor_tags as string[]).includes('Astringent');
-  const balanced = flavor_tags.includes('Balanced');
-
-  const underExtracted = sour || extraction_time < 25 || brew_ratio < 1.8;
-  const overExtracted =
-    bitter || astringent || extraction_time > 30 || brew_ratio > 2.2;
-
-  if (underExtracted) {
-    const isTrend = trending(
-      recentShots,
-      (s) => s.flavor_tags.includes('Sour') || s.extraction_time < 25,
-    );
-    const adjustments = ['Grind 2 steps finer'];
-    if (sour) adjustments.push('Raise brew temperature by 1°C');
-    if (extraction_time < 20) adjustments.push('Check distribution — channeling is likely');
-
-    return {
-      type: 'under-extracted',
-      title: isTrend ? '3 shots trending under-extracted' : 'Under-Extracted Shot',
-      adjustments,
-      isTrend,
-    };
+export async function analyzeShot(shot: Shot, trendSummary: string = ''): Promise<string> {
+  if (!genAI) {
+    console.error('[Dialed AI] GEMINI_API_KEY is not set');
+    return 'AI configuration missing.';
   }
 
-  if (overExtracted) {
-    const isTrend = trending(
-      recentShots,
-      (s) =>
-        s.flavor_tags.includes('Bitter') ||
-        s.flavor_tags.includes('Dry') ||
-        (s.flavor_tags as string[]).includes('Astringent') ||
-        s.extraction_time > 30,
-    );
-    const adjustments = ['Grind 1–2 steps coarser'];
-    if (bitter) adjustments.push('Lower brew temperature by 1°C');
-    if (astringent) adjustments.push('Review WDT / distribution technique');
+  const ratio = shot.dose && shot.yield
+    ? `1:${(shot.yield / shot.dose).toFixed(2)}`
+    : 'unknown';
 
-    return {
-      type: 'over-extracted',
-      title: isTrend ? '3 shots trending over-extracted' : 'Over-Extracted Shot',
-      adjustments,
-      isTrend,
-    };
+  const trendBlock = trendSummary
+    ? `Recent trend: ${trendSummary}`
+    : 'No previous shots on record for this bean/equipment combination.';
+
+  const prompt = `You are Dialed, a professional barista coach. Analyze this espresso shot and give a sharp, actionable recommendation.
+
+Rules:
+- Exactly 2 sentences. No more.
+- Sentence 1: Diagnose what went wrong (or confirm it is dialled in).
+- Sentence 2: One specific adjustment — grind setting, dose, yield, or temperature.
+- Tone: Direct and confident. No fluff, no filler words.
+- Plain text only. No markdown, no quotation marks, no bolding.
+
+Shot metrics:
+- Dose: ${shot.dose}g | Yield: ${shot.yield}g | Ratio: ${ratio}
+- Extraction time: ${shot.extraction_time}s
+- Brew temp: ${shot.brew_temp ?? 'not recorded'}°C
+- Flavor: ${shot.flavor_tags?.join(', ') || 'none tagged'}
+- Score: ${shot.overall_score ?? 'not scored'}/10
+- Notes: ${shot.notes || 'none'}
+
+${trendBlock}`;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const result = await model.generateContent(prompt);
+    return result.response.text().trim().replace(/["""'']/g, '');
+  } catch (err: unknown) {
+    console.error('[Dialed AI]', err);
+    const status = (err as { status?: number }).status;
+    if (status === 429) return 'Dialed is cooling down — try again in a moment.';
+    if (status === 503) return 'AI service temporarily unavailable.';
+    return 'Analysis temporarily unavailable.';
   }
-
-  if (balanced && (overall_score ?? 0) >= 7) {
-    return {
-      type: 'balanced',
-      title: 'Dialled In!',
-      adjustments: ['Lock in these parameters and enjoy.'],
-      isTrend: false,
-    };
-  }
-
-  return {
-    type: 'neutral',
-    title: 'Shot Logged',
-    adjustments: ['Log more shots to refine recommendations.'],
-    isTrend: false,
-  };
 }

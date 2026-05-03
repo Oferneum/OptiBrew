@@ -44,3 +44,14 @@ export function restDays(roastDateStr: string): number {
   const diff = Date.now() - new Date(roastDateStr).getTime();
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
+
+export function computeCostPerShot(pricePaid: number, weightGrams: number, dose: number = 18): number {
+  if (!pricePaid || !weightGrams || !dose) return 0;
+  return parseFloat((pricePaid / (weightGrams / dose)).toFixed(2));
+}
+
+export function computeVFM(avgScore: number, pricePaid: number, weightGrams: number, dose: number = 18): number {
+  const costPerShot = computeCostPerShot(pricePaid, weightGrams, dose);
+  if (!costPerShot || !avgScore) return 0;
+  return parseFloat((avgScore / costPerShot).toFixed(2));
+}
