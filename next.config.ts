@@ -9,8 +9,6 @@ const withPWA = withPWAInit({
   disable: process.env.NODE_ENV === 'development',
 });
 
-const nextConfig: NextConfig = {
-  allowedDevOrigins: ['10.100.102.117', 'http://10.100.102.117:3000', '192.168.33.26', '10.100.102.4'],
-};
+const nextConfig: NextConfig = {};
 
 export default withPWA(nextConfig);

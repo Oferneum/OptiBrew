@@ -16,13 +16,16 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Dialed', 
+  title: 'Dialed',
   description: 'Master your espresso extraction',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Dialed', 
+    title: 'Dialed',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
   },
 };
 
