@@ -21,6 +21,11 @@ export async function POST(req: Request) {
     const db = getRequestClient(req);
     const body = await req.json();
 
+    const { data: { user }, error: authError } = await db.auth.getUser();
+    if (!user || authError) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // getShotContext returns a ShotContext object — extract the string summary only
     const { trendSummary } = await getShotContext(body.bean_id, body.equipment_id);
     const recommendation = await analyzeShot(body as Shot, trendSummary ?? '');
@@ -28,6 +33,7 @@ export async function POST(req: Request) {
     const { data: shot, error } = await db
       .from('shots')
       .insert({
+        user_id:         user.id,
         dose:            body.dose,
         yield:           body.yield,
         extraction_time: body.extraction_time,

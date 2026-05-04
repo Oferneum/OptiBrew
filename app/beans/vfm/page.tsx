@@ -15,16 +15,18 @@ export default async function VfmLeaderboardPage() {
     <div className="p-4 space-y-4">
       <div className="pt-6 pb-1">
         <Link href="/beans" className="text-[#8A7B72] text-xs hover:text-[#C85A32] transition-colors mb-3 inline-block">
-          ← Bean Inventory
+          ← Community Beans
         </Link>
-        <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#8A7B72] mb-1">Rankings</p>
+        <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#8A7B72] mb-1">Community Rankings</p>
         <h1 className="text-[#3C2A21] font-bold text-2xl tracking-tight">Value for Money</h1>
       </div>
 
       {ranked.length === 0 ? (
         <div className="bg-white rounded-3xl p-8 text-center shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
           <p className="text-[#3C2A21] font-semibold mb-1">No ranked beans yet</p>
-          <p className="text-[#8A7B72] text-sm">Beans need a price, weight, and at least one scored shot to rank.</p>
+          <p className="text-[#8A7B72] text-sm">
+            Beans need a price, weight, and at least one scored shot to appear here.
+          </p>
         </div>
       ) : (
         <div className="space-y-2.5">
@@ -66,7 +68,7 @@ export default async function VfmLeaderboardPage() {
       )}
 
       <p className="text-[10px] text-[#AFA096] text-center px-4 pb-2">
-        VFM = avg score ÷ cost per shot. Higher is better.
+        VFM = community avg score ÷ cost per shot. Higher is better.
       </p>
     </div>
   );
