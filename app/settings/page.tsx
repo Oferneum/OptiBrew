@@ -1,7 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import type { EquipmentProfile } from '@/lib/types';
+
+async function authHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+}
 
 const FIELD_CLS =
   'bg-[#F3EFEA] rounded-2xl px-4 py-3 text-[#3C2A21] text-base placeholder:text-[#C4B8AC] w-full focus:outline-none focus:ring-2 focus:ring-[#C85A32] transition-shadow';
@@ -9,9 +16,11 @@ const FIELD_CLS =
 const LABEL_CLS = 'text-[10px] uppercase tracking-[0.15em] font-bold text-[#A39A92]';
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [profiles, setProfiles] = useState<EquipmentProfile[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const [showAdd, setShowAdd] = useState(false);
   const [machineName, setMachineName] = useState('');
@@ -21,11 +30,14 @@ export default function SettingsPage() {
 
   useEffect(() => {
     setActiveId(localStorage.getItem('activeEquipmentId'));
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserEmail(session?.user?.email ?? null);
+    });
     loadProfiles().then(() => setMounted(true));
   }, []);
 
   async function loadProfiles() {
-    const res = await fetch('/api/equipment');
+    const res = await fetch('/api/equipment', { headers: await authHeaders() });
     if (res.ok) {
       const data = await res.json();
       setProfiles(Array.isArray(data) ? data : []);
@@ -46,7 +58,7 @@ export default function SettingsPage() {
     try {
       const res = await fetch('/api/equipment', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({
           machine_name: machineName.trim(),
           grinder_name: grinderName.trim() || null,
@@ -146,6 +158,26 @@ export default function SettingsPage() {
               </button>
             );
           })}
+        </div>
+      )}
+
+      {/* Account */}
+      {userEmail && (
+        <div className="bg-white rounded-3xl px-5 py-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center justify-between">
+          <div>
+            <p className={`${LABEL_CLS} mb-0.5`}>Signed in as</p>
+            <p className="text-[#3C2A21] text-sm font-semibold truncate max-w-[200px]">{userEmail}</p>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              await supabase.auth.signOut();
+              router.replace('/login');
+            }}
+            className="text-[#C85A32] text-xs font-bold uppercase tracking-widest px-3 py-2 rounded-xl hover:bg-[#FEF2EC] transition-colors touch-manipulation"
+          >
+            Sign Out
+          </button>
         </div>
       )}
 

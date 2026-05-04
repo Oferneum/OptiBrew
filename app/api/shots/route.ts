@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getRequestClient } from '@/lib/supabase';
 import { analyzeShot } from '@/lib/recommendations';
 import { getShotContext } from '@/lib/context-builder';
 import type { Shot } from '@/lib/types';
 
-export async function GET() {
-  const { data, error } = await supabase
+export async function GET(req: Request) {
+  const db = getRequestClient(req);
+  const { data, error } = await db
     .from('shots')
     .select('*')
     .order('created_at', { ascending: false })
@@ -17,13 +18,14 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const db = getRequestClient(req);
     const body = await req.json();
 
     // getShotContext returns a ShotContext object — extract the string summary only
     const { trendSummary } = await getShotContext(body.bean_id, body.equipment_id);
     const recommendation = await analyzeShot(body as Shot, trendSummary ?? '');
 
-    const { data: shot, error } = await supabase
+    const { data: shot, error } = await db
       .from('shots')
       .insert({
         dose:            body.dose,

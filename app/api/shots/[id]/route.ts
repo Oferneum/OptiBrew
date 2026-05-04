@@ -1,18 +1,20 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getRequestClient } from '@/lib/supabase';
 
-export async function GET(_req: NextRequest, ctx: RouteContext<'/api/shots/[id]'>) {
+export async function GET(req: NextRequest, ctx: RouteContext<'/api/shots/[id]'>) {
   const { id } = await ctx.params;
-  const { data, error } = await supabase.from('shots').select('*').eq('id', id).single();
+  const db = getRequestClient(req);
+  const { data, error } = await db.from('shots').select('*').eq('id', id).single();
   if (error) return NextResponse.json({ error: error.message }, { status: 404 });
   return NextResponse.json(data);
 }
 
 export async function PATCH(req: NextRequest, ctx: RouteContext<'/api/shots/[id]'>) {
   const { id } = await ctx.params;
+  const db = getRequestClient(req);
   const body = await req.json();
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('shots')
     .update(body)
     .eq('id', id)
@@ -22,9 +24,10 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<'/api/shots/[id]
   return NextResponse.json(data);
 }
 
-export async function DELETE(_req: NextRequest, ctx: RouteContext<'/api/shots/[id]'>) {
+export async function DELETE(req: NextRequest, ctx: RouteContext<'/api/shots/[id]'>) {
   const { id } = await ctx.params;
-  const { error } = await supabase.from('shots').delete().eq('id', id);
+  const db = getRequestClient(req);
+  const { error } = await db.from('shots').delete().eq('id', id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return new NextResponse(null, { status: 204 });
 }

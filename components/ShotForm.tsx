@@ -7,6 +7,13 @@ import { computeBrewRatio } from '@/lib/analytics';
 import { supabase } from '@/lib/supabase';
 import type { FlavorTag, Shot, BrewMethod } from '@/lib/types';
 
+async function authHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token
+    ? { Authorization: `Bearer ${session.access_token}` }
+    : {};
+}
+
 interface FormState {
   dose: string;
   yieldG: string;
@@ -157,7 +164,7 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
     try {
       const res = await fetch('/api/beans', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({
           origin:       newBag.origin.trim(),
           roaster:      newBag.roaster.trim(),
@@ -411,7 +418,7 @@ export default function ShotForm({
     try {
       const res = await fetch('/api/shots', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({
           dose:           parseFloat(form.dose),
           yield:          parseFloat(form.yieldG),

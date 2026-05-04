@@ -1,15 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ShotForm from '@/components/ShotForm';
 import RecommendationCard from '@/components/RecommendationCard';
 import ShotCard from '@/components/ShotCard';
+import { supabase } from '@/lib/supabase';
 import type { Shot } from '@/lib/types';
 
 export default function NewShotPage() {
   const router = useRouter();
   const [result, setResult] = useState<{ shot: Shot; recommendation: string } | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.replace('/login');
+      } else {
+        setAuthChecked(true);
+      }
+    });
+  }, []);
+
+  if (!authChecked) return null;
 
   if (result) {
     return (

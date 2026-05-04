@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getRequestClient } from '@/lib/supabase';
 
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
+  const db = getRequestClient(req);
   const body = await req.json();
 
   const allowed = ['roaster', 'origin', 'roast_date', 'price_paid', 'weight_grams', 'is_active', 'notes'];
@@ -13,7 +14,7 @@ export async function PATCH(
     Object.entries(body).filter(([k]) => allowed.includes(k)),
   );
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('beans')
     .update(update)
     .eq('id', id)

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getRequestClient } from '@/lib/supabase';
 
-export async function GET() {
-  const { data, error } = await supabase
+export async function GET(req: Request) {
+  const db = getRequestClient(req);
+  const { data, error } = await db
     .from('beans')
     .select('*')
     .eq('is_active', true)
@@ -12,9 +13,10 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const db = getRequestClient(req);
   const body = await req.json();
 
-  const { data: dupes } = await supabase.rpc('search_beans', {
+  const { data: dupes } = await db.rpc('search_beans', {
     query: `${body.roaster} ${body.origin}`,
     threshold: 0.6,
   });
@@ -22,7 +24,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ conflict: true, match: dupes[0] }, { status: 409 });
   }
 
-  const { data, error } = await supabase.from('beans').insert(body).select().single();
+  const { data, error } = await db.from('beans').insert(body).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data, { status: 201 });
 }
