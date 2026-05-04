@@ -19,17 +19,44 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
 
   async function signInWithGoogle() {
+    console.log('Button clicked');
     setLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-    if (error) {
-      setError(error.message);
+
+    const redirectTo = `${window.location.origin}/auth/callback`;
+    console.log('redirectTo:', redirectTo);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true, // we handle the redirect manually below
+        },
+      });
+
+      console.log('signInWithOAuth result — data:', data, 'error:', error);
+
+      if (error) {
+        console.error('signInWithOAuth error:', error);
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+
+      if (data?.url) {
+        console.log('Redirecting to OAuth URL:', data.url);
+        window.location.href = data.url;
+      } else {
+        console.error('No OAuth URL returned — data was:', data);
+        setError('Could not start sign-in. No OAuth URL returned.');
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error('Unexpected error in signInWithGoogle:', err);
+      setError(err instanceof Error ? err.message : 'Unexpected error');
       setLoading(false);
     }
-    // On success, browser navigates away — no need to setLoading(false)
   }
 
   return (

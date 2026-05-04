@@ -19,7 +19,7 @@ function CallbackHandler() {
         console.error('[auth/callback]', error.message);
         router.replace('/login');
       } else {
-        router.replace('/shots/new');
+        router.replace('/?welcome=1');
       }
     });
   }, []);

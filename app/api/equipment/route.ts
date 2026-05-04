@@ -15,6 +15,11 @@ export async function POST(req: Request) {
   const db = getRequestClient(req);
   const body = await req.json();
 
+  const { data: { user }, error: authError } = await db.auth.getUser();
+  if (!user || authError) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const { data: dupes } = await db.rpc('search_equipment', {
     query: body.machine_name,
     threshold: 0.6,
@@ -25,7 +30,11 @@ export async function POST(req: Request) {
 
   const { data, error } = await db
     .from('equipment_profiles')
-    .insert(body)
+    .insert({
+      machine_name: body.machine_name,
+      grinder_name: body.grinder_name ?? null,
+      user_id: user.id,
+    })
     .select()
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

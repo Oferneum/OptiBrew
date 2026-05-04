@@ -1,5 +1,7 @@
+import { Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import ShotCard from '@/components/ShotCard';
+import HomeGreeting from '@/components/HomeGreeting';
 import Link from 'next/link';
 import type { Shot } from '@/lib/types';
 
@@ -69,6 +71,11 @@ export default async function HomePage() {
           Espresso Journal
         </p>
       </header>
+
+      {/* ── Personalised greeting + welcome toast ─── */}
+      <Suspense>
+        <HomeGreeting />
+      </Suspense>
 
       {/* ── Log Shot CTA ──────────────────────────── */}
       <Link
