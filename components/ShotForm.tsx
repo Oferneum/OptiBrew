@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Coffee, Milk } from 'lucide-react';
 import { computeBrewRatio } from '@/lib/analytics';
@@ -138,6 +138,7 @@ interface BeanSearchProps {
 
 interface NewBagForm { origin: string; roaster: string; bag_name: string; price_paid: string; weight_grams: string; }
 interface BeanEntry  { id: string; roaster: string; origin: string; bag_name?: string | null; }
+interface ScanSlot   { file: File; preview: string; }
 
 function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
   const [allBeans, setAllBeans] = useState<BeanEntry[]>([]);
@@ -146,10 +147,12 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
   const [saving, setSaving] = useState(false);
   const [newBag, setNewBag] = useState<NewBagForm>({ origin: '', roaster: '', bag_name: '', price_paid: '', weight_grams: '' });
 
-  const [scanning, setScanning]     = useState(false);
-  const [scanRec, setScanRec]       = useState<string | null>(null);
-  const [scanPreview, setScanPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [scanning, setScanning]   = useState(false);
+  const [scanRec, setScanRec]     = useState<string | null>(null);
+  const [scanFront, setScanFront] = useState<ScanSlot | null>(null);
+  const [scanBack, setScanBack]   = useState<ScanSlot | null>(null);
+  const frontInputRef = useRef<HTMLInputElement>(null);
+  const backInputRef  = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setLoadingBeans(true);
@@ -163,13 +166,20 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
       });
   }, []);
 
-  const handleScan = useCallback(async (file: File) => {
+  function selectImage(slot: 'front' | 'back', file: File) {
+    const preview = URL.createObjectURL(file);
+    if (slot === 'front') { setScanFront({ file, preview }); setScanRec(null); }
+    else                  { setScanBack({ file, preview });  setScanRec(null); }
+  }
+
+  async function submitScan() {
+    if (!scanFront) return;
     setScanning(true);
     setScanRec(null);
-    setScanPreview(URL.createObjectURL(file));
     try {
       const fd = new FormData();
-      fd.append('image', file);
+      fd.append('image', scanFront.file);
+      if (scanBack) fd.append('image', scanBack.file);
       const res = await fetch('/api/scan-bag', { method: 'POST', body: fd });
       if (res.ok) {
         const { scan, recommendation } = await res.json();
@@ -184,7 +194,13 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
     } finally {
       setScanning(false);
     }
-  }, []);
+  }
+
+  function resetScan() {
+    setScanFront(null);
+    setScanBack(null);
+    setScanRec(null);
+  }
 
   async function saveNewBag() {
     if (!newBag.origin.trim() || !newBag.roaster.trim()) return;
@@ -212,8 +228,7 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
         onSelect(bean.id, label);
         setShowNewBag(false);
         setNewBag({ origin: '', roaster: '', bag_name: '', price_paid: '', weight_grams: '' });
-        setScanRec(null);
-        setScanPreview(null);
+        resetScan();
         const { data: fresh } = await supabase
           .from('beans').select('id, roaster, origin, bag_name').order('roaster', { ascending: true });
         setAllBeans(fresh ?? []);
@@ -222,6 +237,12 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
   }
 
   const newBagInputCls = 'bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white text-base placeholder:text-white/25 w-full focus:outline-none focus:border-[#FF4500] focus:ring-2 focus:ring-[#FF4500]/20 transition-all appearance-none outline-none';
+  const cameraIcon = (
+    <svg className="w-5 h-5 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </svg>
+  );
 
   return (
     <div className="space-y-3">
@@ -258,54 +279,85 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
       </div>
 
       {showNewBag && (
-        <div className="glass rounded-2xl p-5 space-y-3">
-          {/* ── Header + scan button ── */}
-          <div className="flex items-center justify-between">
-            <p className="text-white font-black text-base uppercase tracking-wider">New Bag</p>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={scanning}
-              className="flex items-center gap-1.5 bg-white/10 border border-white/15 text-white/80 text-xs font-bold uppercase tracking-wider px-3 py-2 rounded-xl active:scale-95 transition-all disabled:opacity-50 touch-manipulation"
-            >
-              {scanning ? (
-                <><Spinner /><span>Scanning…</span></>
-              ) : (
-                <>
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                    <circle cx="12" cy="13" r="4"/>
-                  </svg>
-                  <span>Scan Bag</span>
-                </>
+        <div className="glass rounded-2xl p-5 space-y-4">
+          <p className="text-white font-black text-base uppercase tracking-wider">New Bag</p>
+
+          {/* ── Two image slots ── */}
+          <div className="flex gap-3">
+            {/* Front slot */}
+            <div className="relative flex-1">
+              <button
+                type="button"
+                onClick={() => frontInputRef.current?.click()}
+                disabled={scanning}
+                className="w-full aspect-square rounded-xl border border-dashed border-white/20 bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all touch-manipulation overflow-hidden"
+              >
+                {scanFront ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={scanFront.preview} alt="Front" className="w-full h-full object-cover" />
+                ) : (
+                  <>{cameraIcon}<span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Front</span></>
+                )}
+              </button>
+              {scanFront && (
+                <button
+                  type="button"
+                  onClick={() => { setScanFront(null); setScanRec(null); }}
+                  className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center"
+                >
+                  <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
               )}
-            </button>
-            {/* Hidden file input — camera capture on mobile */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleScan(f); e.target.value = ''; }}
-            />
+              <input ref={frontInputRef} type="file" accept="image/*" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) selectImage('front', f); e.target.value = ''; }} />
+            </div>
+
+            {/* Back slot */}
+            <div className="relative flex-1">
+              <button
+                type="button"
+                onClick={() => backInputRef.current?.click()}
+                disabled={scanning}
+                className="w-full aspect-square rounded-xl border border-dashed border-white/20 bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all touch-manipulation overflow-hidden"
+              >
+                {scanBack ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={scanBack.preview} alt="Back" className="w-full h-full object-cover" />
+                ) : (
+                  <>{cameraIcon}<span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Back (opt.)</span></>
+                )}
+              </button>
+              {scanBack && (
+                <button
+                  type="button"
+                  onClick={() => { setScanBack(null); setScanRec(null); }}
+                  className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center"
+                >
+                  <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+              )}
+              <input ref={backInputRef} type="file" accept="image/*" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) selectImage('back', f); e.target.value = ''; }} />
+            </div>
           </div>
 
-          {/* ── Scan preview + recommendation ── */}
-          {scanPreview && (
-            <div className="flex items-start gap-3 bg-white/5 rounded-xl p-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={scanPreview} alt="Bag preview" className="w-14 h-14 object-cover rounded-lg shrink-0" />
-              <div className="min-w-0">
-                {scanning ? (
-                  <p className="text-[#A1A1AA] text-xs font-medium">Analyzing bag with Dialed Vision…</p>
-                ) : scanRec ? (
-                  <>
-                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#FFC107] mb-1">Startup Rec</p>
-                    <p className="text-white/80 text-xs leading-relaxed">{scanRec}</p>
-                  </>
-                ) : null}
-              </div>
+          {/* ── Scan Now button (appears once at least one image is selected) ── */}
+          {(scanFront || scanBack) && (
+            <button
+              type="button"
+              onClick={submitScan}
+              disabled={scanning || !scanFront}
+              className="w-full flex items-center justify-center gap-2 bg-white/10 border border-white/15 text-white font-bold py-3 rounded-xl text-sm uppercase tracking-wider active:scale-95 transition-all disabled:opacity-50 touch-manipulation"
+            >
+              {scanning ? <><Spinner /><span>Scanning…</span></> : <span>Scan Bag</span>}
+            </button>
+          )}
+
+          {/* ── Startup recommendation ── */}
+          {scanRec && !scanning && (
+            <div className="bg-[#FFC107]/10 border border-[#FFC107]/20 rounded-xl p-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FFC107] mb-2">Startup Rec</p>
+              <p className="text-white/90 text-sm leading-relaxed">{scanRec}</p>
             </div>
           )}
 
@@ -372,7 +424,7 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
           <div className="flex gap-2.5 pt-1">
             <button
               type="button"
-              onClick={() => { setShowNewBag(false); setScanRec(null); setScanPreview(null); }}
+              onClick={() => { setShowNewBag(false); resetScan(); }}
               className="flex-1 bg-white/5 border border-white/10 text-white font-black py-4 min-h-[56px] rounded-xl text-sm uppercase tracking-wide active:scale-95 transition-all touch-manipulation"
             >
               Cancel

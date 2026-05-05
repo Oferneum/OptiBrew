@@ -5,15 +5,26 @@ const genAI = process.env.GEMINI_API_KEY
   ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
   : null;
 
-export async function scanBagImage(
-  imageBase64: string,
-  mimeType: string,
-): Promise<BagScanResult> {
+export interface ImageInput {
+  data:     string; // base64-encoded
+  mimeType: string;
+}
+
+export async function scanBagImage(images: ImageInput[]): Promise<BagScanResult> {
   if (!genAI) throw new Error('[VisionAgent] GEMINI_API_KEY not set');
+  if (images.length === 0) throw new Error('[VisionAgent] No images provided');
 
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-  const prompt = `Analyze this coffee bag photo and extract details. Respond ONLY with a valid JSON object — no markdown, no explanation, no code fences.
+  const imageParts = images.map((img) => ({
+    inlineData: { mimeType: img.mimeType, data: img.data },
+  }));
+
+  const context = images.length > 1
+    ? `You are given ${images.length} photos of the same coffee bag (e.g. front and back). Combine information from all images.`
+    : 'You are given a photo of a coffee bag.';
+
+  const prompt = `${context} Extract the details and respond ONLY with a valid JSON object — no markdown, no explanation, no code fences.
 
 {
   "roaster": "the roasting company name",
@@ -24,12 +35,9 @@ export async function scanBagImage(
   "tasting_notes": "specific flavour descriptors if listed"
 }
 
-Use empty string "" for any field that is not visible or unclear. Return only the JSON object.`;
+Use empty string "" for any field not visible or unclear. Return only the JSON object.`;
 
-  const result = await model.generateContent([
-    { inlineData: { mimeType, data: imageBase64 } },
-    { text: prompt },
-  ]);
+  const result = await model.generateContent([...imageParts, { text: prompt }]);
 
   const raw = result.response
     .text()

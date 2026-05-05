@@ -1,8 +1,8 @@
-import { scanBagImage }            from './vision-agent';
-import { getStartupRecommendation } from './brew-recommendation-agent';
-import { analyzeShot }              from './diagnostics-agent';
-import { getBestBrewMethod }        from './community-analytics-agent';
-import type { BagScanResult, Shot } from '../types';
+import { scanBagImage, type ImageInput } from './vision-agent';
+import { getStartupRecommendation }      from './brew-recommendation-agent';
+import { analyzeShot }                   from './diagnostics-agent';
+import { getBestBrewMethod }             from './community-analytics-agent';
+import type { BagScanResult, Shot }      from '../types';
 
 export interface BagScanOutput {
   scan:           BagScanResult;
@@ -10,14 +10,11 @@ export interface BagScanOutput {
 }
 
 /**
- * Scan flow: VisionAgent extracts bean details from photo,
+ * Scan flow: VisionAgent extracts bean details from one or more bag photos,
  * then BrewRecommendationAgent generates first-shot parameters.
  */
-export async function orchestrateBagScan(
-  imageBase64: string,
-  mimeType:    string,
-): Promise<BagScanOutput> {
-  const scan           = await scanBagImage(imageBase64, mimeType);
+export async function orchestrateBagScan(images: ImageInput[]): Promise<BagScanOutput> {
+  const scan           = await scanBagImage(images);
   const recommendation = await getStartupRecommendation(scan);
   return { scan, recommendation };
 }
