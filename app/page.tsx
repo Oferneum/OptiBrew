@@ -1,11 +1,11 @@
-import { Suspense } from 'react';
+'use client';
+
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import ShotCard from '@/components/ShotCard';
 import HomeGreeting from '@/components/HomeGreeting';
 import Link from 'next/link';
 import type { Shot } from '@/lib/types';
-
-export const dynamic = 'force-dynamic';
 
 function GlowOrb({ className }: { className?: string }) {
   return (
@@ -39,18 +39,28 @@ function EmptyState() {
   );
 }
 
-export default async function HomePage() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return <div />;
+export default function HomePage() {
+  const [shots, setShots]   = useState<Shot[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { data, error } = await supabase
-    .from('shots')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(50);
+  useEffect(() => {
+    async function load() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { setLoading(false); return; }
 
-  const shots  = error ? [] : ((data ?? []) as Shot[]);
+      const { data, error } = await supabase
+        .from('shots')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      setShots(error ? [] : ((data ?? []) as Shot[]));
+      setLoading(false);
+    }
+    load();
+  }, []);
+
   const recent = shots.slice(0, 3);
 
   const scoredShots = shots.filter((s) => s.overall_score != null);
@@ -77,9 +87,7 @@ export default async function HomePage() {
       </header>
 
       {/* ── Personalised greeting + welcome toast ─── */}
-      <Suspense>
-        <HomeGreeting />
-      </Suspense>
+      <HomeGreeting />
 
       {/* ── Log Shot CTA ──────────────────────────── */}
       <Link
@@ -94,7 +102,7 @@ export default async function HomePage() {
       </Link>
 
       {/* ── Stats ─────────────────────────────────── */}
-      {shots.length > 0 && (
+      {!loading && shots.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: 'Shots',     value: shots.length.toString() },
@@ -128,7 +136,17 @@ export default async function HomePage() {
           )}
         </div>
 
-        {recent.length === 0 ? (
+        {loading ? (
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="glass rounded-2xl h-24 animate-pulse"
+                style={{ opacity: 1 - i * 0.18 }}
+              />
+            ))}
+          </div>
+        ) : recent.length === 0 ? (
           <div className="glass rounded-3xl py-12 px-6 flex flex-col items-center text-center space-y-5">
             <EmptyState />
             <div className="space-y-1.5">
