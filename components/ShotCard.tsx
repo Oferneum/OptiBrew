@@ -38,12 +38,22 @@ export default function ShotCard({ shot }: { shot: Shot }) {
 
       {/* Header */}
       <div className="flex justify-between items-start gap-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[#A1A1AA] text-xs font-mono tracking-wide">{formatDate(shot.created_at)}</span>
-          {quality && (
-            <span className={`px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest rounded-full bg-gradient-to-r ${quality.gradient} text-black`}>
-              {quality.text}
-            </span>
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[#A1A1AA] text-xs font-mono tracking-wide">{formatDate(shot.created_at)}</span>
+            {quality && (
+              <span className={`px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest rounded-full bg-gradient-to-r ${quality.gradient} text-black`}>
+                {quality.text}
+              </span>
+            )}
+          </div>
+          {shot.beans && (
+            <div className="flex items-center gap-1.5">
+              <span className="w-1 h-1 rounded-full bg-[#FFC107] shrink-0" />
+              <span className="text-[#A1A1AA] text-[11px] truncate">
+                {shot.beans.roaster} · {shot.beans.origin}
+              </span>
+            </div>
           )}
         </div>
         {shot.overall_score != null && (

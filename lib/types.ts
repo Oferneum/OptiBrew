@@ -18,6 +18,7 @@ export interface Shot {
   brew_method?: BrewMethod | null;
   has_milk?: boolean | null;
   recommendation?: string | null;
+  beans?: { roaster: string; origin: string } | null;
 }
 
 export interface Bean {
