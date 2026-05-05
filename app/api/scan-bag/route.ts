@@ -17,8 +17,15 @@ export async function POST(req: Request) {
   try {
     const result = await orchestrateBagScan(images);
     return NextResponse.json(result);
-  } catch (err) {
-    console.error('[scan-bag]', err);
-    return NextResponse.json({ error: 'Scan failed' }, { status: 500 });
+  } catch (firstErr) {
+    console.warn('[scan-bag] first attempt failed, retrying in 500ms…', firstErr);
+    await new Promise((r) => setTimeout(r, 500));
+    try {
+      const result = await orchestrateBagScan(images);
+      return NextResponse.json(result);
+    } catch (err) {
+      console.error('[scan-bag] retry also failed', err);
+      return NextResponse.json({ error: 'Scan failed' }, { status: 500 });
+    }
   }
 }

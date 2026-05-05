@@ -140,7 +140,7 @@ interface NewBagForm { origin: string; roaster: string; bag_name: string; price_
 interface BeanEntry  { id: string; roaster: string; origin: string; bag_name?: string | null; }
 interface ScanSlot   { file: File; preview: string; }
 
-function compressImage(file: File, maxPx = 1024, quality = 0.8): Promise<Blob> {
+function compressImage(file: File, maxPx = 800, quality = 0.7): Promise<Blob> {
   return new Promise((resolve) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
