@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Shot } from './types';
 
 const PRIMARY_MODEL  = 'gemini-2.5-flash';
-const FALLBACK_MODEL = 'gemini-1.5-flash';
+const FALLBACK_MODEL = 'gemini-2.5-flash-lite'; // gemini-1.5-flash was deprecated (404)
 
 // GEMINI_API_KEY only — never NEXT_PUBLIC_ (would expose key in client bundle)
 const genAI = process.env.GEMINI_API_KEY

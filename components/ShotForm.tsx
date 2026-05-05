@@ -294,8 +294,10 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
 
 export default function ShotForm({
   onSuccess,
+  onSubmitting,
 }: {
   onSuccess: (shot: Shot, recommendation: string) => void;
+  onSubmitting?: () => void;
 }) {
   const [form, setForm] = useState<FormState>({
     dose: '', yieldG: '', extraction_time: '', brew_temp: '',
@@ -415,6 +417,7 @@ export default function ShotForm({
     e.preventDefault();
     if (!form.dose || !form.yieldG) { setError('Dose and yield are required'); return; }
     setLoading(true); setError(null);
+    onSubmitting?.();
     try {
       const res = await fetch('/api/shots', {
         method: 'POST',
