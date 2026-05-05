@@ -32,6 +32,7 @@ export async function POST(req: Request) {
     .from('beans')
     .insert({
       roaster:      body.roaster,
+      bag_name:     body.bag_name     ?? null,
       origin:       body.origin,
       roast_date:   body.roast_date,
       is_active:    body.is_active ?? true,

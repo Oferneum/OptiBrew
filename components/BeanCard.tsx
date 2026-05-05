@@ -27,12 +27,13 @@ function VfmBadge({ value }: { value: number }) {
 }
 
 interface EditState {
-  roaster: string;
-  origin: string;
-  price_paid: string;
+  roaster:      string;
+  bag_name:     string;
+  origin:       string;
+  price_paid:   string;
   weight_grams: string;
-  roast_date: string;
-  is_active: boolean;
+  roast_date:   string;
+  is_active:    boolean;
 }
 
 export default function BeanCard({ bean }: { bean: BeanVFMData }) {
@@ -43,6 +44,7 @@ export default function BeanCard({ bean }: { bean: BeanVFMData }) {
 
   const [draft, setDraft] = useState<EditState>({
     roaster:      bean.roaster,
+    bag_name:     bean.bag_name ?? '',
     origin:       bean.origin,
     price_paid:   bean.price_paid != null ? String(bean.price_paid) : '',
     weight_grams: bean.weight_grams != null ? String(bean.weight_grams) : '',
@@ -53,6 +55,7 @@ export default function BeanCard({ bean }: { bean: BeanVFMData }) {
   function openEdit() {
     setDraft({
       roaster:      bean.roaster,
+      bag_name:     bean.bag_name ?? '',
       origin:       bean.origin,
       price_paid:   bean.price_paid != null ? String(bean.price_paid) : '',
       weight_grams: bean.weight_grams != null ? String(bean.weight_grams) : '',
@@ -73,6 +76,7 @@ export default function BeanCard({ bean }: { bean: BeanVFMData }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           roaster:      draft.roaster.trim(),
+          bag_name:     draft.bag_name.trim() || null,
           origin:       draft.origin.trim(),
           price_paid:   draft.price_paid   ? parseFloat(draft.price_paid)   : null,
           weight_grams: draft.weight_grams ? parseFloat(draft.weight_grams) : null,
@@ -99,6 +103,9 @@ export default function BeanCard({ bean }: { bean: BeanVFMData }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[#3C2A21] font-bold text-base leading-tight">{bean.roaster}</p>
+          {bean.bag_name && (
+            <p className="text-[#3C2A21] text-sm font-semibold mt-0">{bean.bag_name}</p>
+          )}
           <p className="text-[#8A7B72] text-sm mt-0.5">{bean.origin}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -152,6 +159,12 @@ export default function BeanCard({ bean }: { bean: BeanVFMData }) {
               ₪{bean.costPerShot.toFixed(2)}/shot
             </span>
           )}
+          {bean.community_method && (
+            <span className="text-xs font-semibold px-2.5 py-1 bg-[#EEF5FF] text-[#2A5EA8] rounded-full flex items-center gap-1">
+              <span>★</span>
+              <span>Recommended: {bean.community_method.brew_method}</span>
+            </span>
+          )}
         </div>
       )}
 
@@ -185,6 +198,16 @@ export default function BeanCard({ bean }: { bean: BeanVFMData }) {
       {editing && (
         <div className="mt-4 space-y-3" style={{ borderTop: '1px solid #F3EFEA', paddingTop: '1rem' }}>
 
+          <div>
+            <p className={LABEL}>Bag Name</p>
+            <input
+              type="text"
+              value={draft.bag_name}
+              onChange={(e) => setDraft((d) => ({ ...d, bag_name: e.target.value }))}
+              className={INPUT}
+              placeholder="e.g. Sunrise Blend"
+            />
+          </div>
           <div className="grid grid-cols-2 gap-2.5">
             <div>
               <p className={LABEL}>Roaster *</p>

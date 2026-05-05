@@ -1,5 +1,36 @@
 ## OptiBrew — Project Context
 
+---
+
+### Multi-Agent Architecture
+
+All AI and analytics logic lives in `lib/agents/`. Each agent owns exactly one domain.
+
+| Agent | File | Domain | AI? |
+|---|---|---|---|
+| **DiagnosticsAgent** | `lib/agents/diagnostics-agent.ts` | Per-shot barista coaching | Gemini text (re-exports from `lib/recommendations.ts`) |
+| **VisionAgent** | `lib/agents/vision-agent.ts` | Photo OCR — bag image → structured JSON | Gemini 2.5 Flash multimodal |
+| **BrewRecommendationAgent** | `lib/agents/brew-recommendation-agent.ts` | First-shot startup params from bean details | Gemini text (primary + fallback) |
+| **CommunityAnalyticsAgent** | `lib/agents/community-analytics-agent.ts` | Best brew method per bean from shot statistics | Supabase query + pure math |
+| **Orchestrator** | `lib/agents/orchestrator.ts` | Routes tasks to agents, chains multi-step flows | None (coordination only) |
+
+**Orchestration flows:**
+- `orchestrateBagScan(image)` → `VisionAgent` → `BrewRecommendationAgent` (sequential; scan output feeds recommendation)
+- `orchestrateShotAnalysis(shot, trend)` → `DiagnosticsAgent` (delegation)
+- `getBestBrewMethod(beanId)` → `CommunityAnalyticsAgent` (direct pass-through)
+
+**New API routes (agent-backed):**
+- `POST /api/scan-bag` — multipart image → `orchestrateBagScan` → `{ scan, recommendation }`
+- `GET /api/beans/community-method/[id]` — calls `getBestBrewMethod(beanId)` directly
+
+**Agent contract rules:**
+- Each agent is a pure async function with typed inputs/outputs
+- Agents may call Supabase or Gemini, never the Next.js request/response layer
+- Only the Orchestrator is allowed to call multiple agents in sequence
+- API routes call the Orchestrator (or a single agent), never other API routes
+
+---
+
 ### Tech Stack
 | Layer | Choice |
 |---|---|
@@ -72,11 +103,17 @@ components/
 
 lib/
   supabase.ts               Browser singleton + createAuthClient(token) + getRequestClient(req)
-  types.ts                  Shot, Bean, Equipment, BaristaBrain, BrewMethod
+  types.ts                  Shot, Bean, Equipment, BaristaBrain, BrewMethod, BagScanResult, CommunityMethodResult
   recommendations.ts        BaristaBrain — Gemini AI call with primary/fallback model strategy
   analytics.ts              computeBrewRatio, computeVFM, computeCostPerShot
-  vfm-actions.ts            'use server' — fetchBeansWithVFM() with React cache() + Zod
+  vfm-actions.ts            'use server' — fetchBeansWithVFM() with bag_name + community_method
   context-builder.ts        getShotContext() — recent shots trend summary for AI prompt
+  agents/
+    diagnostics-agent.ts    Re-exports analyzeShot from recommendations.ts
+    vision-agent.ts         scanBagImage() — Gemini vision → BagScanResult JSON
+    brew-recommendation-agent.ts  getStartupRecommendation() — first-shot params from bean details
+    community-analytics-agent.ts  getBestBrewMethod() + computeBestBrewMethod() — stats only
+    orchestrator.ts         orchestrateBagScan(), orchestrateShotAnalysis(), getBestBrewMethod()
 ```
 
 ---
@@ -243,6 +280,16 @@ Bean Inventory, VFM Index, Bean editing, Settings, iOS mobile fixes.
 - ✅ `user_id` column added to `beans` (FK→auth.users, ON DELETE CASCADE)
 - ✅ RLS: INSERT/UPDATE owner-only on both tables; SELECT community-wide for authenticated users
 - ✅ All three POST routes (shots, beans, equipment) call `db.auth.getUser()` and inject `user_id: user.id`
+
+**Layer 6 — ✅ Complete (Multi-Agent Architecture + New Features)**
+- ✅ Multi-agent system in `lib/agents/` (5 agents + orchestrator)
+- ✅ `bag_name` column on `beans` table — captured in Add Bean form, displayed on BeanCard
+- ✅ Community Prep Method — CommunityAnalyticsAgent computes best brew method per bean from shot stats; shown on BeanCard
+- ✅ Photo OCR — VisionAgent uses Gemini vision to extract bag details from photo
+- ✅ Startup Recommendation — BrewRecommendationAgent gives first-shot params; shown inline in Add Bean form after scan
+- ✅ `POST /api/scan-bag` — multipart image endpoint backed by Orchestrator
+- ✅ `GET /api/beans/community-method/[id]` — per-bean community stats endpoint
+- ✅ CLAUDE.md documents full agent architecture
 
 **Still outstanding:**
 - ❌ PWA icons (`icon-192.png`, `icon-512.png` referenced in manifest)

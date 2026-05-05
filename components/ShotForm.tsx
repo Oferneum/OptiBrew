@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Coffee, Milk } from 'lucide-react';
 import { computeBrewRatio } from '@/lib/analytics';
@@ -136,26 +136,54 @@ interface BeanSearchProps {
   selected: { id: string; label: string } | null;
 }
 
-interface NewBagForm { origin: string; roaster: string; price_paid: string; weight_grams: string; }
-interface BeanEntry  { id: string; roaster: string; origin: string; }
+interface NewBagForm { origin: string; roaster: string; bag_name: string; price_paid: string; weight_grams: string; }
+interface BeanEntry  { id: string; roaster: string; origin: string; bag_name?: string | null; }
 
 function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
   const [allBeans, setAllBeans] = useState<BeanEntry[]>([]);
   const [loadingBeans, setLoadingBeans] = useState(true);
   const [showNewBag, setShowNewBag] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [newBag, setNewBag] = useState<NewBagForm>({ origin: '', roaster: '', price_paid: '', weight_grams: '' });
+  const [newBag, setNewBag] = useState<NewBagForm>({ origin: '', roaster: '', bag_name: '', price_paid: '', weight_grams: '' });
+
+  const [scanning, setScanning]     = useState(false);
+  const [scanRec, setScanRec]       = useState<string | null>(null);
+  const [scanPreview, setScanPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setLoadingBeans(true);
     supabase
       .from('beans')
-      .select('id, roaster, origin')
+      .select('id, roaster, origin, bag_name')
       .order('roaster', { ascending: true })
       .then(({ data, error }) => {
         if (!error) setAllBeans(data ?? []);
         setLoadingBeans(false);
       });
+  }, []);
+
+  const handleScan = useCallback(async (file: File) => {
+    setScanning(true);
+    setScanRec(null);
+    setScanPreview(URL.createObjectURL(file));
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const res = await fetch('/api/scan-bag', { method: 'POST', body: fd });
+      if (res.ok) {
+        const { scan, recommendation } = await res.json();
+        setNewBag((b) => ({
+          ...b,
+          roaster:  scan.roaster  || b.roaster,
+          bag_name: scan.bag_name || b.bag_name,
+          origin:   scan.origin   || b.origin,
+        }));
+        setScanRec(recommendation);
+      }
+    } finally {
+      setScanning(false);
+    }
   }, []);
 
   async function saveNewBag() {
@@ -168,6 +196,7 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
         body: JSON.stringify({
           origin:       newBag.origin.trim(),
           roaster:      newBag.roaster.trim(),
+          bag_name:     newBag.bag_name.trim() || null,
           roast_date:   new Date().toISOString().split('T')[0],
           is_active:    true,
           price_paid:   newBag.price_paid   ? parseFloat(newBag.price_paid)   : null,
@@ -177,11 +206,16 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
       const data = await res.json();
       if (res.ok || res.status === 409) {
         const bean = res.status === 409 ? data.match : data;
-        onSelect(bean.id, `${newBag.roaster.trim()} · ${newBag.origin.trim()}`);
+        const label = newBag.bag_name.trim()
+          ? `${newBag.roaster.trim()} · ${newBag.bag_name.trim()}`
+          : `${newBag.roaster.trim()} · ${newBag.origin.trim()}`;
+        onSelect(bean.id, label);
         setShowNewBag(false);
-        setNewBag({ origin: '', roaster: '', price_paid: '', weight_grams: '' });
+        setNewBag({ origin: '', roaster: '', bag_name: '', price_paid: '', weight_grams: '' });
+        setScanRec(null);
+        setScanPreview(null);
         const { data: fresh } = await supabase
-          .from('beans').select('id, roaster, origin').order('roaster', { ascending: true });
+          .from('beans').select('id, roaster, origin, bag_name').order('roaster', { ascending: true });
         setAllBeans(fresh ?? []);
       }
     } finally { setSaving(false); }
@@ -199,7 +233,12 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
             if (val === 'NEW_BAG') { e.target.value = selected?.id ?? ''; setShowNewBag(true); return; }
             if (val === '') { onClear(); return; }
             const bean = allBeans.find((b) => b.id === val);
-            if (bean) onSelect(bean.id, `${bean.roaster} · ${bean.origin}`);
+            if (bean) {
+              const label = bean.bag_name
+                ? `${bean.roaster} · ${bean.bag_name}`
+                : `${bean.roaster} · ${bean.origin}`;
+              onSelect(bean.id, label);
+            }
           }}
           className="bg-white/5 border border-white/10 rounded-2xl px-4 min-h-[56px] text-white text-base font-black appearance-none outline-none w-full focus:border-[#FF4500] focus:ring-2 focus:ring-[#FF4500]/20 transition-all"
           style={{ fontSize: '16px' }}
@@ -209,7 +248,9 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
             : <option value="">Select a bean…</option>
           }
           {allBeans.map((b) => (
-            <option key={b.id} value={b.id} style={{ background: '#1a1a2e' }}>{b.roaster} · {b.origin}</option>
+            <option key={b.id} value={b.id} style={{ background: '#1a1a2e' }}>
+              {b.bag_name ? `${b.roaster} · ${b.bag_name}` : `${b.roaster} · ${b.origin}`}
+            </option>
           ))}
           <option value="NEW_BAG" style={{ background: '#1a1a2e' }}>+ Add New Bag</option>
         </select>
@@ -218,7 +259,68 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
 
       {showNewBag && (
         <div className="glass rounded-2xl p-5 space-y-3">
-          <p className="text-white font-black text-base uppercase tracking-wider">New Bag</p>
+          {/* ── Header + scan button ── */}
+          <div className="flex items-center justify-between">
+            <p className="text-white font-black text-base uppercase tracking-wider">New Bag</p>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={scanning}
+              className="flex items-center gap-1.5 bg-white/10 border border-white/15 text-white/80 text-xs font-bold uppercase tracking-wider px-3 py-2 rounded-xl active:scale-95 transition-all disabled:opacity-50 touch-manipulation"
+            >
+              {scanning ? (
+                <><Spinner /><span>Scanning…</span></>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                  <span>Scan Bag</span>
+                </>
+              )}
+            </button>
+            {/* Hidden file input — camera capture on mobile */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleScan(f); e.target.value = ''; }}
+            />
+          </div>
+
+          {/* ── Scan preview + recommendation ── */}
+          {scanPreview && (
+            <div className="flex items-start gap-3 bg-white/5 rounded-xl p-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={scanPreview} alt="Bag preview" className="w-14 h-14 object-cover rounded-lg shrink-0" />
+              <div className="min-w-0">
+                {scanning ? (
+                  <p className="text-[#A1A1AA] text-xs font-medium">Analyzing bag with Dialed Vision…</p>
+                ) : scanRec ? (
+                  <>
+                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#FFC107] mb-1">Startup Rec</p>
+                    <p className="text-white/80 text-xs leading-relaxed">{scanRec}</p>
+                  </>
+                ) : null}
+              </div>
+            </div>
+          )}
+
+          {/* ── Fields ── */}
+          <div>
+            <Label>Bag Name</Label>
+            <input
+              type="text"
+              placeholder="e.g. Sunrise Blend"
+              value={newBag.bag_name}
+              onChange={(e) => setNewBag((b) => ({ ...b, bag_name: e.target.value }))}
+              className={newBagInputCls}
+              style={{ fontSize: '16px' }}
+            />
+          </div>
           <div className="grid grid-cols-2 gap-2.5">
             <div>
               <Label>Roaster *</Label>
@@ -270,7 +372,7 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
           <div className="flex gap-2.5 pt-1">
             <button
               type="button"
-              onClick={() => setShowNewBag(false)}
+              onClick={() => { setShowNewBag(false); setScanRec(null); setScanPreview(null); }}
               className="flex-1 bg-white/5 border border-white/10 text-white font-black py-4 min-h-[56px] rounded-xl text-sm uppercase tracking-wide active:scale-95 transition-all touch-manipulation"
             >
               Cancel

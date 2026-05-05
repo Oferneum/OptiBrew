@@ -1,0 +1,1 @@
+export { analyzeShot } from '../recommendations';

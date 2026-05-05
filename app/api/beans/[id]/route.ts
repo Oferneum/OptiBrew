@@ -9,7 +9,7 @@ export async function PATCH(
   const db = getRequestClient(req);
   const body = await req.json();
 
-  const allowed = ['roaster', 'origin', 'roast_date', 'price_paid', 'weight_grams', 'is_active', 'notes'];
+  const allowed = ['roaster', 'bag_name', 'origin', 'roast_date', 'price_paid', 'weight_grams', 'is_active', 'notes'];
   const update = Object.fromEntries(
     Object.entries(body).filter(([k]) => allowed.includes(k)),
   );

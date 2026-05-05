@@ -4,10 +4,13 @@ import { cache } from 'react';
 import { unstable_noStore as noStore } from 'next/cache';
 import { supabase } from './supabase';
 import { computeCostPerShot, computeVFM } from './analytics';
+import { computeBestBrewMethod } from './agents/community-analytics-agent';
+import type { CommunityMethodResult } from './types';
 
 export interface BeanVFMData {
   id: string;
   roaster: string;
+  bag_name: string | null;
   origin: string;
   shotCount: number;
   avgScore: number | null;
@@ -17,6 +20,7 @@ export interface BeanVFMData {
   price_paid: number | null;
   weight_grams: number | null;
   roast_date: string;
+  community_method: CommunityMethodResult | null;
 }
 
 export const fetchBeansWithVFM = cache(async (): Promise<BeanVFMData[]> => {
@@ -26,7 +30,7 @@ export const fetchBeansWithVFM = cache(async (): Promise<BeanVFMData[]> => {
   // ── Beans (global — RLS SELECT USING (true)) ──────────────────────────
   const { data: beansData, error: beansError } = await supabase
     .from('beans')
-    .select('id, roaster, origin, is_active, price_paid, weight_grams, roast_date')
+    .select('id, roaster, bag_name, origin, is_active, price_paid, weight_grams, roast_date')
     .order('created_at', { ascending: false });
 
   if (beansError) {
@@ -40,7 +44,7 @@ export const fetchBeansWithVFM = cache(async (): Promise<BeanVFMData[]> => {
   // ── Shots (global — RLS SELECT USING (true)) ──────────────────────────
   const { data: shotsData, error: shotsError } = await supabase
     .from('shots')
-    .select('bean_id, overall_score, dose')
+    .select('bean_id, overall_score, dose, brew_method')
     .not('bean_id', 'is', null);
 
   if (shotsError) {
@@ -49,7 +53,7 @@ export const fetchBeansWithVFM = cache(async (): Promise<BeanVFMData[]> => {
 
   console.log(`[fetchBeansWithVFM] shots fetched: ${shotsData?.length ?? 0}`);
 
-  type ShotRow = { bean_id: string; overall_score: number | null; dose: number | null };
+  type ShotRow = { bean_id: string; overall_score: number | null; dose: number | null; brew_method: string | null };
   const shots: ShotRow[] = (shotsData ?? []) as ShotRow[];
 
   // ── Map shots → beans ─────────────────────────────────────────────────
@@ -76,18 +80,22 @@ export const fetchBeansWithVFM = cache(async (): Promise<BeanVFMData[]> => {
         ? computeVFM(avgScore, bean.price_paid, bean.weight_grams, avgDose)
         : null;
 
+    const community_method = computeBestBrewMethod(beanShots);
+
     return {
-      id:           bean.id,
-      roaster:      bean.roaster,
-      origin:       bean.origin,
-      shotCount:    beanShots.length,
+      id:               bean.id,
+      roaster:          bean.roaster,
+      bag_name:         (bean as Record<string, unknown>).bag_name as string | null ?? null,
+      origin:           bean.origin,
+      shotCount:        beanShots.length,
       avgScore,
       costPerShot,
       vfm,
-      isActive:     bean.is_active,
-      price_paid:   bean.price_paid,
-      weight_grams: bean.weight_grams,
-      roast_date:   bean.roast_date ?? '',
+      isActive:         bean.is_active,
+      price_paid:       bean.price_paid,
+      weight_grams:     bean.weight_grams,
+      roast_date:       bean.roast_date ?? '',
+      community_method,
     };
   });
 

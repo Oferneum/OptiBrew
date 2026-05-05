@@ -1,6 +1,21 @@
 export type FlavorTag = 'Sour' | 'Bitter' | 'Balanced' | 'Dry';
 export type BrewMethod = 'Espresso' | 'MokaPot' | 'FrenchPress' | 'V60' | 'Aeropress';
 
+export interface BagScanResult {
+  roaster:       string;
+  bag_name:      string;
+  origin:        string;
+  process?:      string;
+  notes?:        string;
+  tasting_notes?: string;
+}
+
+export interface CommunityMethodResult {
+  brew_method: BrewMethod;
+  avg_score:   number;
+  shot_count:  number;
+}
+
 export interface Shot {
   id: string;
   created_at: string;
@@ -18,7 +33,7 @@ export interface Shot {
   brew_method?: BrewMethod | null;
   has_milk?: boolean | null;
   recommendation?: string | null;
-  beans?: { roaster: string; origin: string } | null;
+  beans?: { roaster: string; origin: string; bag_name?: string | null } | null;
 }
 
 export interface Bean {
@@ -26,6 +41,7 @@ export interface Bean {
   created_at: string;
   origin: string;
   roaster: string;
+  bag_name?: string | null;
   roast_date: string;
   notes?: string | null;
   is_active: boolean;
