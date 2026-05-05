@@ -203,7 +203,7 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
       const fd = new FormData();
       fd.append('image', frontBlob, 'front.jpg');
       if (backBlob) fd.append('image', backBlob, 'back.jpg');
-      const res = await fetch('/api/scan-bag', { method: 'POST', body: fd });
+      const res = await fetch('/api/scan-bag', { method: 'POST', body: fd, headers: await authHeaders() });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         setScanError((body as { error?: string }).error || `Scan failed (${res.status}) — please try again`);

@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import type { BagScanResult } from '../types';
+import type { BagScanResult, UserContext } from '../types';
 
 const PRIMARY_MODEL  = 'gemini-2.5-flash';
 const FALLBACK_MODEL = 'gemini-2.5-flash-lite';
@@ -8,18 +8,43 @@ const genAI = process.env.GEMINI_API_KEY
   ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
   : null;
 
-export async function getStartupRecommendation(bean: BagScanResult): Promise<string> {
+export async function getStartupRecommendation(
+  bean: BagScanResult,
+  userContext?: UserContext,
+): Promise<string> {
   if (!genAI) return 'AI configuration missing.';
 
-  const prompt = `You are Dialed, a professional barista coach. Based on the coffee bag details below, give a first-shot starting point for a barista opening this bag for the first time.
+  // Build equipment context
+  let equipmentLine: string;
+  if (userContext?.equipment?.length) {
+    const gear = userContext.equipment
+      .map((e) => e.grinder_name ? `${e.machine_name} with ${e.grinder_name}` : e.machine_name)
+      .join(', ');
+    equipmentLine = `User's equipment: ${gear}. Give machine-specific parameters (e.g. PID temp, pre-infusion, dose for their basket size).`;
+  } else {
+    equipmentLine = 'No equipment data — recommend the best brew method for these beans with generic high-quality parameters.';
+  }
+
+  // Build taste history context
+  let tasteLine = '';
+  if (userContext?.recentBeans?.length) {
+    const history = userContext.recentBeans
+      .map((b) => b.bag_name ? `${b.roaster} ${b.bag_name} (${b.origin})` : `${b.roaster} (${b.origin})`)
+      .join(', ');
+    tasteLine = `\nUser's recent coffee history: ${history}. If this new bag differs meaningfully (origin, process, roast level), briefly acknowledge the contrast in sentence 2.`;
+  }
+
+  const prompt = `You are Dialed, a personal barista consultant. Based on the details below, give a first-shot recommendation tailored to this specific user.
 
 Rules:
 - Exactly 2 sentences. No more.
-- Sentence 1: Recommend the ideal brew method for these beans and briefly explain why.
-- Sentence 2: Give specific starting parameters (dose, yield, time, or temperature depending on method).
-- Always use Celsius for temperature. Never use Fahrenheit.
-- Tone: Direct and confident. No fluff.
+- Sentence 1: State specific starting brew parameters for the user's equipment. If you recognise the machine (e.g. Lelit Anna, Gaggia Classic, Flair 58), give machine-specific guidance (PID setting, pre-infusion time, dose, yield, shot time). If no equipment, recommend the best brew method with starting parameters.
+- Sentence 2: If the user's taste history is relevant, briefly acknowledge how this bag compares ("This is bolder than your usual Ethiopia naturals..." etc.). Otherwise, give one key technique tip specific to these beans.
+- Always use Celsius. Never Fahrenheit.
+- Tone: Direct, confident, personal — like a coach who knows you. No fluff.
 - Plain text only. No markdown, no quotation marks, no bolding.
+
+${equipmentLine}${tasteLine}
 
 Bean details:
 - Roaster: ${bean.roaster || 'Unknown'}

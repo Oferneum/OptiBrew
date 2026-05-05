@@ -99,3 +99,8 @@ export interface FuzzyEquipmentMatch {
   grinder_name?: string | null;
   similarity: number;
 }
+
+export interface UserContext {
+  equipment:   Array<{ machine_name: string; grinder_name?: string | null }>;
+  recentBeans: Array<{ roaster: string; origin: string; bag_name?: string | null }>;
+}

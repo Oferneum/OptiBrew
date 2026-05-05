@@ -119,6 +119,34 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* ── Fresh Beans CTA ──────────────────────── */}
+      <Link
+        href="/beans/new"
+        className="flex items-center justify-between w-full glass rounded-2xl px-5 py-4 border border-white/10 hover:border-[#FF4500]/30 active:scale-[0.99] transition-all duration-200"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF4500]/15 to-[#FFC107]/10 border border-[#FF4500]/20 flex items-center justify-center flex-shrink-0">
+            <svg width="20" height="20" viewBox="0 0 64 64" fill="none" stroke="#FF4500" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 28h24l-3.5 18H23.5L20 28z" />
+              <path d="M44 32h4a5 5 0 0 1 0 10h-4" />
+              <ellipse cx="32" cy="48" rx="16" ry="2.5" />
+              <path d="M26 22c0-5 5-5 5-10" />
+              <path d="M35 24c0-5 5-5 5-10" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#A1A1AA]">New arrival</p>
+            <p className="text-white font-black text-base leading-tight mt-0.5">
+              Fresh beans?{' '}
+              <span className="bg-gradient-to-r from-[#FF4500] to-[#FFC107] bg-clip-text text-transparent">
+                Get dialed in.
+              </span>
+            </p>
+          </div>
+        </div>
+        <span className="text-[#FF4500] font-bold text-xl ml-2">→</span>
+      </Link>
+
       {/* ── Recent ────────────────────────────────── */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">

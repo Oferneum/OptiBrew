@@ -1,0 +1,310 @@
+'use client';
+
+import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
+
+async function authHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+}
+
+interface NewBagForm {
+  bag_name: string;
+  roaster: string;
+  origin: string;
+  price_paid: string;
+  weight_grams: string;
+}
+
+interface ScanSlot { file: File; preview: string; }
+
+function Spinner() {
+  return (
+    <svg className="spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.25" />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function compressImage(file: File, maxPx = 800, quality = 0.7): Promise<Blob> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale  = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width  = Math.round(img.width  * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', quality);
+    };
+    img.src = url;
+  });
+}
+
+const INPUT = 'bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white text-base placeholder:text-white/25 w-full focus:outline-none focus:border-[#FF4500] focus:ring-2 focus:ring-[#FF4500]/20 transition-all appearance-none outline-none';
+
+function Label({ children }: { children: React.ReactNode }) {
+  return <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#A1A1AA] mb-2">{children}</p>;
+}
+
+export default function NewBagPage() {
+  const router = useRouter();
+
+  const [form, setForm]         = useState<NewBagForm>({ bag_name: '', roaster: '', origin: '', price_paid: '', weight_grams: '' });
+  const [scanFront, setScanFront] = useState<ScanSlot | null>(null);
+  const [scanBack,  setScanBack]  = useState<ScanSlot | null>(null);
+  const [scanning,  setScanning]  = useState(false);
+  const [scanRec,   setScanRec]   = useState<string | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [saving,    setSaving]    = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const frontRef = useRef<HTMLInputElement>(null);
+  const backRef  = useRef<HTMLInputElement>(null);
+
+  function selectImage(slot: 'front' | 'back', file: File) {
+    const preview = URL.createObjectURL(file);
+    if (slot === 'front') { setScanFront({ file, preview }); setScanRec(null); }
+    else                  { setScanBack({ file, preview });  setScanRec(null); }
+  }
+
+  async function submitScan() {
+    if (!scanFront) return;
+    setScanning(true);
+    setScanRec(null);
+    setScanError(null);
+    try {
+      const [frontBlob, backBlob] = await Promise.all([
+        compressImage(scanFront.file),
+        scanBack ? compressImage(scanBack.file) : Promise.resolve(null),
+      ]);
+      const fd = new FormData();
+      fd.append('image', frontBlob, 'front.jpg');
+      if (backBlob) fd.append('image', backBlob, 'back.jpg');
+      const res = await fetch('/api/scan-bag', { method: 'POST', body: fd, headers: await authHeaders() });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setScanError((body as { error?: string }).error || `Scan failed (${res.status}) — please try again`);
+        return;
+      }
+      const { scan, recommendation } = await res.json();
+      setForm((f) => ({
+        ...f,
+        roaster:  scan.roaster  || f.roaster,
+        bag_name: scan.bag_name || f.bag_name,
+        origin:   scan.origin   || f.origin,
+      }));
+      setScanRec(recommendation);
+    } finally {
+      setScanning(false);
+    }
+  }
+
+  async function saveBag() {
+    if (!form.origin.trim() || !form.roaster.trim()) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const res = await fetch('/api/beans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({
+          origin:       form.origin.trim(),
+          roaster:      form.roaster.trim(),
+          bag_name:     form.bag_name.trim()    || null,
+          roast_date:   new Date().toISOString().split('T')[0],
+          is_active:    true,
+          price_paid:   form.price_paid   ? parseFloat(form.price_paid)   : null,
+          weight_grams: form.weight_grams ? parseFloat(form.weight_grams) : null,
+        }),
+      });
+      if (!res.ok && res.status !== 409) {
+        const body = await res.json().catch(() => ({}));
+        setSaveError((body as { error?: string }).error || 'Failed to save — please try again');
+        return;
+      }
+      router.push('/beans');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const cameraIcon = (
+    <svg className="w-5 h-5 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </svg>
+  );
+
+  const canSave = form.roaster.trim().length > 0 && form.origin.trim().length > 0;
+
+  return (
+    <div className="max-w-md mx-auto px-4 pt-6 pb-28 space-y-6">
+
+      {/* ── Header ── */}
+      <div className="flex items-center gap-3 pt-2">
+        <Link href="/" className="text-[#A1A1AA] text-sm font-bold hover:text-white transition-colors">
+          ←
+        </Link>
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#A1A1AA]">New arrival</p>
+          <h1 className="text-white font-black text-2xl tracking-tight leading-none">Fresh Beans</h1>
+        </div>
+      </div>
+
+      {/* ── Scan section ── */}
+      <div className="glass rounded-3xl p-5 space-y-4">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#A1A1AA] mb-1">Step 1 — Scan the bag</p>
+          <p className="text-white/60 text-xs">Take a photo of the front (and optionally the back) to auto-fill details and get a personalised recipe.</p>
+        </div>
+
+        {/* Two image slots */}
+        <div className="flex gap-3">
+          {/* Front */}
+          <div className="relative flex-1">
+            <button
+              type="button"
+              onClick={() => frontRef.current?.click()}
+              disabled={scanning}
+              className="w-full aspect-square rounded-xl border border-dashed border-white/20 bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all touch-manipulation overflow-hidden"
+            >
+              {scanFront ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={scanFront.preview} alt="Front" className="w-full h-full object-cover" />
+              ) : (
+                <>{cameraIcon}<span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Front</span></>
+              )}
+            </button>
+            {scanFront && (
+              <button
+                type="button"
+                onClick={() => { setScanFront(null); setScanRec(null); }}
+                className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center"
+              >
+                <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            )}
+            <input ref={frontRef} type="file" accept="image/*" capture="environment" className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) selectImage('front', f); e.target.value = ''; }} />
+          </div>
+
+          {/* Back */}
+          <div className="relative flex-1">
+            <button
+              type="button"
+              onClick={() => backRef.current?.click()}
+              disabled={scanning}
+              className="w-full aspect-square rounded-xl border border-dashed border-white/20 bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all touch-manipulation overflow-hidden"
+            >
+              {scanBack ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={scanBack.preview} alt="Back" className="w-full h-full object-cover" />
+              ) : (
+                <>{cameraIcon}<span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Back (opt.)</span></>
+              )}
+            </button>
+            {scanBack && (
+              <button
+                type="button"
+                onClick={() => { setScanBack(null); setScanRec(null); }}
+                className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center"
+              >
+                <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            )}
+            <input ref={backRef} type="file" accept="image/*" capture="environment" className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) selectImage('back', f); e.target.value = ''; }} />
+          </div>
+        </div>
+
+        {/* Scan button */}
+        {scanFront && (
+          <button
+            type="button"
+            onClick={submitScan}
+            disabled={scanning}
+            className="w-full flex items-center justify-center gap-2 bg-white/10 border border-white/15 text-white font-bold py-3 rounded-xl text-sm uppercase tracking-wider active:scale-95 transition-all disabled:opacity-50 touch-manipulation"
+          >
+            {scanning ? <><Spinner /><span>Scanning…</span></> : <span>Scan Bag</span>}
+          </button>
+        )}
+
+        {/* Error */}
+        {scanError && !scanning && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+            <p className="text-red-400 text-sm font-medium">{scanError}</p>
+          </div>
+        )}
+
+        {/* Personalised recommendation */}
+        {scanRec && !scanning && (
+          <div className="bg-[#FFC107]/10 border border-[#FFC107]/20 rounded-xl p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FFC107] mb-2">Your Recipe</p>
+            <p className="text-white/90 text-sm leading-relaxed">{scanRec}</p>
+          </div>
+        )}
+      </div>
+
+      {/* ── Details form ── */}
+      <div className="glass rounded-3xl p-5 space-y-4">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#A1A1AA]">Step 2 — Confirm details</p>
+
+        <div>
+          <Label>Bag Name</Label>
+          <input type="text" placeholder="e.g. Sunrise Blend" value={form.bag_name}
+            onChange={(e) => setForm((f) => ({ ...f, bag_name: e.target.value }))}
+            className={INPUT} style={{ fontSize: '16px' }} />
+        </div>
+
+        <div className="grid grid-cols-2 gap-2.5">
+          <div>
+            <Label>Roaster *</Label>
+            <input type="text" placeholder="e.g. Onyx" value={form.roaster}
+              onChange={(e) => setForm((f) => ({ ...f, roaster: e.target.value }))}
+              className={INPUT} style={{ fontSize: '16px' }} />
+          </div>
+          <div>
+            <Label>Origin *</Label>
+            <input type="text" placeholder="e.g. Ethiopia" value={form.origin}
+              onChange={(e) => setForm((f) => ({ ...f, origin: e.target.value }))}
+              className={INPUT} style={{ fontSize: '16px' }} />
+          </div>
+          <div>
+            <Label>Price (₪)</Label>
+            <input type="text" inputMode="decimal" placeholder="85" value={form.price_paid}
+              onChange={(e) => setForm((f) => ({ ...f, price_paid: e.target.value }))}
+              className={`${INPUT} readout`} style={{ fontSize: '16px' }} />
+          </div>
+          <div>
+            <Label>Weight (g)</Label>
+            <input type="text" inputMode="numeric" placeholder="250" value={form.weight_grams}
+              onChange={(e) => setForm((f) => ({ ...f, weight_grams: e.target.value }))}
+              className={`${INPUT} readout`} style={{ fontSize: '16px' }} />
+          </div>
+        </div>
+
+        {saveError && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+            <p className="text-red-400 text-sm font-medium">{saveError}</p>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={saveBag}
+          disabled={saving || !canSave}
+          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#FF4500] to-[#FFC107] text-black font-black uppercase tracking-widest py-4 rounded-2xl text-sm shadow-lg shadow-[#FF4500]/25 active:scale-95 transition-all disabled:opacity-40 touch-manipulation"
+        >
+          {saving ? <><Spinner /><span>Saving…</span></> : <span>Save to My Inventory</span>}
+        </button>
+      </div>
+
+    </div>
+  );
+}
