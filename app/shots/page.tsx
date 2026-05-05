@@ -1,5 +1,4 @@
 import { Suspense } from 'react';
-import { redirect } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import ShotCard from '@/components/ShotCard';
 import Link from 'next/link';
@@ -9,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function ShotsPage() {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  if (!user) return <div />;
 
   return (
     <div className="p-4 space-y-4">

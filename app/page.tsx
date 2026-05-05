@@ -1,5 +1,4 @@
 import { Suspense } from 'react';
-import { redirect } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import ShotCard from '@/components/ShotCard';
 import HomeGreeting from '@/components/HomeGreeting';
@@ -42,7 +41,7 @@ function EmptyState() {
 
 export default async function HomePage() {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  if (!user) return <div />;
 
   const { data, error } = await supabase
     .from('shots')
