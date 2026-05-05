@@ -194,21 +194,29 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
     if (!scanFront) return;
     setScanning(true);
     setScanRec(null);
+    setScanError(null);
     try {
+      const [frontBlob, backBlob] = await Promise.all([
+        compressImage(scanFront.file),
+        scanBack ? compressImage(scanBack.file) : Promise.resolve(null),
+      ]);
       const fd = new FormData();
-      fd.append('image', scanFront.file);
-      if (scanBack) fd.append('image', scanBack.file);
+      fd.append('image', frontBlob, 'front.jpg');
+      if (backBlob) fd.append('image', backBlob, 'back.jpg');
       const res = await fetch('/api/scan-bag', { method: 'POST', body: fd });
-      if (res.ok) {
-        const { scan, recommendation } = await res.json();
-        setNewBag((b) => ({
-          ...b,
-          roaster:  scan.roaster  || b.roaster,
-          bag_name: scan.bag_name || b.bag_name,
-          origin:   scan.origin   || b.origin,
-        }));
-        setScanRec(recommendation);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setScanError((body as { error?: string }).error || `Scan failed (${res.status}) — please try again`);
+        return;
       }
+      const { scan, recommendation } = await res.json();
+      setNewBag((b) => ({
+        ...b,
+        roaster:  scan.roaster  || b.roaster,
+        bag_name: scan.bag_name || b.bag_name,
+        origin:   scan.origin   || b.origin,
+      }));
+      setScanRec(recommendation);
     } finally {
       setScanning(false);
     }
@@ -218,6 +226,7 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
     setScanFront(null);
     setScanBack(null);
     setScanRec(null);
+    setScanError(null);
   }
 
   async function saveNewBag() {
@@ -369,6 +378,13 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
             >
               {scanning ? <><Spinner /><span>Scanning…</span></> : <span>Scan Bag</span>}
             </button>
+          )}
+
+          {/* ── Scan error ── */}
+          {scanError && !scanning && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+              <p className="text-red-400 text-sm font-medium">{scanError}</p>
+            </div>
           )}
 
           {/* ── Startup recommendation ── */}

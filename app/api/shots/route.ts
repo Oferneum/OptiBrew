@@ -6,11 +6,15 @@ import type { Shot } from '@/lib/types';
 
 export async function GET(req: Request) {
   const db = getRequestClient(req);
-  const { data, error } = await db
+  const { data: { user } } = await db.auth.getUser();
+
+  const baseQ = db
     .from('shots')
     .select('*')
     .order('created_at', { ascending: false })
     .limit(50);
+
+  const { data, error } = await (user ? baseQ.eq('user_id', user.id) : baseQ);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);

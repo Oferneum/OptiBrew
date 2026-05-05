@@ -46,6 +46,7 @@ export default async function HomePage() {
   const { data, error } = await supabase
     .from('shots')
     .select('*')
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(50);
 

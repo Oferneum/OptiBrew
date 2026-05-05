@@ -37,11 +37,15 @@ function ShotsSkeleton() {
 }
 
 async function ShotList() {
-  const { data, error } = await supabase
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const baseQ = supabase
     .from('shots')
-    .select('*, beans(roaster, origin)')
+    .select('*, beans(roaster, origin, bag_name)')
     .order('created_at', { ascending: false })
     .limit(50);
+
+  const { data, error } = await (user ? baseQ.eq('user_id', user.id) : baseQ);
 
   if (error) {
     return (
