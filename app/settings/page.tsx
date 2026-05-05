@@ -11,8 +11,10 @@ async function authHeaders(): Promise<Record<string, string>> {
 
 const FIELD_CLS =
   'bg-white/5 rounded-2xl px-4 py-3 text-white text-base placeholder:text-white/25 ' +
-  'border border-white/10 w-full focus:outline-none focus:ring-2 focus:ring-[#FF4500] transition-all';
+  'border border-white/10 w-full focus:outline-none focus:ring-2 focus:ring-[#FF4500] transition-all appearance-none outline-none';
 const LABEL_CLS = 'text-[10px] uppercase tracking-[0.15em] font-bold text-[#A1A1AA]';
+
+const BREW_METHODS = ['Espresso', 'V60', 'MokaPot', 'FrenchPress', 'Aeropress'] as const;
 
 export default function SettingsPage() {
   const [profiles, setProfiles]   = useState<EquipmentProfile[]>([]);
@@ -21,14 +23,17 @@ export default function SettingsPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName]   = useState<string | null>(null);
 
-  const [showAdd, setShowAdd]       = useState(false);
+  const [showAdd, setShowAdd]         = useState(false);
   const [machineName, setMachineName] = useState('');
   const [grinderName, setGrinderName] = useState('');
-  const [saving, setSaving]         = useState(false);
-  const [addError, setAddError]     = useState<string | null>(null);
+  const [saving, setSaving]           = useState(false);
+  const [addError, setAddError]       = useState<string | null>(null);
+
+  const [brewMethodPref, setBrewMethodPref] = useState('Espresso');
 
   useEffect(() => {
     setActiveId(localStorage.getItem('activeEquipmentId'));
+    setBrewMethodPref(localStorage.getItem('defaultBrewMethod') ?? 'Espresso');
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUserEmail(session?.user?.email ?? null);
       const meta = session?.user?.user_metadata as Record<string, string> | undefined;
@@ -48,6 +53,11 @@ export default function SettingsPage() {
   function activate(id: string) {
     localStorage.setItem('activeEquipmentId', id);
     setActiveId(id);
+  }
+
+  function saveBrewMethod(val: string) {
+    setBrewMethodPref(val);
+    localStorage.setItem('defaultBrewMethod', val);
   }
 
   async function handleAdd(e: React.SyntheticEvent) {
@@ -244,19 +254,46 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* ── Preferences (placeholders) ── */}
-      <div className="space-y-2">
+      {/* ── Preferences ── */}
+      <div className="glass rounded-3xl px-5 py-4 space-y-4">
         <p className={LABEL_CLS}>Preferences</p>
-        {[
-          { label: 'Default Brew Method', value: 'Espresso' },
-          { label: 'Dose Units',          value: 'Grams (g)' },
-          { label: 'Push Notifications',  value: 'Coming soon' },
-        ].map(({ label, value }) => (
-          <div key={label} className="glass rounded-3xl px-5 py-4 flex items-center justify-between opacity-50">
-            <p className="text-white text-sm font-medium">{label}</p>
-            <p className="text-[#A1A1AA] text-xs readout">{value}</p>
+
+        <div>
+          <p className={`${LABEL_CLS} mb-1.5`}>Default Brew Method</p>
+          <div className="relative">
+            <select
+              value={brewMethodPref}
+              onChange={(e) => saveBrewMethod(e.target.value)}
+              className={FIELD_CLS}
+              style={{ fontSize: '16px' }}
+            >
+              {BREW_METHODS.map((m) => (
+                <option key={m} value={m} style={{ background: '#1a1a2e' }}>{m}</option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/40 text-lg">▾</span>
           </div>
-        ))}
+        </div>
+
+        <div className="flex items-center justify-between opacity-40 pt-1">
+          <p className="text-white text-sm font-medium">Push Notifications</p>
+          <p className="text-[#A1A1AA] text-xs readout">Coming soon</p>
+        </div>
+      </div>
+
+      {/* ── Feedback ── */}
+      <div className="glass rounded-3xl px-5 py-4">
+        <p className={`${LABEL_CLS} mb-3`}>Support</p>
+        <a
+          href="mailto:ofer.neumann123@gmail.com?subject=Dialed%20Feedback"
+          className="flex items-center justify-between w-full active:scale-[0.98] transition-all"
+        >
+          <div>
+            <p className="text-white text-sm font-semibold">Leave Feedback</p>
+            <p className="text-[#A1A1AA] text-xs mt-0.5">Tell us what you think or report an issue</p>
+          </div>
+          <span className="text-[#FF4500] font-bold text-lg ml-3">→</span>
+        </a>
       </div>
 
       <p className="text-[10px] text-[#A1A1AA]/50 text-center pb-4">Dialed · v0.1</p>

@@ -7,20 +7,9 @@ import HomeGreeting from '@/components/HomeGreeting';
 import Link from 'next/link';
 import type { Shot } from '@/lib/types';
 
-function GlowOrb({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 48 48" fill="none">
-      <circle cx="24" cy="24" r="3.5" fill="#FF4500" />
-      <circle cx="24" cy="24" r="9"  stroke="#FF4500" strokeWidth="0.75" strokeOpacity="0.45" />
-      <circle cx="24" cy="24" r="16" stroke="#FF4500" strokeWidth="0.5"  strokeOpacity="0.22" />
-      <circle cx="24" cy="24" r="23" stroke="#FFC107" strokeWidth="0.5"  strokeOpacity="0.10" />
-    </svg>
-  );
-}
-
 function EmptyState() {
   return (
-    <svg viewBox="0 0 120 120" fill="none" className="w-28 h-28">
+    <svg viewBox="0 0 120 120" fill="none" className="w-20 h-20">
       <circle cx="60" cy="60" r="56" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
       <circle cx="60" cy="60" r="42" stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
       <circle cx="60" cy="60" r="28" stroke="rgba(255,255,255,0.09)" strokeWidth="1" />
@@ -40,7 +29,7 @@ function EmptyState() {
 }
 
 export default function HomePage() {
-  const [shots, setShots]   = useState<Shot[]>([]);
+  const [shots, setShots]     = useState<Shot[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -61,7 +50,7 @@ export default function HomePage() {
     load();
   }, []);
 
-  const recent = shots.slice(0, 3);
+  const recent = shots.slice(0, 2);
 
   const scoredShots = shots.filter((s) => s.overall_score != null);
   const avgScore    = scoredShots.length > 0
@@ -72,32 +61,28 @@ export default function HomePage() {
     : null;
 
   return (
-    <div className="max-w-md mx-auto px-4 pt-8 pb-28 space-y-8">
+    <div className="max-w-md mx-auto px-4 pt-4 pb-24 space-y-4">
 
       {/* ── Header ────────────────────────────────── */}
-      <header className="relative pt-4">
-        <GlowOrb className="absolute top-2 right-0 w-11 h-11 opacity-80" />
-        <div className="w-16 h-0.5 bg-gradient-to-r from-[#FF4500] to-[#FFC107] mb-3 rounded-full" />
-        <h1 className="text-7xl font-black uppercase tracking-tighter leading-none bg-gradient-to-r from-[#FF4500] via-white to-[#FFC107] bg-clip-text text-transparent">
+      <header className="pt-2">
+        <div className="w-16 h-0.5 bg-gradient-to-r from-[#FF4500] to-[#FFC107] mb-2 rounded-full" />
+        <h1 className="text-6xl font-black uppercase tracking-tighter leading-none bg-gradient-to-r from-[#FF4500] via-white to-[#FFC107] bg-clip-text text-transparent">
           DIALED
         </h1>
-        <p className="text-[11px] font-black uppercase tracking-[0.35em] text-[#A1A1AA] mt-2">
+        <p className="text-[11px] font-black uppercase tracking-[0.35em] text-[#A1A1AA] mt-1.5">
           Espresso Journal
         </p>
       </header>
 
-      {/* ── Personalised greeting + welcome toast ─── */}
+      {/* ── Personalised greeting ─────────────────── */}
       <HomeGreeting />
 
-      {/* ── Log Shot CTA ──────────────────────────── */}
+      {/* ── Single primary CTA ────────────────────── */}
       <Link
         href="/shots/new"
-        className="flex items-center justify-between w-full rounded-2xl px-6 py-5 bg-gradient-to-r from-[#FF4500] to-[#FFC107] shadow-xl shadow-[#FF4500]/30 active:scale-95 transition-all duration-200"
+        className="flex items-center justify-between w-full rounded-2xl px-6 py-4 bg-gradient-to-r from-[#FF4500] to-[#FFC107] shadow-xl shadow-[#FF4500]/30 active:scale-95 transition-all duration-200"
       >
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-black/60">Pull a shot</p>
-          <p className="text-2xl font-black uppercase tracking-tight leading-none mt-0.5 text-black">LOG SHOT</p>
-        </div>
+        <p className="text-2xl font-black uppercase tracking-tight text-black">LOG SHOT</p>
         <span className="text-4xl font-black leading-none text-black/60">+</span>
       </Link>
 
@@ -154,7 +139,7 @@ export default function HomePage() {
             <span className="w-1.5 h-1.5 rounded-full bg-[#FF4500]" style={{ boxShadow: '0 0 6px #FF4500' }} />
             <p className="text-[11px] font-black uppercase tracking-[0.25em] text-white">Recent</p>
           </div>
-          {shots.length > 3 && (
+          {shots.length > 2 && (
             <Link
               href="/shots"
               className="text-[11px] font-black uppercase tracking-wider text-[#FF4500] hover:opacity-70 transition-opacity"
@@ -166,27 +151,21 @@ export default function HomePage() {
 
         {loading ? (
           <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
+            {[...Array(2)].map((_, i) => (
               <div
                 key={i}
                 className="glass rounded-2xl h-24 animate-pulse"
-                style={{ opacity: 1 - i * 0.18 }}
+                style={{ opacity: 1 - i * 0.25 }}
               />
             ))}
           </div>
         ) : recent.length === 0 ? (
-          <div className="glass rounded-3xl py-12 px-6 flex flex-col items-center text-center space-y-5">
+          <div className="glass rounded-3xl py-8 px-6 flex flex-col items-center text-center space-y-4">
             <EmptyState />
             <div className="space-y-1.5">
               <p className="font-black text-white uppercase tracking-tight text-xl">No shots yet</p>
               <p className="text-xs text-[#A1A1AA] font-bold uppercase tracking-[0.25em]">Your espresso journal awaits</p>
             </div>
-            <Link
-              href="/shots/new"
-              className="bg-gradient-to-r from-[#FF4500] to-[#FFC107] text-black text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl shadow-lg shadow-[#FF4500]/30 active:scale-95 transition-all"
-            >
-              Pull first shot →
-            </Link>
           </div>
         ) : (
           <div className="space-y-3">
