@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import ShotCard from '@/components/ShotCard';
 import Link from 'next/link';
@@ -6,7 +7,10 @@ import type { Shot } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-export default function ShotsPage() {
+export default async function ShotsPage() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+
   return (
     <div className="p-4 space-y-4">
       <div className="flex justify-between items-center pt-6 pb-1">
@@ -16,7 +20,7 @@ export default function ShotsPage() {
         </Link>
       </div>
       <Suspense fallback={<ShotsSkeleton />}>
-        <ShotList />
+        <ShotList userId={user.id} />
       </Suspense>
     </div>
   );
@@ -36,16 +40,13 @@ function ShotsSkeleton() {
   );
 }
 
-async function ShotList() {
-  const { data: { user } } = await supabase.auth.getUser();
-
-  const baseQ = supabase
+async function ShotList({ userId }: { userId: string }) {
+  const { data, error } = await supabase
     .from('shots')
     .select('*, beans(roaster, origin, bag_name)')
+    .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(50);
-
-  const { data, error } = await (user ? baseQ.eq('user_id', user.id) : baseQ);
 
   if (error) {
     return (
