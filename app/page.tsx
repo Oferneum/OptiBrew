@@ -40,6 +40,9 @@ function EmptyState() {
 }
 
 export default async function HomePage() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
   const { data, error } = await supabase
     .from('shots')
     .select('*')
