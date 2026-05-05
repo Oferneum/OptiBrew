@@ -140,6 +140,23 @@ interface NewBagForm { origin: string; roaster: string; bag_name: string; price_
 interface BeanEntry  { id: string; roaster: string; origin: string; bag_name?: string | null; }
 interface ScanSlot   { file: File; preview: string; }
 
+function compressImage(file: File, maxPx = 1024, quality = 0.8): Promise<Blob> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale  = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width  = Math.round(img.width  * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', quality);
+    };
+    img.src = url;
+  });
+}
+
 function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
   const [allBeans, setAllBeans] = useState<BeanEntry[]>([]);
   const [loadingBeans, setLoadingBeans] = useState(true);
@@ -147,10 +164,11 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
   const [saving, setSaving] = useState(false);
   const [newBag, setNewBag] = useState<NewBagForm>({ origin: '', roaster: '', bag_name: '', price_paid: '', weight_grams: '' });
 
-  const [scanning, setScanning]   = useState(false);
-  const [scanRec, setScanRec]     = useState<string | null>(null);
-  const [scanFront, setScanFront] = useState<ScanSlot | null>(null);
-  const [scanBack, setScanBack]   = useState<ScanSlot | null>(null);
+  const [scanning, setScanning]     = useState(false);
+  const [scanRec, setScanRec]       = useState<string | null>(null);
+  const [scanError, setScanError]   = useState<string | null>(null);
+  const [scanFront, setScanFront]   = useState<ScanSlot | null>(null);
+  const [scanBack, setScanBack]     = useState<ScanSlot | null>(null);
   const frontInputRef = useRef<HTMLInputElement>(null);
   const backInputRef  = useRef<HTMLInputElement>(null);
 

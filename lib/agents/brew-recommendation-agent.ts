@@ -17,6 +17,7 @@ Rules:
 - Exactly 2 sentences. No more.
 - Sentence 1: Recommend the ideal brew method for these beans and briefly explain why.
 - Sentence 2: Give specific starting parameters (dose, yield, time, or temperature depending on method).
+- Always use Celsius for temperature. Never use Fahrenheit.
 - Tone: Direct and confident. No fluff.
 - Plain text only. No markdown, no quotation marks, no bolding.
 

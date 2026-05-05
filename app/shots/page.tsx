@@ -37,9 +37,14 @@ function ShotsSkeleton() {
 }
 
 async function ShotList() {
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
   const { data, error } = await supabase
     .from('shots')
-    .select('*, beans(roaster, origin)')
+    .select('*, beans(roaster, origin, bag_name)') 
+    .eq('user_id', user.id) 
     .order('created_at', { ascending: false })
     .limit(50);
 
