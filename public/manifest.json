@@ -4,8 +4,8 @@
   "description": "Track and perfect your espresso extractions",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#050505",
-  "theme_color": "#050505",
+  "background_color": "#1E1208",
+  "theme_color": "#1E1208",
   "orientation": "portrait",
   "icons": [
     {

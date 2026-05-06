@@ -7,50 +7,6 @@ import HomeGreeting from '@/components/HomeGreeting';
 import Link from 'next/link';
 import type { Shot } from '@/lib/types';
 
-function CoffeeMugLogo({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 48 56" fill="none" className={className} aria-hidden="true">
-      <defs>
-        <linearGradient id="lm-body" x1="2" y1="14" x2="36" y2="56" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#FF4500" />
-          <stop offset="1" stopColor="#FFC107" />
-        </linearGradient>
-        <linearGradient id="lm-s1" x1="14" y1="0" x2="14" y2="14" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#FFC107" stopOpacity="0" />
-          <stop offset="1" stopColor="#FFC107" stopOpacity="0.7" />
-        </linearGradient>
-        <linearGradient id="lm-s2" x1="27" y1="0" x2="27" y2="14" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#FF6B35" stopOpacity="0" />
-          <stop offset="1" stopColor="#FF6B35" stopOpacity="0.5" />
-        </linearGradient>
-      </defs>
-
-      {/* Steam wisps */}
-      <path d="M14 14 C12 10 16 7 14 3 C12 0 14 0 14 0"
-        stroke="url(#lm-s1)" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M27 14 C25 10 29 7 27 3 C25 0 27 0 27 0"
-        stroke="url(#lm-s2)" strokeWidth="1.6" strokeLinecap="round" />
-
-      {/* Mug body */}
-      <rect x="2" y="14" width="34" height="40" rx="4" fill="url(#lm-body)" />
-
-      {/* Handle — the D curve */}
-      <path d="M36 22 Q48 22 48 34 Q48 47 36 47"
-        stroke="url(#lm-body)" strokeWidth="3.5" strokeLinecap="round" />
-
-      {/* Dark coffee surface at rim */}
-      <ellipse cx="19" cy="14.5" rx="15" ry="2.5" fill="rgba(15,5,0,0.45)" />
-
-      {/* Rim highlight */}
-      <path d="M5 14 Q19 11.5 33 14"
-        stroke="rgba(255,255,255,0.22)" strokeWidth="1" strokeLinecap="round" />
-
-      {/* Left-side shine on body */}
-      <rect x="7" y="22" width="3.5" height="14" rx="1.75" fill="rgba(255,255,255,0.15)" />
-    </svg>
-  );
-}
-
 function EmptyState() {
   return (
     <svg viewBox="0 0 120 120" fill="none" className="w-20 h-20">
@@ -110,12 +66,9 @@ export default function HomePage() {
       {/* ── Header ────────────────────────────────── */}
       <header className="pt-2">
         <div className="w-16 h-0.5 bg-gradient-to-r from-[#FF4500] to-[#FFC107] mb-2 rounded-full" />
-        <div className="flex items-center gap-2">
-          <CoffeeMugLogo className="h-12 w-auto flex-shrink-0" />
-          <h1 className="text-6xl font-black uppercase tracking-tighter leading-none bg-gradient-to-r from-[#FF4500] via-white to-[#FFC107] bg-clip-text text-transparent">
-            IALED
-          </h1>
-        </div>
+        <h1 className="text-6xl font-black uppercase tracking-tighter leading-none bg-gradient-to-r from-[#FF4500] via-white to-[#FFC107] bg-clip-text text-transparent">
+          DIALED
+        </h1>
         <p className="text-[11px] font-black uppercase tracking-[0.35em] text-[#A1A1AA] mt-1.5">
           Espresso Journal
         </p>
