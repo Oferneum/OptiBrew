@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from 'next';
-import { Space_Mono, Heebo } from 'next/font/google'; 
+import { Space_Mono, Heebo } from 'next/font/google';
 import './globals.css';
 import Nav from '@/components/Nav';
 
-const heebo = Heebo({ 
+const heebo = Heebo({
   subsets: ['hebrew', 'latin'],
   weight: ['400', '500', '700', '800'],
   variable: '--font-heebo',
@@ -24,6 +24,13 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'Dialed',
   },
+  icons: {
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+    icon:  [
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+  },
   other: {
     'mobile-web-app-capable': 'yes',
   },
@@ -34,13 +41,13 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#050505',
+  themeColor: '#3C2010',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" dir="ltr" className={`${heebo.variable} ${spaceMono.variable} antialiased`}>
-      <body className="bg-[#050505] min-h-screen pb-24 font-sans text-white">
+      <body className="bg-[#3C2010] min-h-screen pb-24 font-sans text-white">
         <main className="max-w-lg mx-auto px-4">
           {children}
         </main>
