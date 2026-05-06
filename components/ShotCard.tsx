@@ -11,22 +11,22 @@ function formatDate(iso: string) {
 
 function qualityLabel(shot: Shot): { text: string; gradient: string } | null {
   if (shot.flavor_tags.includes('Balanced') && (shot.overall_score ?? 0) >= 7)
-    return { text: 'DIALED IN', gradient: 'from-emerald-400 to-teal-400' };
+    return { text: 'DIALED IN', gradient: 'from-emerald-500 to-teal-500' };
   if (shot.flavor_tags.includes('Bitter'))
-    return { text: 'BITTER', gradient: 'from-red-400 to-rose-500' };
+    return { text: 'BITTER', gradient: 'from-red-500 to-rose-600' };
   if (shot.flavor_tags.includes('Sour'))
-    return { text: 'SOUR', gradient: 'from-yellow-300 to-amber-400' };
+    return { text: 'SOUR', gradient: 'from-yellow-500 to-amber-500' };
   if (shot.flavor_tags.includes('Dry'))
-    return { text: 'DRY', gradient: 'from-orange-400 to-amber-500' };
+    return { text: 'DRY', gradient: 'from-orange-500 to-amber-600' };
   return null;
 }
 
 const TAG_CLS: Record<string, string> = {
-  Balanced:   'text-emerald-400 border-emerald-500/30 bg-emerald-500/10',
-  Sour:       'text-yellow-300 border-yellow-400/30 bg-yellow-400/10',
-  Bitter:     'text-red-400 border-red-500/30 bg-red-500/10',
-  Dry:        'text-orange-400 border-orange-500/30 bg-orange-500/10',
-  Astringent: 'text-orange-400 border-orange-500/30 bg-orange-500/10',
+  Balanced:   'text-emerald-700 border-emerald-500/40 bg-emerald-500/10',
+  Sour:       'text-amber-700 border-amber-500/40 bg-amber-500/10',
+  Bitter:     'text-red-700 border-red-500/40 bg-red-500/10',
+  Dry:        'text-orange-700 border-orange-500/40 bg-orange-500/10',
+  Astringent: 'text-orange-700 border-orange-500/40 bg-orange-500/10',
 };
 
 export default function ShotCard({ shot }: { shot: Shot }) {
@@ -40,24 +40,24 @@ export default function ShotCard({ shot }: { shot: Shot }) {
       <div className="flex justify-between items-start gap-2">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[#A1A1AA] text-xs font-mono tracking-wide">{formatDate(shot.created_at)}</span>
+            <span className="text-[#7A6858] text-xs font-mono tracking-wide">{formatDate(shot.created_at)}</span>
             {quality && (
-              <span className={`px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest rounded-full bg-gradient-to-r ${quality.gradient} text-black`}>
+              <span className={`px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest rounded-full bg-gradient-to-r ${quality.gradient} text-white`}>
                 {quality.text}
               </span>
             )}
           </div>
           {shot.beans && (
             <div className="flex items-center gap-1.5">
-              <span className="w-1 h-1 rounded-full bg-[#FFC107] shrink-0" />
-              <span className="text-[#A1A1AA] text-[11px] truncate">
+              <span className="w-1 h-1 rounded-full bg-[#FF4500] shrink-0" />
+              <span className="text-[#7A6858] text-[11px] truncate">
                 {shot.beans.roaster} · {shot.beans.origin}
               </span>
             </div>
           )}
         </div>
         {shot.overall_score != null && (
-          <span className="readout font-black text-sm bg-gradient-to-r from-[#FF4500] to-[#FFC107] bg-clip-text text-transparent shrink-0">
+          <span className="readout font-black text-sm text-[#FF4500] shrink-0">
             {shot.overall_score}/10
           </span>
         )}
@@ -65,18 +65,18 @@ export default function ShotCard({ shot }: { shot: Shot }) {
 
       {/* Metrics */}
       <div className="flex flex-wrap gap-x-4 gap-y-1">
-        <span className="readout text-sm font-bold text-white">{shot.dose}g → {shot.yield}g</span>
+        <span className="readout text-sm font-bold text-[#2C1E16]">{shot.dose}g → {shot.yield}g</span>
         {ratio && (
-          <span className="readout text-sm font-black bg-gradient-to-r from-[#FF4500] to-[#FFC107] bg-clip-text text-transparent">
+          <span className="readout text-sm font-black text-[#FF4500]">
             {ratio}
           </span>
         )}
-        <span className="readout text-sm text-white">{shot.extraction_time}s</span>
+        <span className="readout text-sm text-[#2C1E16]">{shot.extraction_time}s</span>
         {shot.brew_temp != null && (
-          <span className="readout text-sm text-[#A1A1AA]">{shot.brew_temp}°C</span>
+          <span className="readout text-sm text-[#7A6858]">{shot.brew_temp}°C</span>
         )}
         {shot.grind_setting && (
-          <span className="readout text-sm text-[#A1A1AA]">⌀{shot.grind_setting}</span>
+          <span className="readout text-sm text-[#7A6858]">⌀{shot.grind_setting}</span>
         )}
       </div>
 
@@ -84,7 +84,7 @@ export default function ShotCard({ shot }: { shot: Shot }) {
       {shot.flavor_tags.length > 0 && (
         <div className="flex gap-1.5 flex-wrap">
           {shot.flavor_tags.map((tag) => {
-            const cls = TAG_CLS[tag] ?? 'text-[#A1A1AA] border-white/10 bg-white/5';
+            const cls = TAG_CLS[tag] ?? 'text-[#7A6858] border-[#C8B49A] bg-[#2C1E16]/5';
             return (
               <span
                 key={tag}
@@ -99,7 +99,7 @@ export default function ShotCard({ shot }: { shot: Shot }) {
 
       {/* Notes */}
       {shot.notes && (
-        <p className="text-[#A1A1AA] text-xs leading-relaxed line-clamp-2 border-l-2 border-[#FF4500]/50 pl-2">
+        <p className="text-[#7A6858] text-xs leading-relaxed line-clamp-2 border-l-2 border-[#FF4500]/40 pl-2">
           {shot.notes}
         </p>
       )}

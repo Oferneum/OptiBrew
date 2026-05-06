@@ -1,40 +1,40 @@
 @import "tailwindcss";
 
 @theme {
-  --color-paper:          #3C2010;
-  --color-ink:            #FFFFFF;
+  --color-paper:          #EDE4D3;
+  --color-ink:            #2C1E16;
   --color-punch:          #FF4500;
   --color-amber:          #FFC107;
   --color-violet:         #7B1FA2;
-  --color-muted:          #A1A1AA;
+  --color-muted:          #7A6858;
 
   /* legacy aliases */
-  --color-espresso:       #FFFFFF;
-  --color-surface:        rgba(255,255,255,0.04);
-  --color-surface-raised: rgba(255,255,255,0.08);
-  --color-crema:          #FF4500;
-  --color-border:         rgba(255,255,255,0.10);
+  --color-espresso:       #2C1E16;
+  --color-surface:        #FAF3E6;
+  --color-surface-raised: #F5EBD8;
+  --color-crema:          #5D4037;
+  --color-border:         #C8B49A;
 
   --font-sans: var(--font-heebo), system-ui, sans-serif;
   --font-mono: var(--font-space-mono), 'Courier New', monospace;
 }
 
 :root {
-  --background: #3C2010;
-  --foreground: #FFFFFF;
+  --background: #EDE4D3;
+  --foreground: #2C1E16;
 }
 
 /* ── Base ─────────────────────────────────────────────────── */
 
-html { background: #3C2010; }
+html { background: #EDE4D3; }
 
 body {
-  background-color: #3C2010;
+  background-color: #EDE4D3;
   background-image:
-    radial-gradient(ellipse 80% 55% at 8% -5%,   rgba(255, 69,  0, 0.22) 0%, transparent 55%),
-    radial-gradient(ellipse 65% 50% at 92% 108%,  rgba(123, 31,162, 0.28) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 40% at 72% 28%,   rgba(255,193,  7, 0.12) 0%, transparent 50%);
-  color: #FFFFFF;
+    radial-gradient(ellipse 80% 55% at 8% -5%,   rgba(255, 69,  0, 0.07) 0%, transparent 55%),
+    radial-gradient(ellipse 65% 50% at 92% 108%,  rgba(193,132, 74, 0.09) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 72% 28%,   rgba(255,193,  7, 0.05) 0%, transparent 50%);
+  color: #2C1E16;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   min-height: 100dvh;
@@ -48,62 +48,60 @@ body {
   letter-spacing: 0.03em;
 }
 
-/* ── Dark Glassmorphism ──────────────────────────────────── */
+/* ── Warm Cream Cards ───────────────────────────────────── */
 
 .glass {
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.40);
+  background: #FAF3E6;
+  border: 1px solid #C8B49A;
+  box-shadow: 0 4px 24px rgba(60, 32, 16, 0.08);
 }
 
 .glass-display {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: #F5EBD8;
+  border: 1px solid #C8B49A;
 }
 
 .glass-nav {
-  background: rgba(60, 32, 16, 0.94);
+  background: rgba(237, 228, 211, 0.96);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid #C8B49A;
 }
 
 .glass-input {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #FFFFFF;
+  background: #FAF3E6;
+  border: 1px solid #C8B49A;
+  color: #2C1E16;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .glass-input:focus {
   outline: none;
-  border-color: #FF4500;
-  box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.20);
+  border-color: #5D4037;
+  box-shadow: 0 0 0 3px rgba(93, 64, 55, 0.15);
 }
 
-/* ── Aurora Gradient Button ──────────────────────────────── */
+/* ── Coffee Brown CTA Button ─────────────────────────────── */
 
 .btn-aurora,
 .btn-punch,
 .btn-crema {
-  background: linear-gradient(135deg, #FF4500 0%, #FFC107 100%);
-  color: #0A0A0A;
+  background: #5D4037;
+  color: #FFFBF4;
   font-weight: 900;
-  box-shadow: 0 8px 32px rgba(255, 69, 0, 0.35);
+  box-shadow: 0 8px 32px rgba(93, 64, 55, 0.25);
   transition: opacity 0.15s, transform 0.15s, box-shadow 0.15s;
 }
 .btn-aurora:hover:not(:disabled),
 .btn-punch:hover:not(:disabled),
 .btn-crema:hover:not(:disabled) {
   opacity: 0.90;
-  box-shadow: 0 12px 40px rgba(255, 69, 0, 0.50);
+  box-shadow: 0 12px 40px rgba(93, 64, 55, 0.35);
 }
 .btn-aurora:active:not(:disabled),
 .btn-punch:active:not(:disabled),
 .btn-crema:active:not(:disabled) {
   transform: scale(0.97);
-  box-shadow: 0 4px 16px rgba(255, 69, 0, 0.30);
+  box-shadow: 0 4px 16px rgba(93, 64, 55, 0.20);
 }
 
 /* ── Animations ──────────────────────────────────────────── */

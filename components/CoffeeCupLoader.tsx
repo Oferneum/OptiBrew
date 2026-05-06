@@ -37,11 +37,11 @@ export default function CoffeeCupLoader({ size = 64 }: Props) {
         <g clipPath="url(#ccl-clip)">
           <rect className="ccl-fill" x="6" y="22" width="52" height="44" fill="url(#ccl-grad)" />
         </g>
-        <path d="M8 22 L56 22 L50 66 L14 66 Z"  stroke="rgba(255,255,255,0.18)" strokeWidth="1.5" strokeLinejoin="round" fill="none" />
-        <rect x="6" y="20" width="52" height="3.5" rx="1.75" fill="rgba(255,255,255,0.10)" />
-        <path d="M56 33 Q72 33 72 46 Q72 59 56 59"  stroke="rgba(255,255,255,0.18)" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-        <ellipse cx="32" cy="72" rx="29" ry="4" stroke="rgba(255,255,255,0.10)" strokeWidth="1.5" fill="rgba(255,255,255,0.03)" />
-        <rect x="10" y="68" width="44" height="5" rx="2.5" fill="rgba(255,255,255,0.05)" />
+        <path d="M8 22 L56 22 L50 66 L14 66 Z"  stroke="rgba(44,30,22,0.25)" strokeWidth="1.5" strokeLinejoin="round" fill="none" />
+        <rect x="6" y="20" width="52" height="3.5" rx="1.75" fill="rgba(44,30,22,0.10)" />
+        <path d="M56 33 Q72 33 72 46 Q72 59 56 59"  stroke="rgba(44,30,22,0.20)" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+        <ellipse cx="32" cy="72" rx="29" ry="4" stroke="rgba(44,30,22,0.12)" strokeWidth="1.5" fill="rgba(44,30,22,0.04)" />
+        <rect x="10" y="68" width="44" height="5" rx="2.5" fill="rgba(44,30,22,0.05)" />
       </svg>
     </>
   );

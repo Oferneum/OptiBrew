@@ -83,13 +83,13 @@ export default function Nav() {
               key={href}
               href={href}
               className={`flex-1 flex flex-col items-center pt-3 pb-2 gap-1 text-[10px] font-medium transition-colors duration-150 ${
-                active ? 'text-crema' : 'text-white/35 hover:text-white'
+                active ? 'text-[#5D4037]' : 'text-[#2C1E16]/35 hover:text-[#2C1E16]'
               }`}
             >
               <Icon />
               <span className="tracking-wide">{label}</span>
               {active && (
-                <span className="w-1 h-1 rounded-full bg-crema" />
+                <span className="w-1 h-1 rounded-full bg-[#5D4037]" />
               )}
             </Link>
           );

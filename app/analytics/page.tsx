@@ -9,8 +9,8 @@ export default function AnalyticsPage() {
   return (
     <div className="p-4 space-y-5">
       <div className="pt-6 pb-1">
-        <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#A1A1AA] mb-1">Analytics</p>
-        <h1 className="text-white font-bold text-3xl tracking-tight leading-none">Dial-in Chart</h1>
+        <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#7A6858] mb-1">Analytics</p>
+        <h1 className="text-[#2C1E16] font-bold text-3xl tracking-tight leading-none">Dial-in Chart</h1>
       </div>
       <Suspense fallback={<AnalyticsSkeleton />}>
         <AnalyticsContent />
@@ -27,7 +27,7 @@ function AnalyticsSkeleton() {
           <div key={i} className="glass rounded-3xl p-4 h-16 animate-pulse" style={{ opacity: 1 - i * 0.2 }} />
         ))}
       </div>
-      <div className="bg-white rounded-3xl p-5 h-72 animate-pulse" />
+      <div className="glass rounded-3xl p-5 h-72 animate-pulse" />
     </div>
   );
 }
@@ -64,37 +64,37 @@ async function AnalyticsContent() {
     <>
       <div className="grid grid-cols-3 gap-3">
         <div className="glass rounded-3xl p-4">
-          <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#A1A1AA] mb-1">Shots</p>
+          <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#7A6858] mb-1">Shots</p>
           <p className="readout text-[#FF4500] font-bold text-2xl leading-none">{shots.length}</p>
         </div>
         <div className="glass rounded-3xl p-4">
-          <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#A1A1AA] mb-1">Avg Score</p>
+          <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#7A6858] mb-1">Avg Score</p>
           <p className="readout text-[#FF4500] font-bold text-2xl leading-none">{avgScore ?? '—'}</p>
         </div>
         <div className="glass rounded-3xl p-4">
-          <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#A1A1AA] mb-1">Best</p>
+          <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#7A6858] mb-1">Best</p>
           <p className="readout text-[#FF4500] font-bold text-2xl leading-none">{bestScore ?? '—'}</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+      <div className="glass rounded-3xl p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#8A7B72]">Extraction Time vs. Score</p>
+            <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#7A6858]">Extraction Time vs. Score</p>
             {avgTime != null && (
-              <p className="text-[#3C2A21] text-xs mt-0.5">
+              <p className="text-[#2C1E16] text-xs mt-0.5">
                 avg extraction <span className="readout font-bold">{avgTime}s</span>
               </p>
             )}
           </div>
           {shots.length >= 2 && (
-            <span className="text-[10px] text-[#AFA096] readout">trend line shown</span>
+            <span className="text-[10px] text-[#7A6858] readout">trend line shown</span>
           )}
         </div>
         <DialInChart shots={shots} />
       </div>
 
-      <p className="text-[10px] text-[#AFA096] text-center pb-2">
+      <p className="text-[10px] text-[#7A6858] text-center pb-2">
         Only scored shots with extraction times are plotted.
       </p>
     </>

@@ -4,15 +4,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { BeanVFMData } from '@/lib/vfm-actions';
 
-const LABEL = 'text-[10px] uppercase tracking-[0.15em] font-bold text-[#A1A1AA] mb-1';
-const INPUT = 'bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm w-full focus:outline-none focus:ring-2 focus:ring-[#FF4500] transition-all placeholder:text-white/25 appearance-none outline-none';
+const LABEL = 'text-[10px] uppercase tracking-[0.15em] font-bold text-[#7A6858] mb-1';
+const INPUT = 'bg-[#FAF3E6] border border-[#C8B49A] rounded-xl px-3 py-2.5 text-[#2C1E16] text-sm w-full focus:outline-none focus:ring-2 focus:ring-[#5D4037]/20 focus:border-[#5D4037] transition-all placeholder:text-[#2C1E16]/30 appearance-none outline-none';
 
 function VfmBadge({ value }: { value: number }) {
   const tier = value >= 1.5 ? 'great' : value >= 0.8 ? 'good' : 'low';
   const styles = {
-    great: 'bg-green-500/15 text-green-400',
-    good:  'bg-[#FFC107]/15 text-[#FFC107]',
-    low:   'bg-red-500/15 text-red-400',
+    great: 'bg-green-500/15 text-green-700',
+    good:  'bg-amber-500/15 text-amber-700',
+    low:   'bg-red-500/15 text-red-700',
   };
   const labels = { great: 'Great Value', good: 'Good Value', low: 'Premium' };
   return (
@@ -102,22 +102,22 @@ export default function BeanCard({ bean }: { bean: BeanVFMData }) {
       {/* ── Header row ── */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-white font-bold text-base leading-tight">{bean.roaster}</p>
+          <p className="text-[#2C1E16] font-bold text-base leading-tight">{bean.roaster}</p>
           {bean.bag_name && (
-            <p className="text-white/80 text-sm font-semibold mt-0">{bean.bag_name}</p>
+            <p className="text-[#2C1E16]/80 text-sm font-semibold mt-0">{bean.bag_name}</p>
           )}
-          <p className="text-[#A1A1AA] text-sm mt-0.5">{bean.origin}</p>
+          <p className="text-[#7A6858] text-sm mt-0.5">{bean.origin}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {bean.isActive && (
-            <span className="text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 bg-[#FF4500]/15 text-[#FF4500] rounded-full">
+            <span className="text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 bg-[#FF4500]/12 text-[#C23A00] rounded-full">
               Active
             </span>
           )}
           <button
             type="button"
             onClick={editing ? () => setEditing(false) : openEdit}
-            className="p-1.5 rounded-xl text-[#A1A1AA] hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-xl text-[#7A6858] hover:text-[#2C1E16] hover:bg-[#F5EBD8] transition-colors"
             aria-label={editing ? 'Cancel edit' : 'Edit bean'}
           >
             {editing ? (
@@ -145,22 +145,22 @@ export default function BeanCard({ bean }: { bean: BeanVFMData }) {
       {!editing && (
         <div className="flex flex-wrap gap-2 mt-3">
           {bean.shotCount > 0 && (
-            <span className="text-xs font-medium px-2.5 py-1 bg-white/10 text-[#A1A1AA] rounded-full">
+            <span className="text-xs font-medium px-2.5 py-1 bg-[#2C1E16]/8 text-[#7A6858] rounded-full">
               {bean.shotCount} shot{bean.shotCount !== 1 ? 's' : ''}
             </span>
           )}
           {bean.avgScore != null && (
-            <span className="readout text-xs font-bold px-2.5 py-1 bg-[#FF4500]/15 text-[#FF4500] rounded-full">
+            <span className="readout text-xs font-bold px-2.5 py-1 bg-[#FF4500]/12 text-[#C23A00] rounded-full">
               avg {bean.avgScore.toFixed(1)}/10
             </span>
           )}
           {bean.costPerShot != null && bean.costPerShot > 0 && (
-            <span className="readout text-xs font-medium px-2.5 py-1 bg-white/10 text-[#A1A1AA] rounded-full">
+            <span className="readout text-xs font-medium px-2.5 py-1 bg-[#2C1E16]/8 text-[#7A6858] rounded-full">
               ₪{bean.costPerShot.toFixed(2)}/shot
             </span>
           )}
           {bean.community_method && (
-            <span className="text-xs font-semibold px-2.5 py-1 bg-blue-500/15 text-blue-400 rounded-full flex items-center gap-1">
+            <span className="text-xs font-semibold px-2.5 py-1 bg-blue-500/12 text-blue-700 rounded-full flex items-center gap-1">
               <span>★</span>
               <span>Recommended: {bean.community_method.brew_method}</span>
             </span>
@@ -170,23 +170,23 @@ export default function BeanCard({ bean }: { bean: BeanVFMData }) {
 
       {/* ── Static details row ── */}
       {!editing && (bean.price_paid != null || bean.weight_grams != null || bean.roast_date) && (
-        <div className="flex gap-5 mt-4 pt-3 border-t border-white/10">
+        <div className="flex gap-5 mt-4 pt-3 border-t border-[#C8B49A]">
           {bean.price_paid != null && (
             <div>
-              <p className="text-[#A1A1AA] text-[10px] uppercase tracking-widest font-bold mb-0.5">Price</p>
-              <p className="readout text-white font-semibold text-sm">₪{bean.price_paid}</p>
+              <p className="text-[#7A6858] text-[10px] uppercase tracking-widest font-bold mb-0.5">Price</p>
+              <p className="readout text-[#2C1E16] font-semibold text-sm">₪{bean.price_paid}</p>
             </div>
           )}
           {bean.weight_grams != null && (
             <div>
-              <p className="text-[#A1A1AA] text-[10px] uppercase tracking-widest font-bold mb-0.5">Weight</p>
-              <p className="readout text-white font-semibold text-sm">{bean.weight_grams}g</p>
+              <p className="text-[#7A6858] text-[10px] uppercase tracking-widest font-bold mb-0.5">Weight</p>
+              <p className="readout text-[#2C1E16] font-semibold text-sm">{bean.weight_grams}g</p>
             </div>
           )}
           {bean.roast_date && (
             <div>
-              <p className="text-[#A1A1AA] text-[10px] uppercase tracking-widest font-bold mb-0.5">Roasted</p>
-              <p className="readout text-white font-semibold text-sm">
+              <p className="text-[#7A6858] text-[10px] uppercase tracking-widest font-bold mb-0.5">Roasted</p>
+              <p className="readout text-[#2C1E16] font-semibold text-sm">
                 {new Date(bean.roast_date).toLocaleDateString('he-IL', { day: 'numeric', month: 'short' })}
               </p>
             </div>
@@ -196,7 +196,7 @@ export default function BeanCard({ bean }: { bean: BeanVFMData }) {
 
       {/* ── Edit panel ── */}
       {editing && (
-        <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
+        <div className="mt-4 pt-4 border-t border-[#C8B49A] space-y-3">
 
           <div>
             <p className={LABEL}>Bag Name</p>
@@ -272,23 +272,23 @@ export default function BeanCard({ bean }: { bean: BeanVFMData }) {
 
           {/* Active toggle */}
           <div className="flex items-center justify-between py-1">
-            <span className="text-white text-sm font-medium">Active bag</span>
+            <span className="text-[#2C1E16] text-sm font-medium">Active bag</span>
             <button
               type="button"
               onClick={() => setDraft((d) => ({ ...d, is_active: !d.is_active }))}
-              className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${draft.is_active ? 'bg-[#FF4500]' : 'bg-white/15'}`}
+              className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${draft.is_active ? 'bg-[#5D4037]' : 'bg-[#C8B49A]/50'}`}
             >
               <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${draft.is_active ? 'translate-x-5' : 'translate-x-0'}`} />
             </button>
           </div>
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+          {error && <p className="text-red-600 text-sm">{error}</p>}
 
           <div className="flex gap-2.5 pt-1">
             <button
               type="button"
               onClick={() => setEditing(false)}
-              className="flex-1 bg-white/5 border border-white/10 text-white font-medium py-3 rounded-2xl text-sm transition-all active:scale-[0.97]"
+              className="flex-1 bg-[#F5EBD8] border border-[#C8B49A] text-[#2C1E16] font-medium py-3 rounded-2xl text-sm transition-all active:scale-[0.97]"
             >
               Cancel
             </button>
@@ -296,7 +296,7 @@ export default function BeanCard({ bean }: { bean: BeanVFMData }) {
               type="button"
               onClick={handleSave}
               disabled={saving || !draft.roaster.trim() || !draft.origin.trim()}
-              className="flex-1 bg-gradient-to-r from-[#FF4500] to-[#FFC107] text-black font-black py-3 rounded-2xl text-sm disabled:opacity-50 transition-all active:scale-[0.97]"
+              className="flex-1 bg-[#5D4037] text-[#FFFBF4] font-black py-3 rounded-2xl text-sm disabled:opacity-50 transition-all active:scale-[0.97]"
             >
               {saving ? 'Saving…' : 'Save'}
             </button>

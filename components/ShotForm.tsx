@@ -97,13 +97,13 @@ const BREW_METHODS: { id: BrewMethod; label: string; Icon: React.ElementType }[]
 // ── Shared styles ──────────────────────────────────────────
 
 const FIELD_CLS =
-  'bg-white/5 border border-white/10 rounded-2xl px-4 text-white text-xl placeholder:text-white/25 w-full focus:outline-none focus:border-[#FF4500] focus:ring-2 focus:ring-[#FF4500]/20 transition-all appearance-none outline-none min-h-[56px]';
+  'bg-[#FAF3E6] border border-[#C8B49A] rounded-2xl px-4 text-[#2C1E16] text-xl placeholder:text-[#2C1E16]/30 w-full focus:outline-none focus:border-[#5D4037] focus:ring-2 focus:ring-[#5D4037]/15 transition-all appearance-none outline-none min-h-[56px]';
 
 const CARD = 'glass rounded-3xl p-5 space-y-4';
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#A1A1AA] mb-2">
+    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#7A6858] mb-2">
       {children}
     </p>
   );
@@ -263,9 +263,9 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
     } finally { setSaving(false); }
   }
 
-  const newBagInputCls = 'bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white text-base placeholder:text-white/25 w-full focus:outline-none focus:border-[#FF4500] focus:ring-2 focus:ring-[#FF4500]/20 transition-all appearance-none outline-none';
+  const newBagInputCls = 'bg-[#FAF3E6] border border-[#C8B49A] rounded-xl px-3 py-3 text-[#2C1E16] text-base placeholder:text-[#2C1E16]/30 w-full focus:outline-none focus:border-[#5D4037] focus:ring-2 focus:ring-[#5D4037]/15 transition-all appearance-none outline-none';
   const cameraIcon = (
-    <svg className="w-5 h-5 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="w-5 h-5 text-[#7A6858]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
       <circle cx="12" cy="13" r="4"/>
     </svg>
@@ -288,7 +288,7 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
               onSelect(bean.id, label);
             }
           }}
-          className="bg-white/5 border border-white/10 rounded-2xl px-4 min-h-[56px] text-white text-base font-black appearance-none outline-none w-full focus:border-[#FF4500] focus:ring-2 focus:ring-[#FF4500]/20 transition-all"
+          className="bg-[#FAF3E6] border border-[#C8B49A] rounded-2xl px-4 min-h-[56px] text-[#2C1E16] text-base font-black appearance-none outline-none w-full focus:border-[#5D4037] focus:ring-2 focus:ring-[#5D4037]/15 transition-all"
           style={{ fontSize: '16px' }}
         >
           {loadingBeans
@@ -296,18 +296,18 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
             : <option value="">Select a bean…</option>
           }
           {allBeans.map((b) => (
-            <option key={b.id} value={b.id} style={{ background: '#1a1a2e' }}>
+            <option key={b.id} value={b.id} style={{ background: '#EDE4D3', color: '#2C1E16' }}>
               {b.bag_name ? `${b.roaster} · ${b.bag_name}` : `${b.roaster} · ${b.origin}`}
             </option>
           ))}
-          <option value="NEW_BAG" style={{ background: '#1a1a2e' }}>+ Add New Bag</option>
+          <option value="NEW_BAG" style={{ background: '#EDE4D3', color: '#2C1E16' }}>+ Add New Bag</option>
         </select>
-        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/40 text-lg">▾</span>
+        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#7A6858] text-lg">▾</span>
       </div>
 
       {showNewBag && (
         <div className="glass rounded-2xl p-5 space-y-4">
-          <p className="text-white font-black text-base uppercase tracking-wider">New Bag</p>
+          <p className="text-[#2C1E16] font-black text-base uppercase tracking-wider">New Bag</p>
 
           {/* ── Two image slots ── */}
           <div className="flex gap-3">
@@ -317,20 +317,20 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
                 type="button"
                 onClick={() => frontInputRef.current?.click()}
                 disabled={scanning}
-                className="w-full aspect-square rounded-xl border border-dashed border-white/20 bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all touch-manipulation overflow-hidden"
+                className="w-full aspect-square rounded-xl border border-dashed border-[#C8B49A] bg-[#F5EBD8] flex flex-col items-center justify-center gap-2 active:scale-95 transition-all touch-manipulation overflow-hidden"
               >
                 {scanFront ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={scanFront.preview} alt="Front" className="w-full h-full object-cover" />
                 ) : (
-                  <>{cameraIcon}<span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Front</span></>
+                  <>{cameraIcon}<span className="text-[10px] font-bold uppercase tracking-widest text-[#7A6858]">Front</span></>
                 )}
               </button>
               {scanFront && (
                 <button
                   type="button"
                   onClick={() => { setScanFront(null); setScanRec(null); }}
-                  className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center"
+                  className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-[#2C1E16]/70 flex items-center justify-center"
                 >
                   <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                 </button>
@@ -345,20 +345,20 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
                 type="button"
                 onClick={() => backInputRef.current?.click()}
                 disabled={scanning}
-                className="w-full aspect-square rounded-xl border border-dashed border-white/20 bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all touch-manipulation overflow-hidden"
+                className="w-full aspect-square rounded-xl border border-dashed border-[#C8B49A] bg-[#F5EBD8] flex flex-col items-center justify-center gap-2 active:scale-95 transition-all touch-manipulation overflow-hidden"
               >
                 {scanBack ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={scanBack.preview} alt="Back" className="w-full h-full object-cover" />
                 ) : (
-                  <>{cameraIcon}<span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Back (opt.)</span></>
+                  <>{cameraIcon}<span className="text-[10px] font-bold uppercase tracking-widest text-[#7A6858]">Back (opt.)</span></>
                 )}
               </button>
               {scanBack && (
                 <button
                   type="button"
                   onClick={() => { setScanBack(null); setScanRec(null); }}
-                  className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center"
+                  className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-[#2C1E16]/70 flex items-center justify-center"
                 >
                   <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                 </button>
@@ -368,13 +368,13 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
             </div>
           </div>
 
-          {/* ── Scan Now button (appears once at least one image is selected) ── */}
+          {/* ── Scan Now button ── */}
           {(scanFront || scanBack) && (
             <button
               type="button"
               onClick={submitScan}
               disabled={scanning || !scanFront}
-              className="w-full flex items-center justify-center gap-2 bg-white/10 border border-white/15 text-white font-bold py-3 rounded-xl text-sm uppercase tracking-wider active:scale-95 transition-all disabled:opacity-50 touch-manipulation"
+              className="w-full flex items-center justify-center gap-2 bg-[#F5EBD8] border border-[#C8B49A] text-[#2C1E16] font-bold py-3 rounded-xl text-sm uppercase tracking-wider active:scale-95 transition-all disabled:opacity-50 touch-manipulation"
             >
               {scanning ? <><Spinner /><span>Scanning…</span></> : <span>Scan Bag</span>}
             </button>
@@ -383,15 +383,15 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
           {/* ── Scan error ── */}
           {scanError && !scanning && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-              <p className="text-red-400 text-sm font-medium">{scanError}</p>
+              <p className="text-red-600 text-sm font-medium">{scanError}</p>
             </div>
           )}
 
           {/* ── Startup recommendation ── */}
           {scanRec && !scanning && (
-            <div className="bg-[#FFC107]/10 border border-[#FFC107]/20 rounded-xl p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FFC107] mb-2">Startup Rec</p>
-              <p className="text-white/90 text-sm leading-relaxed">{scanRec}</p>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700 mb-2">Startup Rec</p>
+              <p className="text-amber-900 text-sm leading-relaxed">{scanRec}</p>
             </div>
           )}
 
@@ -459,7 +459,7 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
             <button
               type="button"
               onClick={() => { setShowNewBag(false); resetScan(); }}
-              className="flex-1 bg-white/5 border border-white/10 text-white font-black py-4 min-h-[56px] rounded-xl text-sm uppercase tracking-wide active:scale-95 transition-all touch-manipulation"
+              className="flex-1 bg-[#F5EBD8] border border-[#C8B49A] text-[#2C1E16] font-black py-4 min-h-[56px] rounded-xl text-sm uppercase tracking-wide active:scale-95 transition-all touch-manipulation"
             >
               Cancel
             </button>
@@ -467,7 +467,7 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
               type="button"
               onClick={saveNewBag}
               disabled={saving}
-              className="flex-1 bg-gradient-to-r from-[#FF4500] to-[#FFC107] text-black font-black py-4 min-h-[56px] rounded-xl text-sm uppercase tracking-wide shadow-lg shadow-[#FF4500]/30 active:scale-95 transition-all disabled:opacity-60 touch-manipulation"
+              className="flex-1 bg-[#5D4037] text-[#FFFBF4] font-black py-4 min-h-[56px] rounded-xl text-sm uppercase tracking-wide shadow-lg shadow-[#5D4037]/25 active:scale-95 transition-all disabled:opacity-60 touch-manipulation"
             >
               {saving ? 'Saving…' : 'Add & Select'}
             </button>
@@ -576,7 +576,6 @@ export default function ShotForm({
   }
 
   function switchToManual() {
-    // Focus FIRST synchronously — input is off-screen but has real 1px dimensions so iOS allows it
     manualInputRef.current?.focus();
     if (timerRunningRef.current) {
       if (timerRAFRef.current !== null) cancelAnimationFrame(timerRAFRef.current);
@@ -661,7 +660,7 @@ export default function ShotForm({
                   className={`flex flex-col items-center justify-center gap-1.5 min-h-[56px] py-2 rounded-xl border text-[9px] font-black tracking-wider uppercase transition-all duration-150 touch-manipulation ${
                     active
                       ? 'bg-gradient-to-b from-[#FF4500] to-[#FFC107] text-black border-transparent shadow-lg shadow-[#FF4500]/25'
-                      : 'bg-white/5 border-white/10 text-[#A1A1AA] active:scale-95'
+                      : 'bg-[#F5EBD8] border-[#C8B49A] text-[#7A6858] active:scale-95'
                   }`}
                 >
                   <Icon size={18} strokeWidth={1.75} />
@@ -674,16 +673,16 @@ export default function ShotForm({
 
         <div className="flex items-center justify-between min-h-[56px]">
           <div className="flex items-center gap-2.5">
-            <Milk size={16} className="text-[#A1A1AA]" strokeWidth={1.75} />
-            <span className="text-white text-sm font-black uppercase tracking-wide">Milk Drink?</span>
+            <Milk size={16} className="text-[#7A6858]" strokeWidth={1.75} />
+            <span className="text-[#2C1E16] text-sm font-black uppercase tracking-wide">Milk Drink?</span>
           </div>
           <button
             type="button"
             onClick={() => setForm((f) => ({ ...f, has_milk: !f.has_milk }))}
             className={`relative w-12 h-7 border rounded-full transition-all duration-200 touch-manipulation ${
               form.has_milk
-                ? 'bg-gradient-to-r from-[#FF4500] to-[#FFC107] border-transparent'
-                : 'bg-white/10 border-white/20'
+                ? 'bg-[#5D4037] border-transparent'
+                : 'bg-[#F5EBD8] border-[#C8B49A]'
             }`}
           >
             <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${form.has_milk ? 'translate-x-[18px]' : 'translate-x-0'}`} />
@@ -695,11 +694,11 @@ export default function ShotForm({
             <div className="flex items-center justify-between min-h-[44px]">
               <div className="flex items-center gap-2.5">
                 <span className="w-2 h-2 rounded-full bg-[#FF4500] shrink-0" style={{ boxShadow: '0 0 6px #FF4500' }} />
-                <span className="text-white text-sm font-black uppercase tracking-wide">{rigName}</span>
+                <span className="text-[#2C1E16] text-sm font-black uppercase tracking-wide">{rigName}</span>
               </div>
               <Link
                 href="/settings"
-                className="text-[#A1A1AA] text-xs font-black uppercase tracking-widest hover:text-[#FF4500] transition-colors px-2 py-3"
+                className="text-[#7A6858] text-xs font-black uppercase tracking-widest hover:text-[#5D4037] transition-colors px-2 py-3"
               >
                 Change
               </Link>
@@ -707,10 +706,10 @@ export default function ShotForm({
           ) : (
             <Link
               href="/settings"
-              className="flex items-center justify-between border border-dashed border-white/20 rounded-2xl px-4 min-h-[56px] hover:bg-white/5 transition-colors"
+              className="flex items-center justify-between border border-dashed border-[#C8B49A] rounded-2xl px-4 min-h-[56px] hover:bg-[#F5EBD8] transition-colors"
             >
-              <span className="text-[#A1A1AA] text-sm font-bold uppercase tracking-wide">No rig configured</span>
-              <span className="text-[#FF4500] text-xs font-black uppercase tracking-widest">Set up →</span>
+              <span className="text-[#7A6858] text-sm font-bold uppercase tracking-wide">No rig configured</span>
+              <span className="text-[#5D4037] text-xs font-black uppercase tracking-widest">Set up →</span>
             </Link>
           )
         )}
@@ -769,9 +768,9 @@ export default function ShotForm({
         </div>
 
         {brewRatio > 0 && (
-          <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#A1A1AA]">Brew Ratio</span>
-            <span className="readout font-black text-lg bg-gradient-to-r from-[#FF4500] to-[#FFC107] bg-clip-text text-transparent">
+          <div className="bg-[#F5EBD8] border border-[#C8B49A] rounded-2xl px-4 py-3 flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#7A6858]">Brew Ratio</span>
+            <span className="readout font-black text-lg text-[#FF4500]">
               1:{brewRatio.toFixed(2)}
             </span>
           </div>
@@ -781,17 +780,17 @@ export default function ShotForm({
           <>
             <div>
               <Label>Extraction Time</Label>
-              <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+              <div className="bg-[#FAF3E6] border border-[#C8B49A] rounded-2xl overflow-hidden">
 
                 {/* Segmented control */}
-                <div className="grid grid-cols-2 border-b border-white/10">
+                <div className="grid grid-cols-2 border-b border-[#C8B49A]">
                   <button
                     type="button"
                     onClick={() => setTimeMode('timer')}
-                    className={`min-h-[48px] text-xs font-black tracking-widest uppercase transition-all border-r border-white/10 touch-manipulation ${
+                    className={`min-h-[48px] text-xs font-black tracking-widest uppercase transition-all border-r border-[#C8B49A] touch-manipulation ${
                       timeMode === 'timer'
                         ? 'bg-gradient-to-r from-[#FF4500] to-[#FFC107] text-black'
-                        : 'bg-transparent text-[#A1A1AA]'
+                        : 'bg-transparent text-[#7A6858]'
                     }`}
                   >
                     ⏱ Timer
@@ -802,7 +801,7 @@ export default function ShotForm({
                     className={`min-h-[48px] text-xs font-black tracking-widest uppercase transition-all touch-manipulation ${
                       timeMode === 'manual'
                         ? 'bg-gradient-to-r from-[#FF4500] to-[#FFC107] text-black'
-                        : 'bg-transparent text-[#A1A1AA]'
+                        : 'bg-transparent text-[#7A6858]'
                     }`}
                   >
                     ✎ Type
@@ -817,8 +816,8 @@ export default function ShotForm({
                         timerRunning
                           ? 'bg-gradient-to-r from-[#FF4500] to-[#FFC107] bg-clip-text text-transparent'
                           : timerMs > 0
-                            ? 'text-white'
-                            : 'text-white/25'
+                            ? 'text-[#2C1E16]'
+                            : 'text-[#2C1E16]/20'
                       }`}
                       style={{ fontSize: '3.75rem', lineHeight: 1 }}
                     >
@@ -831,7 +830,7 @@ export default function ShotForm({
                       onClick={handleTimerToggle}
                       className={`flex-1 py-4 min-h-[56px] rounded-xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 touch-manipulation ${
                         timerRunning
-                          ? 'bg-white/5 border border-[#FF4500]/60 text-[#FF4500]'
+                          ? 'bg-[#F5EBD8] border border-[#FF4500]/60 text-[#FF4500]'
                           : 'bg-gradient-to-r from-[#FF4500] to-[#FFC107] text-black shadow-lg shadow-[#FF4500]/30'
                       }`}
                     >
@@ -841,15 +840,15 @@ export default function ShotForm({
                       <button
                         type="button"
                         onClick={handleTimerReset}
-                        className="px-5 py-4 min-h-[56px] bg-white/5 border border-white/10 rounded-xl text-white text-sm font-black uppercase tracking-widest transition-all active:scale-95 touch-manipulation"
+                        className="px-5 py-4 min-h-[56px] bg-[#F5EBD8] border border-[#C8B49A] rounded-xl text-[#2C1E16] text-sm font-black uppercase tracking-widest transition-all active:scale-95 touch-manipulation"
                       >
                         Reset
                       </button>
                     )}
                   </div>
                   {form.extraction_time && !timerRunning && (
-                    <p className="text-center text-[#A1A1AA] text-xs uppercase tracking-widest font-black">
-                      Saved: <span className="readout text-white">{form.extraction_time}s</span>
+                    <p className="text-center text-[#7A6858] text-xs uppercase tracking-widest font-black">
+                      Saved: <span className="readout text-[#2C1E16]">{form.extraction_time}s</span>
                     </p>
                   )}
                 </div>
@@ -867,7 +866,7 @@ export default function ShotForm({
                       onChange={(e) => setForm((f) => ({ ...f, extraction_time: e.target.value }))}
                       className={
                         timeMode === 'manual'
-                          ? 'w-full bg-white/5 border-2 border-[#FF4500]/60 rounded-xl py-4 text-white font-black readout text-center focus:outline-none focus:ring-2 focus:ring-[#FF4500]/30 appearance-none'
+                          ? 'w-full bg-[#FAF3E6] border-2 border-[#5D4037]/60 rounded-xl py-4 text-[#2C1E16] font-black readout text-center focus:outline-none focus:ring-2 focus:ring-[#5D4037]/20 appearance-none'
                           : ''
                       }
                       style={
@@ -877,7 +876,7 @@ export default function ShotForm({
                       }
                     />
                     {timeMode === 'manual' && (
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#A1A1AA] text-sm font-black uppercase pointer-events-none">
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7A6858] text-sm font-black uppercase pointer-events-none">
                         sec
                       </span>
                     )}
@@ -945,7 +944,7 @@ export default function ShotForm({
                   className={`px-5 text-sm font-black uppercase tracking-wider transition-all duration-150 min-h-[56px] rounded-xl border touch-manipulation ${
                     active
                       ? 'bg-gradient-to-r from-[#FF4500] to-[#FFC107] text-black border-transparent shadow-lg shadow-[#FF4500]/25'
-                      : 'bg-white/5 border-white/10 text-[#A1A1AA] active:scale-95'
+                      : 'bg-[#F5EBD8] border-[#C8B49A] text-[#7A6858] active:scale-95'
                   }`}
                 >
                   {tag}
@@ -968,7 +967,7 @@ export default function ShotForm({
                   className={`w-12 h-12 rounded-xl border text-sm font-black transition-all duration-150 touch-manipulation ${
                     active
                       ? 'bg-gradient-to-br from-[#FF4500] to-[#FFC107] text-black border-transparent shadow-lg shadow-[#FF4500]/25'
-                      : 'bg-white/5 border-white/10 text-[#A1A1AA] active:scale-95'
+                      : 'bg-[#F5EBD8] border-[#C8B49A] text-[#7A6858] active:scale-95'
                   }`}
                 >
                   {n}
@@ -987,13 +986,13 @@ export default function ShotForm({
           placeholder="Optional tasting notes…"
           value={form.notes}
           onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-          className="bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white text-base placeholder:text-white/25 resize-none w-full focus:outline-none focus:border-[#FF4500] focus:ring-2 focus:ring-[#FF4500]/20 transition-all appearance-none"
+          className="bg-[#FAF3E6] border border-[#C8B49A] rounded-2xl px-4 py-4 text-[#2C1E16] text-base placeholder:text-[#2C1E16]/30 resize-none w-full focus:outline-none focus:border-[#5D4037] focus:ring-2 focus:ring-[#5D4037]/15 transition-all appearance-none"
           style={{ fontSize: '16px' }}
         />
       </div>
 
       {error && (
-        <p className="text-[#FF4500] text-sm bg-[#FF4500]/10 border border-[#FF4500]/30 rounded-xl px-4 py-3 font-black">
+        <p className="text-red-600 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 font-black">
           {error}
         </p>
       )}
@@ -1001,7 +1000,7 @@ export default function ShotForm({
       <button
         type="submit"
         disabled={loading}
-        className="bg-gradient-to-r from-[#FF4500] to-[#FFC107] rounded-2xl w-full text-black font-black py-6 text-base uppercase tracking-[0.2em] flex items-center justify-center gap-2.5 disabled:opacity-60 active:scale-95 transition-all touch-manipulation shadow-xl shadow-[#FF4500]/30"
+        className="bg-[#5D4037] rounded-2xl w-full text-[#FFFBF4] font-black py-6 text-base uppercase tracking-[0.2em] flex items-center justify-center gap-2.5 disabled:opacity-60 active:scale-95 transition-all touch-manipulation shadow-xl shadow-[#5D4037]/25"
       >
         {loading ? <><Spinner /> Analyzing…</> : 'Log Shot →'}
       </button>

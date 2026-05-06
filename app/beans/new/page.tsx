@@ -46,10 +46,10 @@ function compressImage(file: File, maxPx = 800, quality = 0.7): Promise<Blob> {
   });
 }
 
-const INPUT = 'bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white text-base placeholder:text-white/25 w-full focus:outline-none focus:border-[#FF4500] focus:ring-2 focus:ring-[#FF4500]/20 transition-all appearance-none outline-none';
+const INPUT = 'bg-[#FAF3E6] border border-[#C8B49A] rounded-xl px-3 py-3 text-[#2C1E16] text-base placeholder:text-[#2C1E16]/30 w-full focus:outline-none focus:border-[#5D4037] focus:ring-2 focus:ring-[#5D4037]/15 transition-all appearance-none outline-none';
 
 function Label({ children }: { children: React.ReactNode }) {
-  return <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#A1A1AA] mb-2">{children}</p>;
+  return <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#7A6858] mb-2">{children}</p>;
 }
 
 export default function NewBagPage() {
@@ -135,7 +135,7 @@ export default function NewBagPage() {
   }
 
   const cameraIcon = (
-    <svg className="w-5 h-5 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="w-5 h-5 text-[#7A6858]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
       <circle cx="12" cy="13" r="4"/>
     </svg>
@@ -148,20 +148,20 @@ export default function NewBagPage() {
 
       {/* ── Header ── */}
       <div className="flex items-center gap-3 pt-2">
-        <Link href="/" className="text-[#A1A1AA] text-sm font-bold hover:text-white transition-colors">
+        <Link href="/" className="text-[#7A6858] text-sm font-bold hover:text-[#2C1E16] transition-colors">
           ←
         </Link>
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#A1A1AA]">New arrival</p>
-          <h1 className="text-white font-black text-2xl tracking-tight leading-none">Fresh Beans</h1>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#7A6858]">New arrival</p>
+          <h1 className="text-[#2C1E16] font-black text-2xl tracking-tight leading-none">Fresh Beans</h1>
         </div>
       </div>
 
       {/* ── Scan section ── */}
       <div className="glass rounded-3xl p-5 space-y-4">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#A1A1AA] mb-1">Step 1 — Scan the bag</p>
-          <p className="text-white/60 text-xs">Take a photo of the front (and optionally the back) to auto-fill details and get a personalised recipe.</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#7A6858] mb-1">Step 1 — Scan the bag</p>
+          <p className="text-[#2C1E16]/60 text-xs">Take a photo of the front (and optionally the back) to auto-fill details and get a personalised recipe.</p>
         </div>
 
         {/* Two image slots */}
@@ -172,20 +172,20 @@ export default function NewBagPage() {
               type="button"
               onClick={() => frontRef.current?.click()}
               disabled={scanning}
-              className="w-full aspect-square rounded-xl border border-dashed border-white/20 bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all touch-manipulation overflow-hidden"
+              className="w-full aspect-square rounded-xl border border-dashed border-[#C8B49A] bg-[#F5EBD8] flex flex-col items-center justify-center gap-2 active:scale-95 transition-all touch-manipulation overflow-hidden"
             >
               {scanFront ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={scanFront.preview} alt="Front" className="w-full h-full object-cover" />
               ) : (
-                <>{cameraIcon}<span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Front</span></>
+                <>{cameraIcon}<span className="text-[10px] font-bold uppercase tracking-widest text-[#7A6858]">Front</span></>
               )}
             </button>
             {scanFront && (
               <button
                 type="button"
                 onClick={() => { setScanFront(null); setScanRec(null); }}
-                className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center"
+                className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-[#2C1E16]/70 flex items-center justify-center"
               >
                 <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
               </button>
@@ -200,20 +200,20 @@ export default function NewBagPage() {
               type="button"
               onClick={() => backRef.current?.click()}
               disabled={scanning}
-              className="w-full aspect-square rounded-xl border border-dashed border-white/20 bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all touch-manipulation overflow-hidden"
+              className="w-full aspect-square rounded-xl border border-dashed border-[#C8B49A] bg-[#F5EBD8] flex flex-col items-center justify-center gap-2 active:scale-95 transition-all touch-manipulation overflow-hidden"
             >
               {scanBack ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={scanBack.preview} alt="Back" className="w-full h-full object-cover" />
               ) : (
-                <>{cameraIcon}<span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Back (opt.)</span></>
+                <>{cameraIcon}<span className="text-[10px] font-bold uppercase tracking-widest text-[#7A6858]">Back (opt.)</span></>
               )}
             </button>
             {scanBack && (
               <button
                 type="button"
                 onClick={() => { setScanBack(null); setScanRec(null); }}
-                className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center"
+                className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-[#2C1E16]/70 flex items-center justify-center"
               >
                 <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
               </button>
@@ -229,7 +229,7 @@ export default function NewBagPage() {
             type="button"
             onClick={submitScan}
             disabled={scanning}
-            className="w-full flex items-center justify-center gap-2 bg-white/10 border border-white/15 text-white font-bold py-3 rounded-xl text-sm uppercase tracking-wider active:scale-95 transition-all disabled:opacity-50 touch-manipulation"
+            className="w-full flex items-center justify-center gap-2 bg-[#F5EBD8] border border-[#C8B49A] text-[#2C1E16] font-bold py-3 rounded-xl text-sm uppercase tracking-wider active:scale-95 transition-all disabled:opacity-50 touch-manipulation"
           >
             {scanning ? <><Spinner /><span>Scanning…</span></> : <span>Scan Bag</span>}
           </button>
@@ -238,22 +238,22 @@ export default function NewBagPage() {
         {/* Error */}
         {scanError && !scanning && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-            <p className="text-red-400 text-sm font-medium">{scanError}</p>
+            <p className="text-red-600 text-sm font-medium">{scanError}</p>
           </div>
         )}
 
         {/* Personalised recommendation */}
         {scanRec && !scanning && (
-          <div className="bg-[#FFC107]/10 border border-[#FFC107]/20 rounded-xl p-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FFC107] mb-2">Your Recipe</p>
-            <p className="text-white/90 text-sm leading-relaxed">{scanRec}</p>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700 mb-2">Your Recipe</p>
+            <p className="text-amber-900 text-sm leading-relaxed">{scanRec}</p>
           </div>
         )}
       </div>
 
       {/* ── Details form ── */}
       <div className="glass rounded-3xl p-5 space-y-4">
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#A1A1AA]">Step 2 — Confirm details</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#7A6858]">Step 2 — Confirm details</p>
 
         <div>
           <Label>Bag Name</Label>
@@ -291,7 +291,7 @@ export default function NewBagPage() {
 
         {saveError && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-            <p className="text-red-400 text-sm font-medium">{saveError}</p>
+            <p className="text-red-600 text-sm font-medium">{saveError}</p>
           </div>
         )}
 
@@ -299,7 +299,7 @@ export default function NewBagPage() {
           type="button"
           onClick={saveBag}
           disabled={saving || !canSave}
-          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#FF4500] to-[#FFC107] text-black font-black uppercase tracking-widest py-4 rounded-2xl text-sm shadow-lg shadow-[#FF4500]/25 active:scale-95 transition-all disabled:opacity-40 touch-manipulation"
+          className="w-full flex items-center justify-center gap-2 bg-[#5D4037] text-[#FFFBF4] font-black uppercase tracking-widest py-4 rounded-2xl text-sm shadow-lg shadow-[#5D4037]/25 active:scale-95 transition-all disabled:opacity-40 touch-manipulation"
         >
           {saving ? <><Spinner /><span>Saving…</span></> : <span>Save to My Inventory</span>}
         </button>

@@ -14,17 +14,17 @@ export default async function VfmLeaderboardPage() {
   return (
     <div className="p-4 space-y-4">
       <div className="pt-6 pb-1">
-        <Link href="/beans" className="text-[#8A7B72] text-xs hover:text-[#C85A32] transition-colors mb-3 inline-block">
+        <Link href="/beans" className="text-[#7A6858] text-xs hover:text-[#5D4037] transition-colors mb-3 inline-block">
           ← Community Beans
         </Link>
-        <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#8A7B72] mb-1">Community Rankings</p>
-        <h1 className="text-[#3C2A21] font-bold text-2xl tracking-tight">Value for Money</h1>
+        <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#7A6858] mb-1">Community Rankings</p>
+        <h1 className="text-[#2C1E16] font-bold text-2xl tracking-tight">Value for Money</h1>
       </div>
 
       {ranked.length === 0 ? (
-        <div className="bg-white rounded-3xl p-8 text-center shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-          <p className="text-[#3C2A21] font-semibold mb-1">No ranked beans yet</p>
-          <p className="text-[#8A7B72] text-sm">
+        <div className="glass rounded-3xl p-8 text-center">
+          <p className="text-[#2C1E16] font-semibold mb-1">No ranked beans yet</p>
+          <p className="text-[#7A6858] text-sm">
             Beans need a price, weight, and at least one scored shot to appear here.
           </p>
         </div>
@@ -33,33 +33,33 @@ export default async function VfmLeaderboardPage() {
           {ranked.map((bean, i) => (
             <div
               key={bean.id}
-              className="bg-white rounded-3xl px-5 py-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center gap-4"
+              className="glass rounded-3xl px-5 py-4 flex items-center gap-4"
             >
               <span className="text-xl leading-none shrink-0 w-7 text-center">
-                {i < 3 ? MEDAL[i] : <span className="readout text-[#AFA096] font-bold text-sm">{i + 1}</span>}
+                {i < 3 ? MEDAL[i] : <span className="readout text-[#7A6858] font-bold text-sm">{i + 1}</span>}
               </span>
 
               <div className="flex-1 min-w-0">
-                <p className="text-[#3C2A21] font-semibold text-sm leading-tight truncate">{bean.roaster}</p>
-                <p className="text-[#8A7B72] text-xs mt-0.5">{bean.origin}</p>
+                <p className="text-[#2C1E16] font-semibold text-sm leading-tight truncate">{bean.roaster}</p>
+                <p className="text-[#7A6858] text-xs mt-0.5">{bean.origin}</p>
                 <div className="flex gap-2 mt-1.5 flex-wrap">
                   {bean.costPerShot != null && (
-                    <span className="readout text-[10px] text-[#8A7B72]">₪{bean.costPerShot.toFixed(2)}/shot</span>
+                    <span className="readout text-[10px] text-[#7A6858]">₪{bean.costPerShot.toFixed(2)}/shot</span>
                   )}
                   {bean.avgScore != null && (
-                    <span className="readout text-[10px] text-[#8A7B72]">avg {bean.avgScore.toFixed(1)}/10</span>
+                    <span className="readout text-[10px] text-[#7A6858]">avg {bean.avgScore.toFixed(1)}/10</span>
                   )}
                   {bean.shotCount > 0 && (
-                    <span className="text-[10px] text-[#AFA096]">{bean.shotCount} shot{bean.shotCount !== 1 ? 's' : ''}</span>
+                    <span className="text-[10px] text-[#7A6858]">{bean.shotCount} shot{bean.shotCount !== 1 ? 's' : ''}</span>
                   )}
                 </div>
               </div>
 
               <div className="text-right shrink-0">
-                <p className="readout text-[#C85A32] font-bold text-2xl leading-none">{bean.vfm!.toFixed(1)}</p>
-                <p className="text-[10px] uppercase tracking-widest text-[#8A7B72] font-bold mt-0.5">VFM</p>
+                <p className="readout text-[#FF4500] font-bold text-2xl leading-none">{bean.vfm!.toFixed(1)}</p>
+                <p className="text-[10px] uppercase tracking-widest text-[#7A6858] font-bold mt-0.5">VFM</p>
                 {bean.isActive && (
-                  <span className="text-[9px] font-bold tracking-widest uppercase text-[#C85A32] opacity-70">Active</span>
+                  <span className="text-[9px] font-bold tracking-widest uppercase text-[#FF4500] opacity-70">Active</span>
                 )}
               </div>
             </div>
@@ -67,7 +67,7 @@ export default async function VfmLeaderboardPage() {
         </div>
       )}
 
-      <p className="text-[10px] text-[#AFA096] text-center px-4 pb-2">
+      <p className="text-[10px] text-[#7A6858] text-center px-4 pb-2">
         VFM = community avg score ÷ cost per shot. Higher is better.
       </p>
     </div>

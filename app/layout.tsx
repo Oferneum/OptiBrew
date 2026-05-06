@@ -41,13 +41,13 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#3C2010',
+  themeColor: '#EDE4D3',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" dir="ltr" className={`${heebo.variable} ${spaceMono.variable} antialiased`}>
-      <body className="bg-[#3C2010] min-h-screen pb-24 font-sans text-white">
+      <body className="bg-[#EDE4D3] min-h-screen pb-24 font-sans text-[#2C1E16]">
         <main className="max-w-lg mx-auto px-4">
           {children}
         </main>
