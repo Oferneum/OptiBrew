@@ -36,7 +36,7 @@ interface EditState {
   is_active:    boolean;
 }
 
-export default function BeanCard({ bean }: { bean: BeanVFMData }) {
+export default function BeanCard({ bean, onSaved }: { bean: BeanVFMData; onSaved?: () => void }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving]   = useState(false);
@@ -90,7 +90,7 @@ export default function BeanCard({ bean }: { bean: BeanVFMData }) {
         return;
       }
       setEditing(false);
-      router.refresh();
+      onSaved ? onSaved() : router.refresh();
     } finally {
       setSaving(false);
     }
