@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import RecommendationCard from '@/components/RecommendationCard';
+import RetryableRecommendation from '@/components/RetryableRecommendation';
 import DeleteButton from './DeleteButton';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -54,13 +54,7 @@ export default async function ShotDetailPage({ params }: { params: Promise<{ id:
           <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#7A6858] px-1">
             Dialed AI
           </p>
-          {shot.recommendation ? (
-            <RecommendationCard rec={{ diagnosis: shot.recommendation }} />
-          ) : (
-            <div className="glass rounded-3xl p-5">
-              <p className="text-[#7A6858] text-sm">No AI analysis for this shot.</p>
-            </div>
-          )}
+          <RetryableRecommendation shotId={shot.id} initialRec={shot.recommendation} />
         </div>
 
         <div className="pt-4 border-t border-[#C8B49A]">

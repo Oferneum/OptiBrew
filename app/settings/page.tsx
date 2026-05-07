@@ -15,6 +15,136 @@ const FIELD_CLS =
 const LABEL_CLS = 'text-[10px] uppercase tracking-[0.15em] font-bold text-[#7A6858]';
 const BREW_METHODS = ['Espresso', 'V60', 'MokaPot', 'FrenchPress', 'Aeropress'] as const;
 
+// ── Spinner ───────────────────────────────────────────────────
+
+function Spinner() {
+  return (
+    <svg className="spin w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.25" />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// ── Smart Equipment Search Input ──────────────────────────────
+
+interface LookupResult {
+  name: string; manufacturer: string; type: string; description: string;
+}
+
+function EquipmentSearchInput({
+  label,
+  value,
+  onChange,
+  suggestions,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  suggestions: string[];
+  placeholder: string;
+}) {
+  const [open, setOpen]           = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [webResult, setWebResult] = useState<LookupResult | null>(null);
+  const [webErr, setWebErr]       = useState<string | null>(null);
+
+  const filtered = value.trim().length >= 1
+    ? suggestions.filter((s) => s.toLowerCase().includes(value.toLowerCase()))
+    : suggestions.slice(0, 6);
+
+  const noLocalMatch = value.trim().length >= 2 && filtered.length === 0;
+
+  async function searchWeb() {
+    setSearching(true); setWebResult(null); setWebErr(null);
+    try {
+      const res  = await fetch(`/api/equipment/lookup?q=${encodeURIComponent(value.trim())}`);
+      const data = await res.json();
+      if (!res.ok) { setWebErr(data.error ?? 'Search failed'); return; }
+      setWebResult(data);
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  return (
+    <div className="relative">
+      <p className={`${LABEL_CLS} mb-1.5`}>{label}</p>
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={value}
+        autoComplete="off"
+        onChange={(e) => { onChange(e.target.value); setOpen(true); setWebResult(null); setWebErr(null); }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 180)}
+        className={FIELD_CLS}
+        style={{ fontSize: '16px' }}
+      />
+
+      {/* Local suggestions */}
+      {open && filtered.length > 0 && (
+        <div className="absolute z-20 w-full mt-1 bg-[#FAF3E6] border border-[#C8B49A] rounded-xl shadow-lg overflow-hidden">
+          {filtered.slice(0, 6).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onMouseDown={() => { onChange(s); setOpen(false); setWebResult(null); }}
+              className="w-full text-left px-4 py-3 text-[#2C1E16] text-sm font-medium hover:bg-[#F5EBD8] border-b border-[#C8B49A]/40 last:border-0 transition-colors touch-manipulation"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Search Web button */}
+      {noLocalMatch && !webResult && !searching && (
+        <button
+          type="button"
+          onClick={searchWeb}
+          className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-[#5D4037]/50 text-[#5D4037] text-xs font-black uppercase tracking-wider rounded-xl hover:bg-[#5D4037]/5 active:scale-[0.97] transition-all touch-manipulation"
+        >
+          🔍 Search Web for &ldquo;{value.trim()}&rdquo;
+        </button>
+      )}
+
+      {searching && (
+        <div className="mt-2 flex items-center gap-2 text-[#7A6858] text-xs px-1 py-1.5">
+          <Spinner /><span>Searching…</span>
+        </div>
+      )}
+
+      {/* Web result card */}
+      {webResult && !searching && (
+        <div className="mt-2 bg-[#F5EBD8] border border-[#C8B49A] rounded-xl p-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[#2C1E16] font-bold text-sm leading-tight">{webResult.name}</p>
+              <p className="text-[#7A6858] text-xs mt-0.5">{webResult.manufacturer}</p>
+              {webResult.description && webResult.description !== 'No details found.' && (
+                <p className="text-[#7A6858] text-xs mt-1 italic leading-relaxed">{webResult.description}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => { onChange(webResult.name); setWebResult(null); }}
+              className="shrink-0 px-3 py-1.5 bg-[#5D4037] text-[#FFFBF4] text-xs font-black uppercase tracking-wider rounded-lg active:scale-95 transition-all touch-manipulation"
+            >
+              Use
+            </button>
+          </div>
+        </div>
+      )}
+
+      {webErr && <p className="mt-1.5 text-red-600 text-xs font-medium">{webErr}</p>}
+    </div>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────
+
 export default function SettingsPage() {
   const [profiles, setProfiles]     = useState<EquipmentProfile[]>([]);
   const [activeId, setActiveId]     = useState<string | null>(null);
@@ -26,13 +156,6 @@ export default function SettingsPage() {
 
   const [userEmail, setUserEmail]   = useState<string | null>(null);
   const [userName, setUserName]     = useState<string | null>(null);
-
-  const [showAdd, setShowAdd]       = useState(false);
-  const [machineName, setMachineName] = useState('');
-  const [grinderName, setGrinderName] = useState('');
-  const [saving, setSaving]         = useState(false);
-  const [addError, setAddError]     = useState<string | null>(null);
-
   const [brewMethodPref, setBrewMethodPref] = useState('Espresso');
 
   useEffect(() => {
@@ -54,10 +177,10 @@ export default function SettingsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // If no machine/grinder in localStorage yet, derive from the active profile
+  // Derive machine/grinder names from active profile if localStorage is empty
   useEffect(() => {
     if (!activeMachine && activeId && profiles.length > 0) {
-      const p = profiles.find(q => q.id === activeId);
+      const p = profiles.find((q) => q.id === activeId);
       if (p) {
         const m = p.machine_name;
         const g = p.grinder_name ?? '';
@@ -79,16 +202,15 @@ export default function SettingsPage() {
   }
 
   const machines = useMemo(
-    () => [...new Set(profiles.map(p => p.machine_name))].sort(),
+    () => [...new Set(profiles.map((p) => p.machine_name))].sort(),
     [profiles],
   );
   const grinders = useMemo(
-    () => [...new Set(profiles.map(p => p.grinder_name).filter((g): g is string => Boolean(g)))].sort(),
+    () => [...new Set(profiles.map((p) => p.grinder_name).filter((g): g is string => Boolean(g)))].sort(),
     [profiles],
   );
 
-  // Is the current dropdown selection different from what's saved?
-  const savedProfile = profiles.find(p => p.id === activeId);
+  const savedProfile = profiles.find((p) => p.id === activeId);
   const rigDirty =
     Boolean(activeMachine) &&
     (activeMachine !== (savedProfile?.machine_name ?? '') ||
@@ -106,9 +228,9 @@ export default function SettingsPage() {
     setRigSaving(true);
     setRigSaved(false);
 
-    const match = profiles.find(p =>
-      p.machine_name === activeMachine &&
-      (activeGrinder ? p.grinder_name === activeGrinder : !p.grinder_name),
+    const match = profiles.find(
+      (p) => p.machine_name === activeMachine &&
+        (activeGrinder ? p.grinder_name === activeGrinder : !p.grinder_name),
     );
 
     if (match) {
@@ -130,43 +252,6 @@ export default function SettingsPage() {
     setRigSaving(false);
     setRigSaved(true);
     setTimeout(() => setRigSaved(false), 2000);
-  }
-
-  async function handleAdd(e: React.SyntheticEvent) {
-    e.preventDefault();
-    if (!machineName.trim()) return;
-    setSaving(true);
-    setAddError(null);
-    try {
-      const res = await fetch('/api/equipment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-        body: JSON.stringify({
-          machine_name: machineName.trim(),
-          grinder_name: grinderName.trim() || null,
-        }),
-      });
-      const data = await res.json();
-      if (res.status === 409 && data.match) {
-        setActiveMachine(data.match.machine_name);
-        setActiveGrinder(data.match.grinder_name ?? '');
-        persistRig(data.match.id);
-        await loadProfiles();
-      } else if (res.ok) {
-        setActiveMachine(data.machine_name);
-        setActiveGrinder(data.grinder_name ?? '');
-        persistRig(data.id);
-        await loadProfiles();
-      } else {
-        setAddError(data.error ?? 'Failed to save equipment');
-        return;
-      }
-      setMachineName('');
-      setGrinderName('');
-      setShowAdd(false);
-    } finally {
-      setSaving(false);
-    }
   }
 
   function saveBrewMethod(val: string) {
@@ -213,163 +298,83 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* ── Active Rig ── */}
+      {/* ── Active Rig — smart search ── */}
       <div className="glass rounded-3xl px-5 py-4 space-y-4">
         <div className="flex items-center justify-between">
           <p className={LABEL_CLS}>Active Rig</p>
           {activeId && !rigDirty && (
-            <span className="text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 bg-green-500/15 text-green-700 rounded-full">
-              Active
-            </span>
+            <span className="text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 bg-green-500/15 text-green-700 rounded-full">Active</span>
           )}
           {rigDirty && (
-            <span className="text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 bg-amber-500/15 text-amber-700 rounded-full">
-              Unsaved
-            </span>
+            <span className="text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 bg-amber-500/15 text-amber-700 rounded-full">Unsaved</span>
           )}
         </div>
 
-        {profiles.length === 0 ? (
-          <p className="text-[#7A6858] text-sm">No equipment yet — add yours below.</p>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className={`${LABEL_CLS} mb-1.5`}>Machine</p>
-                <div className="relative">
-                  <select
-                    value={activeMachine}
-                    onChange={(e) => { setActiveMachine(e.target.value); setRigSaved(false); }}
-                    className={FIELD_CLS}
-                    style={{ fontSize: '16px' }}
-                  >
-                    <option value="">Select…</option>
-                    {machines.map(m => (
-                      <option key={m} value={m} style={{ background: '#EDE4D3', color: '#2C1E16' }}>{m}</option>
-                    ))}
-                  </select>
-                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#7A6858]">▾</span>
-                </div>
-              </div>
-              <div>
-                <p className={`${LABEL_CLS} mb-1.5`}>Grinder</p>
-                <div className="relative">
-                  <select
-                    value={activeGrinder}
-                    onChange={(e) => { setActiveGrinder(e.target.value); setRigSaved(false); }}
-                    className={FIELD_CLS}
-                    style={{ fontSize: '16px' }}
-                  >
-                    <option value="">None</option>
-                    {grinders.map(g => (
-                      <option key={g} value={g} style={{ background: '#EDE4D3', color: '#2C1E16' }}>{g}</option>
-                    ))}
-                  </select>
-                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#7A6858]">▾</span>
-                </div>
-              </div>
-            </div>
+        <p className="text-[#7A6858] text-xs leading-relaxed -mt-2">
+          Type to search your saved rigs, or enter a new name. Can&apos;t find it?{' '}
+          <span className="text-[#5D4037] font-semibold">Search Web</span> to look it up.
+        </p>
 
-            <button
-              type="button"
-              onClick={handleSetRig}
-              disabled={!activeMachine || rigSaving}
-              className={`w-full py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.97] disabled:opacity-50 touch-manipulation ${
-                rigSaved
-                  ? 'bg-green-500/15 text-green-700 border border-green-500/25'
-                  : rigDirty
-                    ? 'bg-[#5D4037] text-[#FFFBF4] shadow-lg shadow-[#5D4037]/25'
-                    : 'bg-[#F5EBD8] border border-[#C8B49A] text-[#7A6858]'
-              }`}
-            >
-              {rigSaving ? 'Saving…' : rigSaved ? '✓ Rig Active' : rigDirty ? 'Set Active Rig' : 'Rig Saved'}
-            </button>
-          </>
-        )}
+        <div className="grid grid-cols-2 gap-3">
+          <EquipmentSearchInput
+            label="Machine"
+            value={activeMachine}
+            onChange={(v) => { setActiveMachine(v); setRigSaved(false); }}
+            suggestions={machines}
+            placeholder="Lelit Bianca"
+          />
+          <EquipmentSearchInput
+            label="Grinder"
+            value={activeGrinder}
+            onChange={(v) => { setActiveGrinder(v); setRigSaved(false); }}
+            suggestions={grinders}
+            placeholder="Niche Zero"
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSetRig}
+          disabled={!activeMachine || rigSaving}
+          className={`w-full py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.97] disabled:opacity-50 touch-manipulation ${
+            rigSaved
+              ? 'bg-green-500/15 text-green-700 border border-green-500/25'
+              : rigDirty
+                ? 'bg-[#5D4037] text-[#FFFBF4] shadow-lg shadow-[#5D4037]/25'
+                : 'bg-[#F5EBD8] border border-[#C8B49A] text-[#7A6858]'
+          }`}
+        >
+          {rigSaving ? 'Saving…' : rigSaved ? '✓ Rig Active' : rigDirty ? 'Set Active Rig' : 'Rig Saved'}
+        </button>
       </div>
 
-      {/* ── Registered equipment (compact reference list) ── */}
+      {/* ── Saved Rigs (compact reference list) ── */}
       {profiles.length > 0 && (
         <div className="space-y-2">
-          <p className={LABEL_CLS}>Registered Equipment</p>
+          <p className={LABEL_CLS}>Saved Rigs</p>
           {profiles.map((p) => (
-            <div
+            <button
               key={p.id}
-              className={`glass rounded-2xl px-4 py-3 flex items-center justify-between ${p.id === activeId ? 'ring-1 ring-[#5D4037]/50' : ''}`}
+              type="button"
+              onClick={() => {
+                setActiveMachine(p.machine_name);
+                setActiveGrinder(p.grinder_name ?? '');
+                setRigSaved(false);
+              }}
+              className={`w-full glass rounded-2xl px-4 py-3 flex items-center justify-between text-left transition-all active:scale-[0.98] touch-manipulation ${p.id === activeId ? 'ring-1 ring-[#5D4037]/50' : ''}`}
             >
               <div className="min-w-0">
                 <p className="text-[#2C1E16] font-semibold text-sm">{p.machine_name}</p>
-                {p.grinder_name && (
-                  <p className="text-[#7A6858] text-xs mt-0.5">{p.grinder_name}</p>
-                )}
+                {p.grinder_name && <p className="text-[#7A6858] text-xs mt-0.5">{p.grinder_name}</p>}
               </div>
-              {p.id === activeId && (
-                <span className="text-[10px] text-[#5D4037] font-black uppercase tracking-widest shrink-0 ml-3">✓ Active</span>
-              )}
-            </div>
+              {p.id === activeId
+                ? <span className="text-[10px] text-[#5D4037] font-black uppercase tracking-widest shrink-0 ml-3">✓ Active</span>
+                : <span className="text-[10px] text-[#7A6858] uppercase tracking-widest shrink-0 ml-3">Select →</span>
+              }
+            </button>
           ))}
         </div>
       )}
-
-      {/* ── Add equipment ── */}
-      <div className="space-y-3">
-        {!showAdd ? (
-          <button
-            type="button"
-            onClick={() => setShowAdd(true)}
-            className="w-full glass rounded-3xl px-4 py-4 text-[#7A6858] text-sm font-medium hover:text-[#2C1E16] transition-colors flex items-center justify-center gap-2 active:scale-[0.98]"
-          >
-            <span className="text-lg leading-none text-[#5D4037]">+</span>
-            Register Equipment
-          </button>
-        ) : (
-          <form onSubmit={handleAdd} className="glass rounded-3xl p-5 space-y-4">
-            <p className="text-[#2C1E16] font-semibold text-sm">Register Equipment</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className={`${LABEL_CLS} mb-1.5`}>Machine *</p>
-                <input
-                  type="text"
-                  required
-                  placeholder="Lelit Bianca"
-                  value={machineName}
-                  onChange={(e) => setMachineName(e.target.value)}
-                  className={FIELD_CLS}
-                  style={{ fontSize: '16px' }}
-                />
-              </div>
-              <div>
-                <p className={`${LABEL_CLS} mb-1.5`}>Grinder</p>
-                <input
-                  type="text"
-                  placeholder="Niche Zero"
-                  value={grinderName}
-                  onChange={(e) => setGrinderName(e.target.value)}
-                  className={FIELD_CLS}
-                  style={{ fontSize: '16px' }}
-                />
-              </div>
-            </div>
-            {addError && <p className="text-red-600 text-sm">{addError}</p>}
-            <div className="flex gap-3 pt-1">
-              <button
-                type="button"
-                onClick={() => { setShowAdd(false); setAddError(null); }}
-                className="flex-1 bg-[#F5EBD8] border border-[#C8B49A] text-[#2C1E16] font-medium py-3 rounded-2xl transition-all active:scale-[0.97]"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex-1 bg-[#5D4037] text-[#FFFBF4] font-black py-3 rounded-2xl disabled:opacity-60 active:scale-[0.97] transition-all"
-              >
-                {saving ? 'Saving…' : 'Save & Activate'}
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
 
       {/* ── Preferences ── */}
       <div className="glass rounded-3xl px-5 py-4 space-y-4">

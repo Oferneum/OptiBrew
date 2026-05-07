@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ShotForm from '@/components/ShotForm';
 import RecommendationCard from '@/components/RecommendationCard';
+import RetryableRecommendation from '@/components/RetryableRecommendation';
 import ShotCard from '@/components/ShotCard';
 import CoffeeCupLoader from '@/components/CoffeeCupLoader';
 import { supabase } from '@/lib/supabase';
@@ -68,7 +69,7 @@ export default function NewShotPage() {
         </div>
 
         <ShotCard shot={result.shot} />
-        <RecommendationCard rec={{ diagnosis: result.recommendation } as Parameters<typeof RecommendationCard>[0]['rec']} />
+        <RetryableRecommendation shotId={result.shot.id} initialRec={result.recommendation} />
 
         <div className="flex gap-3 pt-2">
           <button
