@@ -41,14 +41,9 @@ export async function analyzeShot(shot: Shot, trendSummary: string = '', weather
     ? `Recent trend: ${trendSummary}`
     : 'No previous shots on record for this bean/equipment combination.';
 
-  const weatherBlock = weatherContext ? `\nAmbient conditions when this shot was pulled: ${weatherContext}.
-Weather context rules (apply only when extreme — otherwise ignore entirely):
-- Humidity >75%: beans absorb moisture and swell, slowing extraction — factor this into your diagnosis if the shot ran long or under-extracted.
-- Humidity <35%: beans are dry and dense, extracting faster than usual — factor this in if the shot ran short or over-extracted.
-- Temperature >30°C: ambient heat accelerates extraction and affects equipment temperature stability.
-- Temperature <15°C: cold equipment thermalises slowly — relevant if the shot was inconsistent early on.
-- If conditions are extreme, weave the environmental context naturally into your diagnosis without stating exact numbers.
-- If conditions are normal (35–75% humidity, 15–30°C): ignore weather entirely.` : '';
+  const weatherBlock = weatherContext
+    ? `\nEnvironmental context: ${weatherContext} — weave this naturally into your diagnosis as an extraction factor; do not repeat the numbers verbatim.`
+    : '';
 
   const prompt = `You are Dialed, a professional barista coach. Analyze this shot and give a sharp, personalized 2-sentence response.
 

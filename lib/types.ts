@@ -33,6 +33,8 @@ export interface Shot {
   brew_method?: BrewMethod | null;
   has_milk?: boolean | null;
   recommendation?: string | null;
+  ambient_temp?: number | null;
+  humidity?: number | null;
   beans?: { roaster: string; origin: string; bag_name?: string | null } | null;
 }
 

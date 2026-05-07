@@ -512,7 +512,8 @@ export default function ShotForm({
   const [timeMode, setTimeMode] = useState<'timer' | 'manual'>('timer');
   const manualInputRef = useRef<HTMLInputElement>(null);
 
-  const [grindPrediction, setGrindPrediction] = useState<GrindPrediction | null>(null);
+  const [grindPrediction, setGrindPrediction]   = useState<GrindPrediction | null>(null);
+  const [weatherBaseline, setWeatherBaseline]   = useState<{ humidity: number; temp: number } | null>(null);
 
   const equipmentIdRef = useRef<string | null>(null);
   const [rigName, setRigName] = useState<string | null>(null);
@@ -544,22 +545,29 @@ export default function ShotForm({
     if (timerRAFRef.current !== null) cancelAnimationFrame(timerRAFRef.current);
   }, []);
 
-  // Fetch grind prediction when bean + equipment are both ready
+  // Fetch grind prediction + weather baseline when bean + equipment are both ready
   useEffect(() => {
     const beanId  = selectedBean?.id;
     const equipId = equipmentIdRef.current;
-    if (!beanId || !equipId) { setGrindPrediction(null); return; }
+    if (!beanId || !equipId) { setGrindPrediction(null); setWeatherBaseline(null); return; }
 
     supabase
       .from('shots')
-      .select('grind_setting, extraction_time')
+      .select('grind_setting, extraction_time, overall_score, humidity, ambient_temp')
       .eq('bean_id', beanId)
       .eq('equipment_id', equipId)
-      .not('grind_setting', 'is', null)
-      .not('extraction_time', 'is', null)
       .order('created_at', { ascending: false })
-      .limit(5)
-      .then(({ data }) => setGrindPrediction(data ? predictGrind(data) : null));
+      .limit(10)
+      .then(({ data }) => {
+        setGrindPrediction(data ? predictGrind(data) : null);
+        // Last good shot (score ≥ 7) with recorded weather becomes the baseline
+        const baseline = data?.find(
+          (s) => (s.overall_score ?? 0) >= 7 && s.humidity != null && s.ambient_temp != null,
+        );
+        setWeatherBaseline(
+          baseline ? { humidity: baseline.humidity as number, temp: baseline.ambient_temp as number } : null,
+        );
+      });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBean?.id, rigReady]);
 
@@ -647,7 +655,8 @@ export default function ShotForm({
           brew_method:     form.brew_method,
           has_milk:        form.has_milk,
           bean_id:         selectedBean?.id ?? null,
-          weather_context: weather ? `${weather.temp}°C, ${weather.humidity}% humidity` : undefined,
+          ambient_temp: weather?.temp    ?? null,
+          humidity:     weather?.humidity ?? null,
         }),
       });
       const data = await res.json();
@@ -659,6 +668,24 @@ export default function ShotForm({
   }
 
   const isEspresso = form.brew_method === 'Espresso';
+
+  // Relative weather nudge — only fires when delta vs last good shot is significant
+  const weatherNudge: string | null = (() => {
+    if (!weather || !weatherBaseline) return null;
+    const dH = weather.humidity - weatherBaseline.humidity;
+    const dT = weather.temp     - weatherBaseline.temp;
+    if (Math.abs(dH) > 15) {
+      return dH > 0
+        ? `Humidity is ${Math.round(dH)}% higher than your last good shot — beans may have absorbed moisture, try a touch coarser`
+        : `Humidity is ${Math.abs(Math.round(dH))}% lower than your last good shot — beans are drier, try a touch finer`;
+    }
+    if (Math.abs(dT) > 7) {
+      return dT > 0
+        ? `${Math.round(dT)}°C warmer than your last good shot — watch for faster extraction`
+        : `${Math.abs(Math.round(dT))}°C cooler than your last good shot — allow extra warm-up time`;
+    }
+    return null;
+  })();
 
   return (
     <form onSubmit={handleSubmit} className="px-4 pb-8 space-y-4">
@@ -786,14 +813,9 @@ export default function ShotForm({
               <p className="readout text-[10px] text-[#7A6858] mt-1">
                 {grindPrediction.basedOn.map((p) => `⌀${p.grind} → ${p.time}s`).join(' · ')}
               </p>
-              {weather && (() => {
-                const { temp, humidity } = weather;
-                if (humidity > 75) return <p className="text-[10px] text-[#5D4037] font-bold mt-2">💧 {humidity}% humidity today — consider going 0.5–1 click coarser</p>;
-                if (humidity < 35) return <p className="text-[10px] text-[#5D4037] font-bold mt-2">🌵 {humidity}% humidity today — consider going 0.5 click finer</p>;
-                if (temp > 30)     return <p className="text-[10px] text-[#5D4037] font-bold mt-2">🌡 {temp}°C today — watch for faster extraction than usual</p>;
-                if (temp < 15)     return <p className="text-[10px] text-[#5D4037] font-bold mt-2">❄️ {temp}°C today — give your machine an extra warm-up purge</p>;
-                return null;
-              })()}
+              {weatherNudge && (
+                <p className="text-[10px] text-[#5D4037] font-bold mt-2">⚠ {weatherNudge}</p>
+              )}
             </div>
             <button
               type="button"
