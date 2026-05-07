@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useDelayedLoader } from '@/hooks/useDelayedLoader';
 import PageLoader from '@/components/PageLoader';
 import ShotCard from '@/components/ShotCard';
 import Link from 'next/link';
@@ -25,7 +24,6 @@ function ShotsSkeleton() {
 export default function ShotsPage() {
   const [shots, setShots]     = useState<Shot[]>([]);
   const [loading, setLoading] = useState(true);
-  const showLoader            = useDelayedLoader(loading);
   const [error, setError]     = useState<string | null>(null);
 
   useEffect(() => {
@@ -60,7 +58,7 @@ export default function ShotsPage() {
       </div>
 
       {loading ? (
-        showLoader ? <PageLoader /> : null
+        <PageLoader />
       ) : error ? (
         <div className="p-4 text-red-600 text-sm">Failed to load shots: {error}</div>
       ) : shots.length === 0 ? (

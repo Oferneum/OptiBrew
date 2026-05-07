@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useDelayedLoader } from '@/hooks/useDelayedLoader';
 import PageLoader from '@/components/PageLoader';
 import DialInChart from '@/components/DialInChart';
 import type { ShotPoint } from '@/components/DialInChart';
@@ -241,7 +240,6 @@ function AnalyticsSkeleton() {
 export default function AnalyticsPage() {
   const [shots, setShots]             = useState<AnalyticsShot[]>([]);
   const [loading, setLoading]         = useState(true);
-  const showLoader                    = useDelayedLoader(loading);
   const [filter, setFilter]           = useState<FilterMode>('all');
   const [activeMachine, setActiveMachine] = useState<string | null>(null);
   const [activeGrinder, setActiveGrinder] = useState<string | null>(null);
@@ -366,7 +364,7 @@ export default function AnalyticsPage() {
       </div>
 
       {loading ? (
-        showLoader ? <PageLoader /> : null
+        <PageLoader />
       ) : (
         <>
           {/* ── Stats strip ── */}

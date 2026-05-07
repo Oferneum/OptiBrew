@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useDelayedLoader } from '@/hooks/useDelayedLoader';
 import PageLoader from '@/components/PageLoader';
 import type { EquipmentProfile } from '@/lib/types';
 
@@ -248,8 +247,7 @@ export default function SettingsPage() {
     window.location.href = '/login';
   }
 
-  const showLoader = useDelayedLoader(!mounted);
-  if (!mounted) return showLoader ? <PageLoader /> : null;
+  if (!mounted) return <PageLoader />;
 
   return (
     <div className="p-4 space-y-5 max-w-lg mx-auto">
