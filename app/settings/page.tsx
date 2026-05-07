@@ -127,7 +127,7 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={handleSignOut}
-            className="shrink-0 text-[#FF4500] text-xs font-black uppercase tracking-widest px-3 py-2 rounded-xl hover:bg-[#FF4500]/10 transition-colors touch-manipulation"
+            className="shrink-0 text-[#5D4037] text-xs font-black uppercase tracking-widest px-3 py-2 rounded-xl hover:bg-[#5D4037]/10 transition-colors touch-manipulation"
           >
             Sign Out
           </button>
@@ -200,7 +200,7 @@ export default function SettingsPage() {
             onClick={() => setShowAdd(true)}
             className="w-full glass rounded-3xl px-4 py-4 text-[#7A6858] text-sm font-medium hover:text-[#2C1E16] transition-colors flex items-center justify-center gap-2 active:scale-[0.98]"
           >
-            <span className="text-lg leading-none text-[#FF4500]">+</span>
+            <span className="text-lg leading-none text-[#5D4037]">+</span>
             Add Equipment
           </button>
         ) : (
@@ -208,7 +208,7 @@ export default function SettingsPage() {
             <p className="text-[#2C1E16] font-semibold text-sm">New Equipment</p>
             <div>
               <p className={`${LABEL_CLS} mb-1.5`}>
-                Machine Name <span className="text-[#FF4500] opacity-60 normal-case tracking-normal">*</span>
+                Machine Name <span className="text-[#5D4037] opacity-60 normal-case tracking-normal">*</span>
               </p>
               <input
                 type="text"
@@ -292,7 +292,7 @@ export default function SettingsPage() {
             <p className="text-[#2C1E16] text-sm font-semibold">Leave Feedback</p>
             <p className="text-[#7A6858] text-xs mt-0.5">Tell us what you think or report an issue</p>
           </div>
-          <span className="text-[#FF4500] font-bold text-lg ml-3">→</span>
+          <span className="text-[#5D4037] font-bold text-lg ml-3">→</span>
         </a>
       </div>
 

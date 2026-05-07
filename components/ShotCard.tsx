@@ -49,7 +49,7 @@ export default function ShotCard({ shot }: { shot: Shot }) {
           </div>
           {shot.beans && (
             <div className="flex items-center gap-1.5">
-              <span className="w-1 h-1 rounded-full bg-[#FF4500] shrink-0" />
+              <span className="w-1 h-1 rounded-full bg-[#5D4037] shrink-0" />
               <span className="text-[#7A6858] text-[11px] truncate">
                 {shot.beans.roaster} · {shot.beans.origin}
               </span>
@@ -57,7 +57,7 @@ export default function ShotCard({ shot }: { shot: Shot }) {
           )}
         </div>
         {shot.overall_score != null && (
-          <span className="readout font-black text-sm text-[#FF4500] shrink-0">
+          <span className="readout font-black text-sm text-[#5D4037] shrink-0">
             {shot.overall_score}/10
           </span>
         )}
@@ -67,7 +67,7 @@ export default function ShotCard({ shot }: { shot: Shot }) {
       <div className="flex flex-wrap gap-x-4 gap-y-1">
         <span className="readout text-sm font-bold text-[#2C1E16]">{shot.dose}g → {shot.yield}g</span>
         {ratio && (
-          <span className="readout text-sm font-black text-[#FF4500]">
+          <span className="readout text-sm font-black text-[#5D4037]">
             {ratio}
           </span>
         )}
@@ -99,7 +99,7 @@ export default function ShotCard({ shot }: { shot: Shot }) {
 
       {/* Notes */}
       {shot.notes && (
-        <p className="text-[#7A6858] text-xs leading-relaxed line-clamp-2 border-l-2 border-[#FF4500]/40 pl-2">
+        <p className="text-[#7A6858] text-xs leading-relaxed line-clamp-2 border-l-2 border-[#5D4037]/30 pl-2">
           {shot.notes}
         </p>
       )}

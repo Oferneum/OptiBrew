@@ -56,10 +56,10 @@ export default async function VfmLeaderboardPage() {
               </div>
 
               <div className="text-right shrink-0">
-                <p className="readout text-[#FF4500] font-bold text-2xl leading-none">{bean.vfm!.toFixed(1)}</p>
+                <p className="readout text-[#5D4037] font-bold text-2xl leading-none">{bean.vfm!.toFixed(1)}</p>
                 <p className="text-[10px] uppercase tracking-widest text-[#7A6858] font-bold mt-0.5">VFM</p>
                 {bean.isActive && (
-                  <span className="text-[9px] font-bold tracking-widest uppercase text-[#FF4500] opacity-70">Active</span>
+                  <span className="text-[9px] font-bold tracking-widest uppercase text-[#5D4037] opacity-70">Active</span>
                 )}
               </div>
             </div>

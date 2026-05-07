@@ -51,7 +51,7 @@ export default function ShotsPage() {
     <div className="p-4 space-y-4">
       <div className="flex justify-between items-center pt-6 pb-1">
         <h1 className="text-[#2C1E16] font-bold text-2xl tracking-tight">Shot History</h1>
-        <Link href="/shots/new" className="text-[#FF4500] text-sm font-medium transition-colors">
+        <Link href="/shots/new" className="text-[#5D4037] text-sm font-medium transition-colors">
           + New
         </Link>
       </div>
@@ -72,7 +72,7 @@ export default function ShotsPage() {
             </svg>
           </div>
           <p className="text-[#2C1E16] font-semibold text-base mb-2">No shots logged yet</p>
-          <Link href="/shots/new" className="text-[#FF4500] font-medium text-sm transition-colors">
+          <Link href="/shots/new" className="text-[#5D4037] font-medium text-sm transition-colors">
             Log your first shot →
           </Link>
         </div>

@@ -9,12 +9,20 @@ export interface ShotPoint {
   extraction_time: number;
   overall_score: number;
   grind_setting?: string | null;
+  dose?: number | null;
+  yield?: number | null;
+  bean_label?: string | null;
+  equipment_name?: string | null;
 }
 
 interface ChartPoint {
   x: number;
   y: number;
   grind_setting?: string | null;
+  dose?: number | null;
+  yield?: number | null;
+  bean_label?: string | null;
+  equipment_name?: string | null;
   source: 'shot' | 'trend';
 }
 
@@ -40,13 +48,31 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   if (d.source !== 'shot') return null;
+
+  const ratio = d.dose && d.yield ? `1:${(d.yield / d.dose).toFixed(2)}` : null;
+
   return (
-    <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.10)] p-3 text-[#3C2A21]">
-      <p className="readout font-bold text-base leading-none">{d.y}/10</p>
-      <p className="text-[#8A7B72] text-xs mt-1">{d.x}s extraction</p>
-      {d.grind_setting && (
-        <p className="text-[#8A7B72] text-xs">grind {d.grind_setting}</p>
+    <div style={{ background: '#FAF3E6', border: '1px solid #C8B49A', borderRadius: 14, padding: '12px 14px', minWidth: 160, boxShadow: '0 4px 20px rgba(44,30,22,0.12)' }}>
+      <p style={{ fontFamily: 'var(--font-space-mono)', fontWeight: 900, fontSize: 18, color: '#5D4037', lineHeight: 1, marginBottom: 6 }}>
+        {d.y}/10
+      </p>
+      {d.bean_label && (
+        <p style={{ fontSize: 11, color: '#2C1E16', fontWeight: 600, marginBottom: 2 }}>{d.bean_label}</p>
       )}
+      {d.equipment_name && (
+        <p style={{ fontSize: 11, color: '#7A6858', marginBottom: 4 }}>{d.equipment_name}</p>
+      )}
+      <div style={{ borderTop: '1px solid #C8B49A', paddingTop: 6, marginTop: 4, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <span style={{ fontFamily: 'var(--font-space-mono)', fontSize: 10, color: '#7A6858' }}>{d.x}s</span>
+        {d.dose && d.yield && (
+          <span style={{ fontFamily: 'var(--font-space-mono)', fontSize: 10, color: '#7A6858' }}>
+            {d.dose}→{d.yield}g{ratio ? ` (${ratio})` : ''}
+          </span>
+        )}
+        {d.grind_setting && (
+          <span style={{ fontFamily: 'var(--font-space-mono)', fontSize: 10, color: '#7A6858' }}>⌀{d.grind_setting}</span>
+        )}
+      </div>
     </div>
   );
 }
@@ -54,7 +80,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<
 export default function DialInChart({ shots }: { shots: ShotPoint[] }) {
   if (shots.length === 0) {
     return (
-      <div className="h-[260px] flex items-center justify-center text-[#AFA096] text-sm">
+      <div className="h-[260px] flex items-center justify-center text-[#7A6858] text-sm">
         Log scored shots to see your dial-in chart.
       </div>
     );
@@ -63,7 +89,11 @@ export default function DialInChart({ shots }: { shots: ShotPoint[] }) {
   const chartPoints: ChartPoint[] = shots.map((s) => ({
     x: s.extraction_time,
     y: s.overall_score,
-    grind_setting: s.grind_setting,
+    grind_setting:  s.grind_setting,
+    dose:           s.dose,
+    yield:          s.yield,
+    bean_label:     s.bean_label,
+    equipment_name: s.equipment_name,
     source: 'shot',
   }));
 
@@ -97,7 +127,7 @@ export default function DialInChart({ shots }: { shots: ShotPoint[] }) {
           tickLine={false}
           axisLine={false}
         />
-        <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#E8E2D9', strokeDasharray: '4 4' }} />
+        <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#C8B49A', strokeDasharray: '4 4' }} />
 
         {/* Trend line */}
         {trendData.length === 2 && (
@@ -105,7 +135,7 @@ export default function DialInChart({ shots }: { shots: ShotPoint[] }) {
             data={trendData}
             dataKey="y"
             type="linear"
-            stroke="#FF4500"
+            stroke="#5D4037"
             strokeWidth={1.5}
             strokeDasharray="5 4"
             dot={false}
@@ -118,8 +148,8 @@ export default function DialInChart({ shots }: { shots: ShotPoint[] }) {
         {/* Scatter dots */}
         <Scatter
           data={chartPoints}
-          fill="#C85A32"
-          fillOpacity={0.7}
+          fill="#5D4037"
+          fillOpacity={0.65}
           strokeWidth={0}
           r={5}
         />

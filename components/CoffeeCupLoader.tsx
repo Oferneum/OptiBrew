@@ -31,9 +31,9 @@ export default function CoffeeCupLoader({ size = 64 }: Props) {
             <stop offset="100%" stopColor="#6B2D0F" stopOpacity="0.95" />
           </linearGradient>
         </defs>
-        <path className="ccl-sa" d="M22 21 C20 16 24 12 22 7"  stroke="#FF4500" strokeWidth="1.5" strokeLinecap="round" />
-        <path className="ccl-sb" d="M32 19 C30 14 34 10 32 5"  stroke="#FFC107" strokeWidth="1.5" strokeLinecap="round" />
-        <path className="ccl-sc" d="M42 21 C44 16 40 12 42 7"  stroke="#FF4500" strokeWidth="1.5" strokeLinecap="round" />
+        <path className="ccl-sa" d="M22 21 C20 16 24 12 22 7"  stroke="#5D4037" strokeWidth="1.5" strokeLinecap="round" />
+        <path className="ccl-sb" d="M32 19 C30 14 34 10 32 5"  stroke="#7A6858" strokeWidth="1.5" strokeLinecap="round" />
+        <path className="ccl-sc" d="M42 21 C44 16 40 12 42 7"  stroke="#5D4037" strokeWidth="1.5" strokeLinecap="round" />
         <g clipPath="url(#ccl-clip)">
           <rect className="ccl-fill" x="6" y="22" width="52" height="44" fill="url(#ccl-grad)" />
         </g>

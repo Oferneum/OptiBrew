@@ -31,9 +31,9 @@ html { background: #EDE4D3; }
 body {
   background-color: #EDE4D3;
   background-image:
-    radial-gradient(ellipse 80% 55% at 8% -5%,   rgba(255, 69,  0, 0.07) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 55% at 8% -5%,   rgba(93, 64, 55, 0.07) 0%, transparent 55%),
     radial-gradient(ellipse 65% 50% at 92% 108%,  rgba(193,132, 74, 0.09) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 40% at 72% 28%,   rgba(255,193,  7, 0.05) 0%, transparent 50%);
+    radial-gradient(ellipse 50% 40% at 72% 28%,   rgba(139, 94, 64, 0.05) 0%, transparent 50%);
   color: #2C1E16;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;

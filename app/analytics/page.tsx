@@ -35,18 +35,26 @@ function AnalyticsSkeleton() {
 async function AnalyticsContent() {
   const { data } = await supabase
     .from('shots')
-    .select('extraction_time, overall_score, grind_setting')
+    .select('extraction_time, overall_score, grind_setting, dose, yield, beans(roaster, origin, bag_name), equipment_profiles(machine_name)')
     .not('overall_score', 'is', null)
     .not('extraction_time', 'is', null)
     .order('created_at', { ascending: false });
 
   const shots: ShotPoint[] = (data ?? [])
     .filter((s) => s.extraction_time != null && s.overall_score != null)
-    .map((s) => ({
-      extraction_time: s.extraction_time as number,
-      overall_score:   s.overall_score as number,
-      grind_setting:   s.grind_setting ?? null,
-    }));
+    .map((s) => {
+      const b = s.beans as { roaster?: string; origin?: string; bag_name?: string | null } | null;
+      const eq = s.equipment_profiles as { machine_name?: string } | null;
+      return {
+        extraction_time: s.extraction_time as number,
+        overall_score:   s.overall_score as number,
+        grind_setting:   s.grind_setting ?? null,
+        dose:            s.dose ?? null,
+        yield:           (s.yield as number | null) ?? null,
+        bean_label:      b ? (b.bag_name ? `${b.roaster} · ${b.bag_name}` : `${b.roaster} · ${b.origin}`) : null,
+        equipment_name:  eq?.machine_name ?? null,
+      };
+    });
 
   const avgScore = shots.length > 0
     ? (shots.reduce((acc, s) => acc + s.overall_score, 0) / shots.length).toFixed(1)
@@ -65,15 +73,15 @@ async function AnalyticsContent() {
       <div className="grid grid-cols-3 gap-3">
         <div className="glass rounded-3xl p-4">
           <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#7A6858] mb-1">Shots</p>
-          <p className="readout text-[#FF4500] font-bold text-2xl leading-none">{shots.length}</p>
+          <p className="readout text-[#5D4037] font-bold text-2xl leading-none">{shots.length}</p>
         </div>
         <div className="glass rounded-3xl p-4">
           <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#7A6858] mb-1">Avg Score</p>
-          <p className="readout text-[#FF4500] font-bold text-2xl leading-none">{avgScore ?? '—'}</p>
+          <p className="readout text-[#5D4037] font-bold text-2xl leading-none">{avgScore ?? '—'}</p>
         </div>
         <div className="glass rounded-3xl p-4">
           <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#7A6858] mb-1">Best</p>
-          <p className="readout text-[#FF4500] font-bold text-2xl leading-none">{bestScore ?? '—'}</p>
+          <p className="readout text-[#5D4037] font-bold text-2xl leading-none">{bestScore ?? '—'}</p>
         </div>
       </div>
 

@@ -110,7 +110,7 @@ export default function BeanCard({ bean }: { bean: BeanVFMData }) {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {bean.isActive && (
-            <span className="text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 bg-[#FF4500]/12 text-[#C23A00] rounded-full">
+            <span className="text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 bg-[#5D4037]/12 text-[#5D4037] rounded-full">
               Active
             </span>
           )}
@@ -150,7 +150,7 @@ export default function BeanCard({ bean }: { bean: BeanVFMData }) {
             </span>
           )}
           {bean.avgScore != null && (
-            <span className="readout text-xs font-bold px-2.5 py-1 bg-[#FF4500]/12 text-[#C23A00] rounded-full">
+            <span className="readout text-xs font-bold px-2.5 py-1 bg-[#5D4037]/12 text-[#5D4037] rounded-full">
               avg {bean.avgScore.toFixed(1)}/10
             </span>
           )}

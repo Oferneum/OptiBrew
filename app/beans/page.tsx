@@ -25,7 +25,7 @@ export default async function BeansPage() {
           </span>
         </div>
         {activeBeans.length > 0 && (
-          <p className="text-[#FF4500] text-xs font-bold mt-1.5">
+          <p className="text-[#5D4037] text-xs font-bold mt-1.5">
             {activeBeans.length} active bag{activeBeans.length !== 1 ? 's' : ''} in rotation
           </p>
         )}
@@ -37,14 +37,14 @@ export default async function BeansPage() {
         className="flex items-center justify-between glass rounded-3xl px-5 py-4 border border-[#C8B49A] transition-colors active:border-[#5D4037]/40"
       >
         <div>
-          <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#FF4500]">
+          <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#5D4037]">
             Community Rankings
           </p>
           <p className="text-[#2C1E16] font-semibold text-sm mt-0.5">
             🏆 Value for Money Leaderboard
           </p>
         </div>
-        <span className="text-[#FF4500] font-bold text-lg">→</span>
+        <span className="text-[#5D4037] font-bold text-lg">→</span>
       </Link>
 
       {/* ── Bean list ── */}
@@ -54,7 +54,7 @@ export default async function BeansPage() {
           <p className="text-[#7A6858] text-sm">Be the first — add a bag when logging a shot.</p>
           <Link
             href="/shots/new"
-            className="inline-block mt-4 text-[#FF4500] text-sm font-medium transition-colors"
+            className="inline-block mt-4 text-[#5D4037] text-sm font-medium transition-colors"
           >
             Log a shot →
           </Link>

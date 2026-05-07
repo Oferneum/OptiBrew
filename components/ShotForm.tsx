@@ -659,7 +659,7 @@ export default function ShotForm({
                   }}
                   className={`flex flex-col items-center justify-center gap-1.5 min-h-[56px] py-2 rounded-xl border text-[9px] font-black tracking-wider uppercase transition-all duration-150 touch-manipulation ${
                     active
-                      ? 'bg-gradient-to-b from-[#FF4500] to-[#FFC107] text-black border-transparent shadow-lg shadow-[#FF4500]/25'
+                      ? 'bg-[#5D4037] text-[#FFFBF4] border-transparent shadow-lg shadow-[#5D4037]/25'
                       : 'bg-[#F5EBD8] border-[#C8B49A] text-[#7A6858] active:scale-95'
                   }`}
                 >
@@ -693,7 +693,7 @@ export default function ShotForm({
           rigName ? (
             <div className="flex items-center justify-between min-h-[44px]">
               <div className="flex items-center gap-2.5">
-                <span className="w-2 h-2 rounded-full bg-[#FF4500] shrink-0" style={{ boxShadow: '0 0 6px #FF4500' }} />
+                <span className="w-2 h-2 rounded-full bg-[#5D4037] shrink-0" />
                 <span className="text-[#2C1E16] text-sm font-black uppercase tracking-wide">{rigName}</span>
               </div>
               <Link
@@ -770,7 +770,7 @@ export default function ShotForm({
         {brewRatio > 0 && (
           <div className="bg-[#F5EBD8] border border-[#C8B49A] rounded-2xl px-4 py-3 flex items-center justify-between">
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#7A6858]">Brew Ratio</span>
-            <span className="readout font-black text-lg text-[#FF4500]">
+            <span className="readout font-black text-lg text-[#5D4037]">
               1:{brewRatio.toFixed(2)}
             </span>
           </div>
@@ -789,7 +789,7 @@ export default function ShotForm({
                     onClick={() => setTimeMode('timer')}
                     className={`min-h-[48px] text-xs font-black tracking-widest uppercase transition-all border-r border-[#C8B49A] touch-manipulation ${
                       timeMode === 'timer'
-                        ? 'bg-gradient-to-r from-[#FF4500] to-[#FFC107] text-black'
+                        ? 'bg-[#5D4037] text-[#FFFBF4]'
                         : 'bg-transparent text-[#7A6858]'
                     }`}
                   >
@@ -800,7 +800,7 @@ export default function ShotForm({
                     onClick={switchToManual}
                     className={`min-h-[48px] text-xs font-black tracking-widest uppercase transition-all touch-manipulation ${
                       timeMode === 'manual'
-                        ? 'bg-gradient-to-r from-[#FF4500] to-[#FFC107] text-black'
+                        ? 'bg-[#5D4037] text-[#FFFBF4]'
                         : 'bg-transparent text-[#7A6858]'
                     }`}
                   >
@@ -814,7 +814,7 @@ export default function ShotForm({
                     <div
                       className={`readout font-black tracking-wider tabular-nums select-none ${
                         timerRunning
-                          ? 'bg-gradient-to-r from-[#FF4500] to-[#FFC107] bg-clip-text text-transparent'
+                          ? 'text-[#5D4037]'
                           : timerMs > 0
                             ? 'text-[#2C1E16]'
                             : 'text-[#2C1E16]/20'
@@ -830,8 +830,8 @@ export default function ShotForm({
                       onClick={handleTimerToggle}
                       className={`flex-1 py-4 min-h-[56px] rounded-xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 touch-manipulation ${
                         timerRunning
-                          ? 'bg-[#F5EBD8] border border-[#FF4500]/60 text-[#FF4500]'
-                          : 'bg-gradient-to-r from-[#FF4500] to-[#FFC107] text-black shadow-lg shadow-[#FF4500]/30'
+                          ? 'bg-[#F5EBD8] border border-[#5D4037]/60 text-[#5D4037]'
+                          : 'bg-[#5D4037] text-[#FFFBF4] shadow-lg shadow-[#5D4037]/30'
                       }`}
                     >
                       {timerRunning ? '■ Stop' : timerMs > 0 ? '▶ Resume' : '▶ Start'}
@@ -943,7 +943,7 @@ export default function ShotForm({
                   onClick={() => toggleFlavor(tag)}
                   className={`px-5 text-sm font-black uppercase tracking-wider transition-all duration-150 min-h-[56px] rounded-xl border touch-manipulation ${
                     active
-                      ? 'bg-gradient-to-r from-[#FF4500] to-[#FFC107] text-black border-transparent shadow-lg shadow-[#FF4500]/25'
+                      ? 'bg-[#5D4037] text-[#FFFBF4] border-transparent shadow-lg shadow-[#5D4037]/25'
                       : 'bg-[#F5EBD8] border-[#C8B49A] text-[#7A6858] active:scale-95'
                   }`}
                 >
@@ -966,7 +966,7 @@ export default function ShotForm({
                   onClick={() => setForm((f) => ({ ...f, overall_score: n }))}
                   className={`w-12 h-12 rounded-xl border text-sm font-black transition-all duration-150 touch-manipulation ${
                     active
-                      ? 'bg-gradient-to-br from-[#FF4500] to-[#FFC107] text-black border-transparent shadow-lg shadow-[#FF4500]/25'
+                      ? 'bg-[#5D4037] text-[#FFFBF4] border-transparent shadow-lg shadow-[#5D4037]/25'
                       : 'bg-[#F5EBD8] border-[#C8B49A] text-[#7A6858] active:scale-95'
                   }`}
                 >
