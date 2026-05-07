@@ -14,11 +14,12 @@ export interface BagScanOutput {
  * then BrewRecommendationAgent generates personalised first-shot parameters.
  */
 export async function orchestrateBagScan(
-  images:      ImageInput[],
-  userContext?: UserContext,
+  images:          ImageInput[],
+  userContext?:    UserContext,
+  weatherContext?: string,
 ): Promise<BagScanOutput> {
   const scan           = await scanBagImage(images);
-  const recommendation = await getStartupRecommendation(scan, userContext);
+  const recommendation = await getStartupRecommendation(scan, userContext, weatherContext);
   return { scan, recommendation };
 }
 

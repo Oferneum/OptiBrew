@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Coffee, Milk } from 'lucide-react';
 import { computeBrewRatio } from '@/lib/analytics';
 import { supabase } from '@/lib/supabase';
+import { predictGrind } from '@/lib/grind-predictor';
+import type { GrindPrediction } from '@/lib/grind-predictor';
 import type { FlavorTag, Shot, BrewMethod } from '@/lib/types';
 
 async function authHeaders(): Promise<Record<string, string>> {
@@ -134,6 +136,7 @@ interface BeanSearchProps {
   onSelect: (id: string, label: string) => void;
   onClear: () => void;
   selected: { id: string; label: string } | null;
+  weather?: { temp: number; humidity: number } | null;
 }
 
 interface NewBagForm { origin: string; roaster: string; bag_name: string; price_paid: string; weight_grams: string; }
@@ -157,7 +160,7 @@ function compressImage(file: File, maxPx = 800, quality = 0.7): Promise<Blob> {
   });
 }
 
-function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
+function BeanSearch({ onSelect, onClear, selected, weather }: BeanSearchProps) {
   const [allBeans, setAllBeans] = useState<BeanEntry[]>([]);
   const [loadingBeans, setLoadingBeans] = useState(true);
   const [showNewBag, setShowNewBag] = useState(false);
@@ -203,6 +206,7 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
       const fd = new FormData();
       fd.append('image', frontBlob, 'front.jpg');
       if (backBlob) fd.append('image', backBlob, 'back.jpg');
+      if (weather) fd.append('weather', `${weather.temp}°C, ${weather.humidity}% humidity`);
       const res = await fetch('/api/scan-bag', { method: 'POST', body: fd, headers: await authHeaders() });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -483,9 +487,11 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
 export default function ShotForm({
   onSuccess,
   onSubmitting,
+  weather,
 }: {
   onSuccess: (shot: Shot, recommendation: string) => void;
   onSubmitting?: () => void;
+  weather?: { temp: number; humidity: number } | null;
 }) {
   const [form, setForm] = useState<FormState>({
     dose: '', yieldG: '', extraction_time: '', brew_temp: '',
@@ -507,6 +513,8 @@ export default function ShotForm({
 
   const [timeMode, setTimeMode] = useState<'timer' | 'manual'>('timer');
   const manualInputRef = useRef<HTMLInputElement>(null);
+
+  const [grindPrediction, setGrindPrediction] = useState<GrindPrediction | null>(null);
 
   const equipmentIdRef = useRef<string | null>(null);
   const [rigName, setRigName] = useState<string | null>(null);
@@ -537,6 +545,25 @@ export default function ShotForm({
   useEffect(() => () => {
     if (timerRAFRef.current !== null) cancelAnimationFrame(timerRAFRef.current);
   }, []);
+
+  // Fetch grind prediction when bean + equipment are both ready
+  useEffect(() => {
+    const beanId  = selectedBean?.id;
+    const equipId = equipmentIdRef.current;
+    if (!beanId || !equipId) { setGrindPrediction(null); return; }
+
+    supabase
+      .from('shots')
+      .select('grind_setting, extraction_time')
+      .eq('bean_id', beanId)
+      .eq('equipment_id', equipId)
+      .not('grind_setting', 'is', null)
+      .not('extraction_time', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(5)
+      .then(({ data }) => setGrindPrediction(data ? predictGrind(data) : null));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBean?.id, rigReady]);
 
   function handleTimerToggle() {
     if (timerRunningRef.current) {
@@ -723,6 +750,7 @@ export default function ShotForm({
             selected={selectedBean}
             onSelect={(id, label) => setSelectedBean({ id, label })}
             onClear={() => setSelectedBean(null)}
+            weather={weather}
           />
         </div>
         <div>
@@ -737,6 +765,40 @@ export default function ShotForm({
           />
         </div>
       </div>
+
+      {/* ── Smart Dial-in (Espresso only, when prediction available) ── */}
+      {grindPrediction && isEspresso && (
+        <div className="glass-display rounded-2xl p-4 border border-[#C8B49A]">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="bg-[#5D4037] p-1 rounded-md shrink-0">
+              <svg className="w-3.5 h-3.5 text-[#FFFBF4]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" />
+              </svg>
+            </div>
+            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[#7A6858]">Smart Dial-in</span>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[#2C1E16] font-semibold text-base leading-tight">
+                Try grind{' '}
+                <span className="readout font-black text-[#5D4037]">⌀{grindPrediction.grindSetting}</span>
+                {' '}
+                <span className="text-[#7A6858] font-normal text-sm">to hit {grindPrediction.targetTime}s</span>
+              </p>
+              <p className="readout text-[10px] text-[#7A6858] mt-1">
+                {grindPrediction.basedOn.map((p) => `⌀${p.grind} → ${p.time}s`).join(' · ')}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, grind_setting: String(grindPrediction.grindSetting) }))}
+              className="shrink-0 px-4 py-2.5 bg-[#5D4037] text-[#FFFBF4] text-xs font-black uppercase tracking-wider rounded-xl active:scale-95 transition-all touch-manipulation"
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Card 3: Extraction ─────────────────────────── */}
       <div className={CARD}>

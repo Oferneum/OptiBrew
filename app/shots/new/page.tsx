@@ -14,12 +14,39 @@ export default function NewShotPage() {
   const [result, setResult]           = useState<{ shot: Shot; recommendation: string } | null>(null);
   const [submitting, setSubmitting]   = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [weather, setWeather]         = useState<{ temp: number; humidity: number } | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) router.replace('/login');
       else setAuthChecked(true);
     });
+  }, []);
+
+  // Silent background weather fetch — never blocks the form, never shows errors
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude: lat, longitude: lon } = pos.coords;
+          const res = await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m`,
+          );
+          if (!res.ok) return;
+          const data = await res.json();
+          const c = data?.current;
+          if (c?.temperature_2m != null && c?.relative_humidity_2m != null) {
+            setWeather({
+              temp:     Math.round(c.temperature_2m * 10) / 10,
+              humidity: Math.round(c.relative_humidity_2m),
+            });
+          }
+        } catch { /* silent */ }
+      },
+      () => { /* geolocation denied — silent */ },
+      { timeout: 5000, maximumAge: 300_000 },
+    );
   }, []);
 
   if (!authChecked) return null;
@@ -108,6 +135,7 @@ export default function NewShotPage() {
         <p className="text-[#7A6858] text-[10px] font-bold uppercase tracking-[0.2em] mt-1">Extraction Parameters</p>
       </div>
       <ShotForm
+        weather={weather}
         onSubmitting={() => setSubmitting(true)}
         onSuccess={(shot, recommendation) => {
           setSubmitting(false);
