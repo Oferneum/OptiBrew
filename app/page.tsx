@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useDelayedLoader } from '@/hooks/useDelayedLoader';
+import PageLoader from '@/components/PageLoader';
 import ShotCard from '@/components/ShotCard';
 import HomeGreeting from '@/components/HomeGreeting';
 import Link from 'next/link';
@@ -31,6 +33,7 @@ function EmptyState() {
 export default function HomePage() {
   const [shots, setShots]     = useState<Shot[]>([]);
   const [loading, setLoading] = useState(true);
+  const showLoader            = useDelayedLoader(loading);
 
   useEffect(() => {
     async function load() {
@@ -150,15 +153,7 @@ export default function HomePage() {
         </div>
 
         {loading ? (
-          <div className="space-y-3">
-            {[...Array(2)].map((_, i) => (
-              <div
-                key={i}
-                className="glass rounded-2xl h-24 animate-pulse"
-                style={{ opacity: 1 - i * 0.25 }}
-              />
-            ))}
-          </div>
+          showLoader ? <PageLoader /> : null
         ) : recent.length === 0 ? (
           <div className="glass rounded-3xl py-8 px-6 flex flex-col items-center text-center space-y-4">
             <EmptyState />

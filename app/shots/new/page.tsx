@@ -7,6 +7,8 @@ import RecommendationCard from '@/components/RecommendationCard';
 import RetryableRecommendation from '@/components/RetryableRecommendation';
 import ShotCard from '@/components/ShotCard';
 import CoffeeCupLoader from '@/components/CoffeeCupLoader';
+import PageLoader from '@/components/PageLoader';
+import { useDelayedLoader } from '@/hooks/useDelayedLoader';
 import { supabase } from '@/lib/supabase';
 import type { Shot } from '@/lib/types';
 
@@ -50,7 +52,8 @@ export default function NewShotPage() {
     );
   }, []);
 
-  if (!authChecked) return null;
+  const showLoader = useDelayedLoader(!authChecked);
+  if (!authChecked) return showLoader ? <PageLoader /> : null;
 
   // ── Success screen ──────────────────────────────────────────
   if (result) {

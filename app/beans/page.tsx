@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useDelayedLoader } from '@/hooks/useDelayedLoader';
+import PageLoader from '@/components/PageLoader';
 import BeanCard from '@/components/BeanCard';
 import Link from 'next/link';
 import { computeCostPerShot, computeVFM } from '@/lib/analytics';
@@ -82,6 +84,7 @@ export default function BeansPage() {
   const [displayBeans, setDisplayBeans] = useState<BeanVFMData[]>([]);
   const [allShots, setAllShots]         = useState<ShotRow[]>([]);
   const [loading, setLoading]           = useState(true);
+  const showLoader                      = useDelayedLoader(loading);
   const [filter, setFilter]             = useState<'all' | 'machine' | 'grinder' | 'rig'>('all');
   const [activeMachine, setActiveMachine] = useState<string | null>(null);
   const [activeGrinder, setActiveGrinder] = useState<string | null>(null);
@@ -265,7 +268,7 @@ export default function BeansPage() {
 
       {/* ── Bean list ── */}
       {loading ? (
-        <BeansSkeleton />
+        showLoader ? <PageLoader /> : null
       ) : displayBeans.length === 0 ? (
         <div className="glass rounded-3xl p-8 text-center">
           {filter !== 'all' ? (
