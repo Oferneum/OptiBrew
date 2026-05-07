@@ -27,7 +27,7 @@ async function callModel(modelName: string, prompt: string): Promise<string> {
   return result.response.text().trim().replace(/["""'']/g, '');
 }
 
-export async function analyzeShot(shot: Shot, trendSummary: string = ''): Promise<string> {
+export async function analyzeShot(shot: Shot, trendSummary: string = '', weatherContext?: string): Promise<string> {
   if (!genAI) {
     console.error('[Dialed AI] GEMINI_API_KEY is not set');
     return 'AI configuration missing.';
@@ -40,6 +40,15 @@ export async function analyzeShot(shot: Shot, trendSummary: string = ''): Promis
   const trendBlock = trendSummary
     ? `Recent trend: ${trendSummary}`
     : 'No previous shots on record for this bean/equipment combination.';
+
+  const weatherBlock = weatherContext ? `\nAmbient conditions when this shot was pulled: ${weatherContext}.
+Weather context rules (apply only when extreme — otherwise ignore entirely):
+- Humidity >75%: beans absorb moisture and swell, slowing extraction — factor this into your diagnosis if the shot ran long or under-extracted.
+- Humidity <35%: beans are dry and dense, extracting faster than usual — factor this in if the shot ran short or over-extracted.
+- Temperature >30°C: ambient heat accelerates extraction and affects equipment temperature stability.
+- Temperature <15°C: cold equipment thermalises slowly — relevant if the shot was inconsistent early on.
+- If conditions are extreme, weave the environmental context naturally into your diagnosis without stating exact numbers.
+- If conditions are normal (35–75% humidity, 15–30°C): ignore weather entirely.` : '';
 
   const prompt = `You are Dialed, a professional barista coach. Analyze this shot and give a sharp, personalized 2-sentence response.
 
@@ -63,7 +72,7 @@ Shot data:
 - Brew temp: ${shot.brew_temp ?? 'not recorded'}°C
 - Flavor tags: ${shot.flavor_tags?.join(', ') || 'none tagged'}
 
-${trendBlock}`;
+${trendBlock}${weatherBlock}`;
 
   // ── Primary: gemini-2.5-flash ──────────────────────────────────────────
   try {

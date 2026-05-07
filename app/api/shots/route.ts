@@ -32,7 +32,7 @@ export async function POST(req: Request) {
 
     // getShotContext returns a ShotContext object — extract the string summary only
     const { trendSummary } = await getShotContext(body.bean_id, body.equipment_id);
-    const recommendation = await analyzeShot(body as Shot, trendSummary ?? '');
+    const recommendation = await analyzeShot(body as Shot, trendSummary ?? '', body.weather_context ?? undefined);
 
     const { data: shot, error } = await db
       .from('shots')

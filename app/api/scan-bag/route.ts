@@ -5,9 +5,8 @@ import type { ImageInput }    from '@/lib/agents/vision-agent';
 import type { UserContext }   from '@/lib/types';
 
 export async function POST(req: Request) {
-  const formData     = await req.formData();
-  const files        = formData.getAll('image') as File[];
-  const weatherCtx   = (formData.get('weather') as string | null) ?? undefined;
+  const formData = await req.formData();
+  const files    = formData.getAll('image') as File[];
   if (files.length === 0) return NextResponse.json({ error: 'No images provided' }, { status: 400 });
 
   const images: ImageInput[] = await Promise.all(
@@ -39,13 +38,13 @@ export async function POST(req: Request) {
   } catch { /* context failure must not block the scan */ }
 
   try {
-    const result = await orchestrateBagScan(images, userContext, weatherCtx);
+    const result = await orchestrateBagScan(images, userContext);
     return NextResponse.json(result);
   } catch (firstErr) {
     console.warn('[scan-bag] first attempt failed, retrying in 500ms…', firstErr);
     await new Promise((r) => setTimeout(r, 500));
     try {
-      const result = await orchestrateBagScan(images, userContext, weatherCtx);
+      const result = await orchestrateBagScan(images, userContext);
       return NextResponse.json(result);
     } catch (err) {
       console.error('[scan-bag] retry also failed', err);

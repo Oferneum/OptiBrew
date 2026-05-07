@@ -11,7 +11,6 @@ const genAI = process.env.GEMINI_API_KEY
 export async function getStartupRecommendation(
   bean: BagScanResult,
   userContext?: UserContext,
-  weatherContext?: string,
 ): Promise<string> {
   if (!genAI) return 'AI configuration missing.';
 
@@ -35,25 +34,15 @@ export async function getStartupRecommendation(
     tasteLine = `\nUser's recent coffee history: ${history}. If this new bag differs meaningfully (origin, process, roast level), briefly acknowledge the contrast in sentence 2.`;
   }
 
-  const weatherLine = weatherContext ? `\nCurrent ambient conditions: ${weatherContext}.
-Weather extraction rules (apply only when conditions are extreme — otherwise skip):
-- Humidity >75%: beans absorb ambient moisture, swell, and flow slower → suggest going 0.5–1 click coarser to compensate for the slower extraction.
-- Humidity <35%: beans are dry and dense, extract faster than usual → suggest going 0.5 click finer.
-- Temperature >30°C: ambient heat accelerates extraction; consider reducing pre-infusion by 1–2s.
-- Temperature <15°C: equipment thermalises slowly; recommend an extra 30–60s warm-up purge.
-- If current conditions are extreme, weave the adjustment naturally into sentence 2 (do not mention "humidity" or "temperature" explicitly — say things like "given the humid conditions today" or "in this heat").
-- If conditions are normal (35–75% humidity, 15–30°C): ignore weather entirely.` : '';
-
   const prompt = `You are Dialed, a personal barista consultant. Based on the details below, give a first-shot recommendation tailored to this specific user.
 
 Rules:
 - Exactly 2 sentences. No more.
 - Sentence 1: State specific starting brew parameters for the user's equipment. If you recognise the machine (e.g. Lelit Anna, Gaggia Classic, Flair 58), give machine-specific guidance (PID setting, pre-infusion time, dose, yield, shot time). If no equipment, recommend the best brew method with starting parameters.
-- Sentence 2: If weather conditions are extreme (see below), weave in the adjustment. Otherwise if the user's taste history is relevant, briefly acknowledge how this bag compares. Otherwise, give one key technique tip specific to these beans.
+- Sentence 2: If the user's taste history is relevant, briefly acknowledge how this bag compares. Otherwise, give one key technique tip specific to these beans.
 - Always use Celsius. Never Fahrenheit.
 - Tone: Direct, confident, personal — like a coach who knows you. No fluff.
 - Plain text only. No markdown, no quotation marks, no bolding.
-${weatherLine}
 
 ${equipmentLine}${tasteLine}
 

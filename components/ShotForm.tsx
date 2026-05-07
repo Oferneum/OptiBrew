@@ -136,7 +136,6 @@ interface BeanSearchProps {
   onSelect: (id: string, label: string) => void;
   onClear: () => void;
   selected: { id: string; label: string } | null;
-  weather?: { temp: number; humidity: number } | null;
 }
 
 interface NewBagForm { origin: string; roaster: string; bag_name: string; price_paid: string; weight_grams: string; }
@@ -160,7 +159,7 @@ function compressImage(file: File, maxPx = 800, quality = 0.7): Promise<Blob> {
   });
 }
 
-function BeanSearch({ onSelect, onClear, selected, weather }: BeanSearchProps) {
+function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
   const [allBeans, setAllBeans] = useState<BeanEntry[]>([]);
   const [loadingBeans, setLoadingBeans] = useState(true);
   const [showNewBag, setShowNewBag] = useState(false);
@@ -206,7 +205,6 @@ function BeanSearch({ onSelect, onClear, selected, weather }: BeanSearchProps) {
       const fd = new FormData();
       fd.append('image', frontBlob, 'front.jpg');
       if (backBlob) fd.append('image', backBlob, 'back.jpg');
-      if (weather) fd.append('weather', `${weather.temp}°C, ${weather.humidity}% humidity`);
       const res = await fetch('/api/scan-bag', { method: 'POST', body: fd, headers: await authHeaders() });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -637,18 +635,19 @@ export default function ShotForm({
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({
-          dose:           parseFloat(form.dose),
-          yield:          parseFloat(form.yieldG),
+          dose:            parseFloat(form.dose),
+          yield:           parseFloat(form.yieldG),
           extraction_time: parseInt(form.extraction_time),
-          brew_temp:      form.brew_temp ? parseFloat(form.brew_temp) : null,
-          flavor_tags:    form.flavor_tags,
-          overall_score:  form.overall_score,
-          notes:          form.notes || null,
-          equipment_id:   equipmentIdRef.current,
-          grind_setting:  form.grind_setting || null,
-          brew_method:    form.brew_method,
-          has_milk:       form.has_milk,
-          bean_id:        selectedBean?.id ?? null,
+          brew_temp:       form.brew_temp ? parseFloat(form.brew_temp) : null,
+          flavor_tags:     form.flavor_tags,
+          overall_score:   form.overall_score,
+          notes:           form.notes || null,
+          equipment_id:    equipmentIdRef.current,
+          grind_setting:   form.grind_setting || null,
+          brew_method:     form.brew_method,
+          has_milk:        form.has_milk,
+          bean_id:         selectedBean?.id ?? null,
+          weather_context: weather ? `${weather.temp}°C, ${weather.humidity}% humidity` : undefined,
         }),
       });
       const data = await res.json();
@@ -750,7 +749,6 @@ export default function ShotForm({
             selected={selectedBean}
             onSelect={(id, label) => setSelectedBean({ id, label })}
             onClear={() => setSelectedBean(null)}
-            weather={weather}
           />
         </div>
         <div>
@@ -788,6 +786,14 @@ export default function ShotForm({
               <p className="readout text-[10px] text-[#7A6858] mt-1">
                 {grindPrediction.basedOn.map((p) => `⌀${p.grind} → ${p.time}s`).join(' · ')}
               </p>
+              {weather && (() => {
+                const { temp, humidity } = weather;
+                if (humidity > 75) return <p className="text-[10px] text-[#5D4037] font-bold mt-2">💧 {humidity}% humidity today — consider going 0.5–1 click coarser</p>;
+                if (humidity < 35) return <p className="text-[10px] text-[#5D4037] font-bold mt-2">🌵 {humidity}% humidity today — consider going 0.5 click finer</p>;
+                if (temp > 30)     return <p className="text-[10px] text-[#5D4037] font-bold mt-2">🌡 {temp}°C today — watch for faster extraction than usual</p>;
+                if (temp < 15)     return <p className="text-[10px] text-[#5D4037] font-bold mt-2">❄️ {temp}°C today — give your machine an extra warm-up purge</p>;
+                return null;
+              })()}
             </div>
             <button
               type="button"
