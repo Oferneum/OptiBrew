@@ -15,7 +15,7 @@ const FIELD_CLS =
 const LABEL_CLS = 'text-[10px] uppercase tracking-[0.15em] font-bold text-[#7A6858]';
 const BREW_METHODS = ['Espresso', 'V60', 'MokaPot', 'FrenchPress', 'Aeropress'] as const;
 
-// ── Spinner ───────────────────────────────────────────────────
+// ── Spinner ─────────────────────────────────────────────────
 
 function Spinner() {
   return (
@@ -26,24 +26,15 @@ function Spinner() {
   );
 }
 
-// ── Smart Equipment Search Input ──────────────────────────────
+// ── Smart search input (for Register New Equipment only) ──────
 
-interface LookupResult {
-  name: string; manufacturer: string; type: string; description: string;
-}
+interface LookupResult { name: string; manufacturer: string; type: string; description: string; }
 
 function EquipmentSearchInput({
-  label,
-  value,
-  onChange,
-  suggestions,
-  placeholder,
+  label, value, onChange, suggestions, placeholder,
 }: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  suggestions: string[];
-  placeholder: string;
+  label: string; value: string; onChange: (v: string) => void;
+  suggestions: string[]; placeholder: string;
 }) {
   const [open, setOpen]           = useState(false);
   const [searching, setSearching] = useState(false);
@@ -52,8 +43,7 @@ function EquipmentSearchInput({
 
   const filtered = value.trim().length >= 1
     ? suggestions.filter((s) => s.toLowerCase().includes(value.toLowerCase()))
-    : suggestions.slice(0, 6);
-
+    : [];
   const noLocalMatch = value.trim().length >= 2 && filtered.length === 0;
 
   async function searchWeb() {
@@ -63,60 +53,39 @@ function EquipmentSearchInput({
       const data = await res.json();
       if (!res.ok) { setWebErr(data.error ?? 'Search failed'); return; }
       setWebResult(data);
-    } finally {
-      setSearching(false);
-    }
+    } finally { setSearching(false); }
   }
 
   return (
     <div className="relative">
       <p className={`${LABEL_CLS} mb-1.5`}>{label}</p>
       <input
-        type="text"
-        placeholder={placeholder}
-        value={value}
-        autoComplete="off"
+        type="text" placeholder={placeholder} value={value} autoComplete="off"
         onChange={(e) => { onChange(e.target.value); setOpen(true); setWebResult(null); setWebErr(null); }}
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 180)}
-        className={FIELD_CLS}
-        style={{ fontSize: '16px' }}
+        className={FIELD_CLS} style={{ fontSize: '16px' }}
       />
-
-      {/* Local suggestions */}
       {open && filtered.length > 0 && (
         <div className="absolute z-20 w-full mt-1 bg-[#FAF3E6] border border-[#C8B49A] rounded-xl shadow-lg overflow-hidden">
-          {filtered.slice(0, 6).map((s) => (
-            <button
-              key={s}
-              type="button"
+          {filtered.slice(0, 5).map((s) => (
+            <button key={s} type="button"
               onMouseDown={() => { onChange(s); setOpen(false); setWebResult(null); }}
               className="w-full text-left px-4 py-3 text-[#2C1E16] text-sm font-medium hover:bg-[#F5EBD8] border-b border-[#C8B49A]/40 last:border-0 transition-colors touch-manipulation"
-            >
-              {s}
-            </button>
+            >{s}</button>
           ))}
         </div>
       )}
-
-      {/* Search Web button */}
       {noLocalMatch && !webResult && !searching && (
-        <button
-          type="button"
-          onClick={searchWeb}
+        <button type="button" onClick={searchWeb}
           className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-[#5D4037]/50 text-[#5D4037] text-xs font-black uppercase tracking-wider rounded-xl hover:bg-[#5D4037]/5 active:scale-[0.97] transition-all touch-manipulation"
-        >
-          🔍 Search Web for &ldquo;{value.trim()}&rdquo;
-        </button>
+        >🔍 Search Web for &ldquo;{value.trim()}&rdquo;</button>
       )}
-
       {searching && (
         <div className="mt-2 flex items-center gap-2 text-[#7A6858] text-xs px-1 py-1.5">
           <Spinner /><span>Searching…</span>
         </div>
       )}
-
-      {/* Web result card */}
       {webResult && !searching && (
         <div className="mt-2 bg-[#F5EBD8] border border-[#C8B49A] rounded-xl p-3">
           <div className="flex items-start justify-between gap-3">
@@ -127,36 +96,39 @@ function EquipmentSearchInput({
                 <p className="text-[#7A6858] text-xs mt-1 italic leading-relaxed">{webResult.description}</p>
               )}
             </div>
-            <button
-              type="button"
+            <button type="button"
               onClick={() => { onChange(webResult.name); setWebResult(null); }}
               className="shrink-0 px-3 py-1.5 bg-[#5D4037] text-[#FFFBF4] text-xs font-black uppercase tracking-wider rounded-lg active:scale-95 transition-all touch-manipulation"
-            >
-              Use
-            </button>
+            >Use</button>
           </div>
         </div>
       )}
-
       {webErr && <p className="mt-1.5 text-red-600 text-xs font-medium">{webErr}</p>}
     </div>
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────
+// ── Page ─────────────────────────────────────────────────────
 
 export default function SettingsPage() {
-  const [profiles, setProfiles]     = useState<EquipmentProfile[]>([]);
-  const [activeId, setActiveId]     = useState<string | null>(null);
+  const [profiles, setProfiles]           = useState<EquipmentProfile[]>([]);
+  const [activeId, setActiveId]           = useState<string | null>(null);
   const [activeMachine, setActiveMachine] = useState('');
   const [activeGrinder, setActiveGrinder] = useState('');
-  const [rigSaving, setRigSaving]   = useState(false);
-  const [rigSaved, setRigSaved]     = useState(false);
-  const [mounted, setMounted]       = useState(false);
+  const [rigSaving, setRigSaving]         = useState(false);
+  const [rigSaved, setRigSaved]           = useState(false);
+  const [mounted, setMounted]             = useState(false);
 
-  const [userEmail, setUserEmail]   = useState<string | null>(null);
-  const [userName, setUserName]     = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName]   = useState<string | null>(null);
   const [brewMethodPref, setBrewMethodPref] = useState('Espresso');
+
+  // Register new equipment form
+  const [showAdd, setShowAdd]     = useState(false);
+  const [newMachine, setNewMachine] = useState('');
+  const [newGrinder, setNewGrinder] = useState('');
+  const [adding, setAdding]       = useState(false);
+  const [addError, setAddError]   = useState<string | null>(null);
 
   useEffect(() => {
     const id      = localStorage.getItem('activeEquipmentId');
@@ -166,28 +138,23 @@ export default function SettingsPage() {
     setActiveMachine(machine);
     setActiveGrinder(grinder);
     setBrewMethodPref(localStorage.getItem('defaultBrewMethod') ?? 'Espresso');
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUserEmail(session?.user?.email ?? null);
       const meta = session?.user?.user_metadata as Record<string, string> | undefined;
       setUserName(meta?.full_name ?? meta?.name ?? null);
     });
-
     loadProfiles().then(() => setMounted(true));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Derive machine/grinder names from active profile if localStorage is empty
   useEffect(() => {
     if (!activeMachine && activeId && profiles.length > 0) {
       const p = profiles.find((q) => q.id === activeId);
       if (p) {
-        const m = p.machine_name;
-        const g = p.grinder_name ?? '';
-        setActiveMachine(m);
-        setActiveGrinder(g);
-        localStorage.setItem('activeMachineName', m);
-        localStorage.setItem('activeGrinderName', g);
+        setActiveMachine(p.machine_name);
+        setActiveGrinder(p.grinder_name ?? '');
+        localStorage.setItem('activeMachineName', p.machine_name);
+        localStorage.setItem('activeGrinderName', p.grinder_name ?? '');
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -195,16 +162,10 @@ export default function SettingsPage() {
 
   async function loadProfiles() {
     const res = await fetch('/api/equipment', { headers: await authHeaders() });
-    if (res.ok) {
-      const data = await res.json();
-      setProfiles(Array.isArray(data) ? data : []);
-    }
+    if (res.ok) { const d = await res.json(); setProfiles(Array.isArray(d) ? d : []); }
   }
 
-  const machines = useMemo(
-    () => [...new Set(profiles.map((p) => p.machine_name))].sort(),
-    [profiles],
-  );
+  const machines = useMemo(() => [...new Set(profiles.map((p) => p.machine_name))].sort(), [profiles]);
   const grinders = useMemo(
     () => [...new Set(profiles.map((p) => p.grinder_name).filter((g): g is string => Boolean(g)))].sort(),
     [profiles],
@@ -225,14 +186,11 @@ export default function SettingsPage() {
 
   async function handleSetRig() {
     if (!activeMachine) return;
-    setRigSaving(true);
-    setRigSaved(false);
-
-    const match = profiles.find(
-      (p) => p.machine_name === activeMachine &&
-        (activeGrinder ? p.grinder_name === activeGrinder : !p.grinder_name),
+    setRigSaving(true); setRigSaved(false);
+    const match = profiles.find((p) =>
+      p.machine_name === activeMachine &&
+      (activeGrinder ? p.grinder_name === activeGrinder : !p.grinder_name),
     );
-
     if (match) {
       persistRig(match.id);
     } else {
@@ -248,10 +206,34 @@ export default function SettingsPage() {
         persistRig(profile.id);
       }
     }
-
-    setRigSaving(false);
-    setRigSaved(true);
+    setRigSaving(false); setRigSaved(true);
     setTimeout(() => setRigSaved(false), 2000);
+  }
+
+  async function handleAdd(e: React.SyntheticEvent) {
+    e.preventDefault();
+    if (!newMachine.trim()) return;
+    setAdding(true); setAddError(null);
+    try {
+      const res = await fetch('/api/equipment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({ machine_name: newMachine.trim(), grinder_name: newGrinder.trim() || null }),
+      });
+      const data = await res.json();
+      if (res.status === 409 && data.match) {
+        setActiveMachine(data.match.machine_name);
+        setActiveGrinder(data.match.grinder_name ?? '');
+        persistRig(data.match.id);
+        await loadProfiles();
+      } else if (res.ok) {
+        setActiveMachine(data.machine_name);
+        setActiveGrinder(data.grinder_name ?? '');
+        persistRig(data.id);
+        await loadProfiles();
+      } else { setAddError(data.error ?? 'Failed to save'); return; }
+      setNewMachine(''); setNewGrinder(''); setShowAdd(false);
+    } finally { setAdding(false); }
   }
 
   function saveBrewMethod(val: string) {
@@ -288,17 +270,13 @@ export default function SettingsPage() {
             {userName  && <p className="text-[#2C1E16] font-semibold text-sm truncate">{userName}</p>}
             {userEmail && <p className="text-[#7A6858] text-xs truncate">{userEmail}</p>}
           </div>
-          <button
-            type="button"
-            onClick={handleSignOut}
+          <button type="button" onClick={handleSignOut}
             className="shrink-0 text-[#5D4037] text-xs font-black uppercase tracking-widest px-3 py-2 rounded-xl hover:bg-[#5D4037]/10 transition-colors touch-manipulation"
-          >
-            Sign Out
-          </button>
+          >Sign Out</button>
         </div>
       </div>
 
-      {/* ── Active Rig — smart search ── */}
+      {/* ── Active Rig — native dropdowns ── */}
       <div className="glass rounded-3xl px-5 py-4 space-y-4">
         <div className="flex items-center justify-between">
           <p className={LABEL_CLS}>Active Rig</p>
@@ -310,71 +288,97 @@ export default function SettingsPage() {
           )}
         </div>
 
-        <p className="text-[#7A6858] text-xs leading-relaxed -mt-2">
-          Type to search your saved rigs, or enter a new name. Can&apos;t find it?{' '}
-          <span className="text-[#5D4037] font-semibold">Search Web</span> to look it up.
-        </p>
-
-        <div className="grid grid-cols-2 gap-3">
-          <EquipmentSearchInput
-            label="Machine"
-            value={activeMachine}
-            onChange={(v) => { setActiveMachine(v); setRigSaved(false); }}
-            suggestions={machines}
-            placeholder="Lelit Bianca"
-          />
-          <EquipmentSearchInput
-            label="Grinder"
-            value={activeGrinder}
-            onChange={(v) => { setActiveGrinder(v); setRigSaved(false); }}
-            suggestions={grinders}
-            placeholder="Niche Zero"
-          />
-        </div>
-
-        <button
-          type="button"
-          onClick={handleSetRig}
-          disabled={!activeMachine || rigSaving}
-          className={`w-full py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.97] disabled:opacity-50 touch-manipulation ${
-            rigSaved
-              ? 'bg-green-500/15 text-green-700 border border-green-500/25'
-              : rigDirty
-                ? 'bg-[#5D4037] text-[#FFFBF4] shadow-lg shadow-[#5D4037]/25'
-                : 'bg-[#F5EBD8] border border-[#C8B49A] text-[#7A6858]'
-          }`}
-        >
-          {rigSaving ? 'Saving…' : rigSaved ? '✓ Rig Active' : rigDirty ? 'Set Active Rig' : 'Rig Saved'}
-        </button>
+        {profiles.length === 0 ? (
+          <p className="text-[#7A6858] text-sm">No equipment yet — add yours below.</p>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className={`${LABEL_CLS} mb-1.5`}>Machine</p>
+                <div className="relative">
+                  <select value={activeMachine}
+                    onChange={(e) => { setActiveMachine(e.target.value); setRigSaved(false); }}
+                    className={FIELD_CLS} style={{ fontSize: '16px' }}
+                  >
+                    <option value="">Select…</option>
+                    {machines.map((m) => (
+                      <option key={m} value={m} style={{ background: '#EDE4D3', color: '#2C1E16' }}>{m}</option>
+                    ))}
+                  </select>
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#7A6858]">▾</span>
+                </div>
+              </div>
+              <div>
+                <p className={`${LABEL_CLS} mb-1.5`}>Grinder</p>
+                <div className="relative">
+                  <select value={activeGrinder}
+                    onChange={(e) => { setActiveGrinder(e.target.value); setRigSaved(false); }}
+                    className={FIELD_CLS} style={{ fontSize: '16px' }}
+                  >
+                    <option value="">None</option>
+                    {grinders.map((g) => (
+                      <option key={g} value={g} style={{ background: '#EDE4D3', color: '#2C1E16' }}>{g}</option>
+                    ))}
+                  </select>
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#7A6858]">▾</span>
+                </div>
+              </div>
+            </div>
+            <button type="button" onClick={handleSetRig}
+              disabled={!activeMachine || rigSaving}
+              className={`w-full py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.97] disabled:opacity-50 touch-manipulation ${
+                rigSaved
+                  ? 'bg-green-500/15 text-green-700 border border-green-500/25'
+                  : rigDirty
+                    ? 'bg-[#5D4037] text-[#FFFBF4] shadow-lg shadow-[#5D4037]/25'
+                    : 'bg-[#F5EBD8] border border-[#C8B49A] text-[#7A6858]'
+              }`}
+            >
+              {rigSaving ? 'Saving…' : rigSaved ? '✓ Rig Active' : rigDirty ? 'Set Active Rig' : 'Rig Saved'}
+            </button>
+          </>
+        )}
       </div>
 
-      {/* ── Saved Rigs (compact reference list) ── */}
-      {profiles.length > 0 && (
-        <div className="space-y-2">
-          <p className={LABEL_CLS}>Saved Rigs</p>
-          {profiles.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => {
-                setActiveMachine(p.machine_name);
-                setActiveGrinder(p.grinder_name ?? '');
-                setRigSaved(false);
-              }}
-              className={`w-full glass rounded-2xl px-4 py-3 flex items-center justify-between text-left transition-all active:scale-[0.98] touch-manipulation ${p.id === activeId ? 'ring-1 ring-[#5D4037]/50' : ''}`}
-            >
-              <div className="min-w-0">
-                <p className="text-[#2C1E16] font-semibold text-sm">{p.machine_name}</p>
-                {p.grinder_name && <p className="text-[#7A6858] text-xs mt-0.5">{p.grinder_name}</p>}
-              </div>
-              {p.id === activeId
-                ? <span className="text-[10px] text-[#5D4037] font-black uppercase tracking-widest shrink-0 ml-3">✓ Active</span>
-                : <span className="text-[10px] text-[#7A6858] uppercase tracking-widest shrink-0 ml-3">Select →</span>
-              }
-            </button>
-          ))}
-        </div>
-      )}
+      {/* ── Register New Equipment — smart search ── */}
+      <div className="space-y-3">
+        {!showAdd ? (
+          <button type="button" onClick={() => setShowAdd(true)}
+            className="w-full glass rounded-3xl px-4 py-4 text-[#7A6858] text-sm font-medium hover:text-[#2C1E16] transition-colors flex items-center justify-center gap-2 active:scale-[0.98] touch-manipulation"
+          >
+            <span className="text-lg leading-none text-[#5D4037]">+</span>
+            Register New Equipment
+          </button>
+        ) : (
+          <form onSubmit={handleAdd} className="glass rounded-3xl p-5 space-y-4">
+            <p className="text-[#2C1E16] font-black text-sm uppercase tracking-wide">New Equipment</p>
+            <p className="text-[#7A6858] text-xs -mt-2">
+              Type a name to search your list, or tap{' '}
+              <span className="text-[#5D4037] font-semibold">Search Web</span> to look up a machine you don&apos;t have yet.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <EquipmentSearchInput
+                label="Machine *" value={newMachine} onChange={setNewMachine}
+                suggestions={machines} placeholder="Lelit Bianca"
+              />
+              <EquipmentSearchInput
+                label="Grinder" value={newGrinder} onChange={setNewGrinder}
+                suggestions={grinders} placeholder="Niche Zero"
+              />
+            </div>
+            {addError && <p className="text-red-600 text-sm">{addError}</p>}
+            <div className="flex gap-3 pt-1">
+              <button type="button"
+                onClick={() => { setShowAdd(false); setNewMachine(''); setNewGrinder(''); setAddError(null); }}
+                className="flex-1 bg-[#F5EBD8] border border-[#C8B49A] text-[#2C1E16] font-medium py-3 rounded-2xl transition-all active:scale-[0.97] touch-manipulation"
+              >Cancel</button>
+              <button type="submit" disabled={adding || !newMachine.trim()}
+                className="flex-1 bg-[#5D4037] text-[#FFFBF4] font-black py-3 rounded-2xl disabled:opacity-60 active:scale-[0.97] transition-all touch-manipulation"
+              >{adding ? 'Saving…' : 'Save & Activate'}</button>
+            </div>
+          </form>
+        )}
+      </div>
 
       {/* ── Preferences ── */}
       <div className="glass rounded-3xl px-5 py-4 space-y-4">
@@ -382,11 +386,8 @@ export default function SettingsPage() {
         <div>
           <p className={`${LABEL_CLS} mb-1.5`}>Default Brew Method</p>
           <div className="relative">
-            <select
-              value={brewMethodPref}
-              onChange={(e) => saveBrewMethod(e.target.value)}
-              className={FIELD_CLS}
-              style={{ fontSize: '16px' }}
+            <select value={brewMethodPref} onChange={(e) => saveBrewMethod(e.target.value)}
+              className={FIELD_CLS} style={{ fontSize: '16px' }}
             >
               {BREW_METHODS.map((m) => (
                 <option key={m} value={m} style={{ background: '#EDE4D3', color: '#2C1E16' }}>{m}</option>
@@ -395,7 +396,6 @@ export default function SettingsPage() {
             <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#7A6858] text-lg">▾</span>
           </div>
         </div>
-
         <div className="flex items-center justify-between opacity-40 pt-1">
           <p className="text-[#2C1E16] text-sm font-medium">Push Notifications</p>
           <p className="text-[#7A6858] text-xs readout">Coming soon</p>
@@ -405,8 +405,7 @@ export default function SettingsPage() {
       {/* ── Support ── */}
       <div className="glass rounded-3xl px-5 py-4">
         <p className={`${LABEL_CLS} mb-3`}>Support</p>
-        <a
-          href="mailto:ofer.neumann123@gmail.com?subject=Dialed%20Feedback"
+        <a href="mailto:ofer.neumann123@gmail.com?subject=Dialed%20Feedback"
           className="flex items-center justify-between w-full active:scale-[0.98] transition-all"
         >
           <div>
