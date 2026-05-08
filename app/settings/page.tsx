@@ -145,7 +145,6 @@ export default function SettingsPage() {
       setUserName(meta?.full_name ?? meta?.name ?? null);
     });
     loadProfiles().then(() => setMounted(true));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

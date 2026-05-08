@@ -33,7 +33,7 @@ export default function HomeGreeting() {
     const fadeOut = setTimeout(() => setToastVisible(false), 2500);
     const unmount = setTimeout(() => setToastMounted(false), 3100);
     return () => { clearTimeout(fadeOut); clearTimeout(unmount); };
-  }, []);
+  }, [searchParams, router]);
 
   return (
     <>

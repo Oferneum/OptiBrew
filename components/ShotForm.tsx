@@ -561,7 +561,6 @@ export default function ShotForm({
           baseline ? { humidity: baseline.humidity as number, temp: baseline.ambient_temp as number } : null,
         );
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBean?.id, rigReady]);
 
   function handleTimerToggle() {

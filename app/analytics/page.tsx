@@ -220,21 +220,6 @@ function SetupInsights({
   );
 }
 
-// ── Skeleton ───────────────────────────────────────────────────────────────
-
-function AnalyticsSkeleton() {
-  return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-3">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="glass rounded-3xl p-4 h-16 animate-pulse" style={{ opacity: 1 - i * 0.2 }} />
-        ))}
-      </div>
-      <div className="glass rounded-3xl p-5 h-72 animate-pulse" />
-    </div>
-  );
-}
-
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default function AnalyticsPage() {

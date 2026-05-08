@@ -7,20 +7,6 @@ import ShotCard from '@/components/ShotCard';
 import Link from 'next/link';
 import type { Shot } from '@/lib/types';
 
-function ShotsSkeleton() {
-  return (
-    <div className="space-y-3">
-      {[...Array(4)].map((_, i) => (
-        <div
-          key={i}
-          className="glass rounded-2xl h-24 animate-pulse"
-          style={{ opacity: 1 - i * 0.18 }}
-        />
-      ))}
-    </div>
-  );
-}
-
 export default function ShotsPage() {
   const [shots, setShots]     = useState<Shot[]>([]);
   const [loading, setLoading] = useState(true);

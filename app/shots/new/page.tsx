@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ShotForm from '@/components/ShotForm';
-import RecommendationCard from '@/components/RecommendationCard';
 import RetryableRecommendation from '@/components/RetryableRecommendation';
 import ShotCard from '@/components/ShotCard';
 import CoffeeCupLoader from '@/components/CoffeeCupLoader';
@@ -26,7 +25,7 @@ export default function NewShotPage() {
       if (!session) router.replace('/login');
       else setAuthChecked(true);
     });
-  }, []);
+  }, [router]);
 
   // Silent background weather fetch — never blocks the form, never shows errors
   useEffect(() => {

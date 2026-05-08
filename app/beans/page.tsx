@@ -54,18 +54,6 @@ function FilterPill({
   );
 }
 
-// ── Skeleton ───────────────────────────────────────────────────────────────
-
-function BeansSkeleton() {
-  return (
-    <div className="space-y-3">
-      {[...Array(3)].map((_, i) => (
-        <div key={i} className="glass rounded-3xl h-24 animate-pulse" style={{ opacity: 1 - i * 0.2 }} />
-      ))}
-    </div>
-  );
-}
-
 // ── Shared shot row type ───────────────────────────────────────────────────
 
 type ShotRow = {

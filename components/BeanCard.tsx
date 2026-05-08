@@ -90,7 +90,7 @@ export default function BeanCard({ bean, onSaved }: { bean: BeanVFMData; onSaved
         return;
       }
       setEditing(false);
-      onSaved ? onSaved() : router.refresh();
+      if (onSaved) { onSaved(); } else { router.refresh(); }
     } finally {
       setSaving(false);
     }
