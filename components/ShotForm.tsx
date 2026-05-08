@@ -68,12 +68,14 @@ function IconColdBrew({ size = 20, strokeWidth = 1.75 }: { size?: number; stroke
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
          stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="7" y="3" width="10" height="13" rx="1" />
-      <path d="M9 16 L9 20" /><path d="M15 16 L15 20" />
-      <path d="M7 20 L17 20" />
-      <path d="M10 7 Q12 9 14 7" />
-      <path d="M10 10 Q12 12 14 10" />
-      <path d="M4 6 L6 7" /><path d="M4 10 L6 10" /><path d="M4 14 L6 13" />
+      {/* Bottle body */}
+      <rect x="7" y="6" width="10" height="15" rx="2" />
+      {/* Lid / stopper */}
+      <rect x="9" y="2" width="6" height="5" rx="1" />
+      {/* D-shaped handle */}
+      <path d="M17 10 Q21 10 21 13.5 Q21 17 17 17" />
+      {/* Inner filter column */}
+      <rect x="10.5" y="7" width="3" height="13" rx="1" strokeWidth="1.25" />
     </svg>
   );
 }
@@ -94,7 +96,7 @@ const BREW_METHODS: { id: BrewMethod; label: string; Icon: React.ElementType }[]
   { id: 'Espresso',     label: 'Espresso', Icon: Coffee          },
   { id: 'MokaPot',     label: 'Moka',     Icon: IconMokaPot     },
   { id: 'FrenchPress', label: 'French',   Icon: IconFrenchPress },
-  { id: 'ColdBrew',    label: 'Cold',     Icon: IconColdBrew    },
+  { id: 'ColdBrew',    label: 'Cold Brew', Icon: IconColdBrew    },
   { id: 'Aeropress',   label: 'Aeropress',Icon: IconAeropress   },
 ];
 
