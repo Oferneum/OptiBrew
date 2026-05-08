@@ -80,24 +80,12 @@ function IconColdBrew({ size = 20, strokeWidth = 1.75 }: { size?: number; stroke
   );
 }
 
-function IconAeropress({ size = 20, strokeWidth = 1.75 }: { size?: number; strokeWidth?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-         stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M8 19 L8 7 L16 7 L16 19" /><path d="M8 7 L16 7" />
-      <path d="M5.5 19 L5.5 21 Q5.5 22 7 22 L17 22 Q18.5 22 18.5 21 L18.5 19 Z" />
-      <path d="M12 4 L12 14.5" /><path d="M9.5 14.5 L14.5 14.5" />
-      <path d="M8.5 4 L15.5 4" />
-    </svg>
-  );
-}
 
 const BREW_METHODS: { id: BrewMethod; label: string; Icon: React.ElementType }[] = [
   { id: 'Espresso',     label: 'Espresso', Icon: Coffee          },
   { id: 'MokaPot',     label: 'Moka',     Icon: IconMokaPot     },
   { id: 'FrenchPress', label: 'French',   Icon: IconFrenchPress },
   { id: 'ColdBrew',    label: 'Cold Brew', Icon: IconColdBrew    },
-  { id: 'Aeropress',   label: 'Aeropress',Icon: IconAeropress   },
 ];
 
 // ── Shared styles ──────────────────────────────────────────

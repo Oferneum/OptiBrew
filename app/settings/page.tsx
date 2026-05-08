@@ -14,7 +14,7 @@ const FIELD_CLS =
   'bg-[#FAF3E6] rounded-2xl px-4 py-3 text-[#2C1E16] text-base placeholder:text-[#2C1E16]/30 ' +
   'border border-[#C8B49A] w-full focus:outline-none focus:ring-2 focus:ring-[#5D4037]/20 focus:border-[#5D4037] transition-all appearance-none outline-none';
 const LABEL_CLS = 'text-[10px] uppercase tracking-[0.15em] font-bold text-[#7A6858]';
-const BREW_METHODS = ['Espresso', 'ColdBrew', 'MokaPot', 'FrenchPress', 'Aeropress'] as const;
+const BREW_METHODS = ['Espresso', 'ColdBrew', 'MokaPot', 'FrenchPress'] as const;
 
 // ── Spinner ─────────────────────────────────────────────────
 
