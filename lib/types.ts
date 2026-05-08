@@ -1,5 +1,5 @@
 export type FlavorTag = 'Sour' | 'Bitter' | 'Balanced' | 'Dry';
-export type BrewMethod = 'Espresso' | 'MokaPot' | 'FrenchPress' | 'V60' | 'Aeropress';
+export type BrewMethod = 'Espresso' | 'MokaPot' | 'FrenchPress' | 'ColdBrew' | 'Aeropress';
 
 export interface BagScanResult {
   roaster:       string;

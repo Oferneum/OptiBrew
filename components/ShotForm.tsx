@@ -64,14 +64,16 @@ function IconFrenchPress({ size = 20, strokeWidth = 1.75 }: { size?: number; str
   );
 }
 
-function IconV60({ size = 20, strokeWidth = 1.75 }: { size?: number; strokeWidth?: number }) {
+function IconColdBrew({ size = 20, strokeWidth = 1.75 }: { size?: number; strokeWidth?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
          stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 5 L21 5" /><path d="M3 5 L12 17.5" /><path d="M21 5 L12 17.5" />
-      <path d="M7 5 L11 14" /><path d="M17 5 L13 14" />
-      <path d="M12 17.5 L12 19.5" />
-      <path d="M7.5 19.5 Q7 22 8 22 L16 22 Q17 22 16.5 19.5 Z" />
+      <rect x="7" y="3" width="10" height="13" rx="1" />
+      <path d="M9 16 L9 20" /><path d="M15 16 L15 20" />
+      <path d="M7 20 L17 20" />
+      <path d="M10 7 Q12 9 14 7" />
+      <path d="M10 10 Q12 12 14 10" />
+      <path d="M4 6 L6 7" /><path d="M4 10 L6 10" /><path d="M4 14 L6 13" />
     </svg>
   );
 }
@@ -92,7 +94,7 @@ const BREW_METHODS: { id: BrewMethod; label: string; Icon: React.ElementType }[]
   { id: 'Espresso',     label: 'Espresso', Icon: Coffee          },
   { id: 'MokaPot',     label: 'Moka',     Icon: IconMokaPot     },
   { id: 'FrenchPress', label: 'French',   Icon: IconFrenchPress },
-  { id: 'V60',         label: 'V60',      Icon: IconV60         },
+  { id: 'ColdBrew',    label: 'Cold',     Icon: IconColdBrew    },
   { id: 'Aeropress',   label: 'Aeropress',Icon: IconAeropress   },
 ];
 
