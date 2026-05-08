@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getRequestClient } from '@/lib/supabase';
 import { analyzeShot } from '@/lib/recommendations';
 import { getShotContext } from '@/lib/context-builder';
+import { checkNewBadges, updateStreak } from '@/lib/achievements';
 import type { Shot } from '@/lib/types';
 
 export async function GET(req: Request) {
@@ -86,8 +87,13 @@ export async function POST(req: Request) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // Return recommendation separately so ShotForm can display it immediately
-    return NextResponse.json({ shot, recommendation }, { status: 201 });
+    // Gamification: check badges + update streak in parallel
+    const [newBadges, streakResult] = await Promise.all([
+      checkNewBadges(user.id, db),
+      updateStreak(user.id, db),
+    ]);
+
+    return NextResponse.json({ shot, recommendation, newBadges, streakResult }, { status: 201 });
   } catch (err) {
     console.error('[POST /api/shots]', err);
     return NextResponse.json(

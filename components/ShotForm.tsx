@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { predictGrind } from '@/lib/grind-predictor';
 import type { GrindPrediction } from '@/lib/grind-predictor';
 import type { FlavorTag, Shot, BrewMethod } from '@/lib/types';
+import type { StreakResult } from '@/lib/achievements';
 
 async function authHeaders(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -479,7 +480,7 @@ export default function ShotForm({
   onSubmitting,
   weather,
 }: {
-  onSuccess: (shot: Shot, recommendation: string) => void;
+  onSuccess: (shot: Shot, recommendation: string, newBadges: string[], streakResult: StreakResult | null) => void;
   onSubmitting?: () => void;
   weather?: { temp: number; humidity: number } | null;
 }) {
@@ -653,7 +654,7 @@ export default function ShotForm({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to log shot');
-      onSuccess(data.shot as Shot, data.shot.recommendation);
+      onSuccess(data.shot as Shot, data.shot.recommendation, data.newBadges ?? [], data.streakResult ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally { setLoading(false); }
@@ -686,7 +687,7 @@ export default function ShotForm({
       <div className={CARD}>
         <div>
           <Label>Brew Method</Label>
-          <div className="grid grid-cols-5 gap-1.5">
+          <div className="grid grid-cols-4 gap-1.5">
             {BREW_METHODS.map(({ id, label, Icon }) => {
               const active = form.brew_method === id;
               return (

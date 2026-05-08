@@ -8,12 +8,15 @@ import RetryableRecommendation from '@/components/RetryableRecommendation';
 import ShotCard from '@/components/ShotCard';
 import CoffeeCupLoader from '@/components/CoffeeCupLoader';
 import PageLoader from '@/components/PageLoader';
+import BadgeUnlockModal from '@/components/BadgeUnlockModal';
 import { supabase } from '@/lib/supabase';
 import type { Shot } from '@/lib/types';
+import type { StreakResult } from '@/lib/achievements';
 
 export default function NewShotPage() {
   const router = useRouter();
-  const [result, setResult]           = useState<{ shot: Shot; recommendation: string } | null>(null);
+  const [result, setResult]           = useState<{ shot: Shot; recommendation: string; newBadges: string[]; streakResult: StreakResult | null } | null>(null);
+  const [showModal, setShowModal]     = useState(false);
   const [submitting, setSubmitting]   = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [weather, setWeather]         = useState<{ temp: number; humidity: number } | null>(null);
@@ -57,6 +60,13 @@ export default function NewShotPage() {
   if (result) {
     return (
       <div className="p-4 space-y-6">
+        {showModal && (
+          <BadgeUnlockModal
+            badgeIds={result.newBadges}
+            streakResult={result.streakResult}
+            onClose={() => setShowModal(false)}
+          />
+        )}
         <div className="pt-6 pb-1 flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-green-500/15 border border-green-500/25 flex items-center justify-center shrink-0">
             <svg className="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -139,9 +149,11 @@ export default function NewShotPage() {
       <ShotForm
         weather={weather}
         onSubmitting={() => setSubmitting(true)}
-        onSuccess={(shot, recommendation) => {
+        onSuccess={(shot, recommendation, newBadges, streakResult) => {
           setSubmitting(false);
-          setResult({ shot, recommendation });
+          setResult({ shot, recommendation, newBadges, streakResult });
+          const milestone = streakResult?.isNew3 || streakResult?.isNew7 || streakResult?.isNew30;
+          if (newBadges.length > 0 || milestone) setShowModal(true);
         }}
       />
     </div>

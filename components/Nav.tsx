@@ -49,6 +49,17 @@ function ChartIcon() {
   );
 }
 
+function TrophyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+      <path d="M8 21h8M12 17v4" />
+      <path d="M7 4H17l-1 8a5 5 0 0 1-8 0Z" />
+      <path d="M5 4H4a2 2 0 0 0-2 2v1a4 4 0 0 0 4 4h.5" />
+      <path d="M19 4h1a2 2 0 0 1 2 2v1a4 4 0 0 1-4 4h-.5" />
+    </svg>
+  );
+}
+
 function GearIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
@@ -59,12 +70,13 @@ function GearIcon() {
 }
 
 const links = [
-  { href: '/',          label: 'Home',     Icon: HomeIcon  },
-  { href: '/shots/new', label: 'Log',      Icon: PlusIcon  },
-  { href: '/shots',     label: 'History',  Icon: ClockIcon },
-  { href: '/beans',     label: 'Beans',    Icon: BeanIcon  },
-  { href: '/analytics', label: 'Charts',   Icon: ChartIcon },
-  { href: '/settings',  label: 'Settings', Icon: GearIcon  },
+  { href: '/',              label: 'Home',    Icon: HomeIcon   },
+  { href: '/shots/new',     label: 'Log',     Icon: PlusIcon   },
+  { href: '/shots',         label: 'History', Icon: ClockIcon  },
+  { href: '/beans',         label: 'Beans',   Icon: BeanIcon   },
+  { href: '/analytics',     label: 'Charts',  Icon: ChartIcon  },
+  { href: '/achievements',  label: 'Awards',  Icon: TrophyIcon },
+  { href: '/settings',      label: 'Settings',Icon: GearIcon   },
 ];
 
 export default function Nav() {
