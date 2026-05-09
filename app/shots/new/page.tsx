@@ -17,6 +17,7 @@ export default function NewShotPage() {
   const [result, setResult]           = useState<{ shot: Shot; recommendation: string; newBadges: string[]; streakResult: StreakResult | null } | null>(null);
   const [showModal, setShowModal]     = useState(false);
   const [submitting, setSubmitting]   = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [weather, setWeather]         = useState<{ temp: number; humidity: number } | null>(null);
 
@@ -99,6 +100,43 @@ export default function NewShotPage() {
     );
   }
 
+  // ── Submit-error screen ─────────────────────────────────────
+  if (submitError) {
+    return (
+      <div className="p-4 space-y-6">
+        <div className="pt-6 pb-1 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-amber-500/15 border border-amber-500/25 flex items-center justify-center shrink-0">
+            <svg className="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-[#2C1E16] font-bold text-xl leading-tight">Connection Issue</h1>
+            <p className="text-[#7A6858] text-[10px] font-bold uppercase tracking-widest mt-0.5">Shot saved — AI unavailable</p>
+          </div>
+        </div>
+        <div className="glass rounded-2xl p-5 space-y-3">
+          <p className="text-[#7A6858] text-sm leading-relaxed">{submitError}</p>
+        </div>
+        <div className="flex gap-3 pt-2">
+          <button
+            onClick={() => { setSubmitError(null); setSubmitting(false); }}
+            className="flex-1 glass border border-[#C8B49A] text-[#2C1E16] font-bold py-4 rounded-2xl transition-all active:scale-[0.97] text-sm uppercase tracking-widest"
+          >
+            Log Another
+          </button>
+          <button
+            onClick={() => router.push('/shots')}
+            className="flex-1 bg-[#5D4037] text-[#FFFBF4] font-black py-4 rounded-2xl transition-all active:scale-[0.97] text-sm uppercase tracking-widest shadow-lg shadow-[#5D4037]/25"
+          >
+            View History
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // ── Analyzing screen ────────────────────────────────────────
   if (submitting) {
     return (
@@ -153,6 +191,10 @@ export default function NewShotPage() {
           setResult({ shot, recommendation, newBadges, streakResult });
           const milestone = streakResult?.isNew3 || streakResult?.isNew7 || streakResult?.isNew30;
           if (newBadges.length > 0 || milestone) setShowModal(true);
+        }}
+        onError={(err) => {
+          setSubmitting(false);
+          setSubmitError(err);
         }}
       />
     </div>

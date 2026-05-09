@@ -60,9 +60,9 @@ export async function POST(req: Request) {
       }
     }
 
-    const recommendation = await analyzeShot(body as Shot, trendSummary ?? '', weatherContext);
-
-    const { data: shot, error } = await db
+    // ── 1: Insert shot immediately so it is always persisted ────────────────
+    // AI runs AFTER the insert — a slow or failed AI call can never lose the shot.
+    const { data: shot, error: insertError } = await db
       .from('shots')
       .insert({
         user_id:         user.id,
@@ -80,20 +80,27 @@ export async function POST(req: Request) {
         has_milk:        body.has_milk      ?? false,
         ambient_temp:    body.ambient_temp  ?? null,
         humidity:        body.humidity      ?? null,
-        recommendation,
+        recommendation:  null,
       })
       .select()
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
 
-    // Gamification: check badges + update streak in parallel
-    const [newBadges, streakResult] = await Promise.all([
+    // ── 2: AI + gamification in parallel (shot already persisted above) ──────
+    const [recommendation, newBadges, streakResult] = await Promise.all([
+      analyzeShot(shot as Shot, trendSummary ?? '', weatherContext),
       checkNewBadges(user.id, db),
       updateStreak(user.id, db),
     ]);
 
-    return NextResponse.json({ shot, recommendation, newBadges, streakResult }, { status: 201 });
+    // ── 3: Backfill recommendation onto the saved shot ────────────────────────
+    await db.from('shots').update({ recommendation }).eq('id', shot.id);
+
+    return NextResponse.json(
+      { shot: { ...shot, recommendation }, recommendation, newBadges, streakResult },
+      { status: 201 },
+    );
   } catch (err) {
     console.error('[POST /api/shots]', err);
     return NextResponse.json(

@@ -478,10 +478,12 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
 export default function ShotForm({
   onSuccess,
   onSubmitting,
+  onError,
   weather,
 }: {
   onSuccess: (shot: Shot, recommendation: string, newBadges: string[], streakResult: StreakResult | null) => void;
   onSubmitting?: () => void;
+  onError?: (err: string) => void;
   weather?: { temp: number; humidity: number } | null;
 }) {
   const [form, setForm] = useState<FormState>({
@@ -630,6 +632,13 @@ export default function ShotForm({
     if (!form.dose || !form.yieldG) { setError('Dose and yield are required'); return; }
     setLoading(true); setError(null);
     onSubmitting?.();
+
+    // Safety-net abort: the server saves the shot within ~1s then runs AI (capped at
+    // 12s). 20s gives enough headroom; if we still haven't heard back by then a
+    // genuine network failure has occurred and we must exit the spinner.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20_000);
+
     try {
       const res = await fetch('/api/shots', {
         method: 'POST',
@@ -650,13 +659,24 @@ export default function ShotForm({
           ambient_temp: weather?.temp    ?? null,
           humidity:     weather?.humidity ?? null,
         }),
+        signal: controller.signal,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to log shot');
       onSuccess(data.shot as Shot, data.shot.recommendation, data.newBadges ?? [], data.streakResult ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
-    } finally { setLoading(false); }
+      const isAbort = err instanceof Error && err.name === 'AbortError';
+      const msg = isAbort
+        ? 'Connection timed out — your shot was saved. Check History to retry AI analysis.'
+        : err instanceof Error ? err.message : 'Something went wrong';
+      // setError is a no-op here (this component is unmounted once onSubmitting fires),
+      // but onError propagates back to the mounted parent so it can exit the spinner.
+      setError(msg);
+      onError?.(msg);
+    } finally {
+      clearTimeout(timeoutId);
+      setLoading(false);
+    }
   }
 
   const isEspresso = form.brew_method === 'Espresso';
