@@ -164,6 +164,10 @@ export default function SettingsPage() {
   const [basketSaving, setBasketSaving]     = useState(false);
   const [basketSaved, setBasketSaved]       = useState(false);
 
+  // Recalculate state
+  const [recalcRunning, setRecalcRunning] = useState(false);
+  const [recalcMsg, setRecalcMsg]         = useState<{ ok: boolean; text: string } | null>(null);
+
   // Register new equipment form
   const [showAdd, setShowAdd]     = useState(false);
   const [newMachine, setNewMachine] = useState('');
@@ -308,6 +312,31 @@ export default function SettingsPage() {
       await loadProfiles();
     }
     setBasketSaving(false);
+  }
+
+  async function handleRecalculate() {
+    setRecalcRunning(true);
+    setRecalcMsg(null);
+    try {
+      const res  = await fetch('/api/admin/recalculate-badges', { headers: await authHeaders() });
+      const data = await res.json();
+      if (!res.ok) {
+        setRecalcMsg({ ok: false, text: data.error ?? 'Recalculation failed' });
+        return;
+      }
+      const awarded = (data.awarded as string[]) ?? [];
+      const held    = (data.heldBadges as { name: string }[]) ?? [];
+      setRecalcMsg({
+        ok:   true,
+        text: awarded.length > 0
+          ? `Restored ${awarded.length} badge${awarded.length > 1 ? 's' : ''}! You now hold ${held.length}/6.`
+          : `All up to date — ${held.length}/6 badges already on record.`,
+      });
+    } catch {
+      setRecalcMsg({ ok: false, text: 'Network error — please try again.' });
+    } finally {
+      setRecalcRunning(false);
+    }
   }
 
   function saveBrewMethod(val: string) {
@@ -524,6 +553,34 @@ export default function SettingsPage() {
           </div>
           <span className="text-[#5D4037] font-bold text-lg ml-3">→</span>
         </a>
+      </div>
+
+      {/* ── Developer Tools ── */}
+      <div className="glass rounded-3xl px-5 py-4 space-y-3">
+        <p className={LABEL_CLS}>Developer Tools</p>
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-[#2C1E16] text-sm font-semibold">Recalculate Badges &amp; Streaks</p>
+            <p className="text-[#7A6858] text-xs mt-0.5">Re-evaluates your full shot history and restores any missing badges.</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleRecalculate}
+            disabled={recalcRunning}
+            className="shrink-0 text-[#5D4037] text-xs font-black uppercase tracking-widest px-3 py-2 rounded-xl border border-[#5D4037]/30 hover:bg-[#5D4037]/10 transition-colors disabled:opacity-50 touch-manipulation"
+          >
+            {recalcRunning ? 'Running…' : 'Run'}
+          </button>
+        </div>
+        {recalcMsg && (
+          <p className={`text-xs font-medium px-3 py-2 rounded-xl ${
+            recalcMsg.ok
+              ? 'bg-green-500/10 text-green-700'
+              : 'bg-red-500/10 text-red-600'
+          }`}>
+            {recalcMsg.text}
+          </p>
+        )}
       </div>
 
       <p className="text-[10px] text-[#7A6858]/50 text-center pb-4">Dialed · v0.1</p>
