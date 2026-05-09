@@ -22,7 +22,8 @@ export interface Shot {
   dose: number;
   yield: number;
   brew_ratio: number;
-  extraction_time: number;
+  extraction_time?: number | null;
+  steep_time_hours?: number | null;
   brew_temp?: number | null;
   flavor_tags: FlavorTag[];
   overall_score?: number | null;

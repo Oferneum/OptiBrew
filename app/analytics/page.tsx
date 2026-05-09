@@ -272,6 +272,7 @@ export default function AnalyticsPage() {
       .select('extraction_time, overall_score, grind_setting, dose, yield, user_id, beans(roaster, origin, bag_name)')
       .not('overall_score', 'is', null)
       .not('extraction_time', 'is', null)
+      .neq('brew_method', 'ColdBrew')
       .order('created_at', { ascending: false })
       .limit(500);
 

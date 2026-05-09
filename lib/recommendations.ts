@@ -52,7 +52,7 @@ export async function analyzeShot(shot: Shot, trendSummary: string = '', weather
 
   const brewMethodBlock = !isEspresso
     ? `\nBREW METHOD OVERRIDE — This is ${brewMethod}, NOT espresso. Do NOT apply espresso constraints (30s extraction time, 1:2 yield ratio). Adjust your analysis:
-- ColdBrew: focus on steep time, coarse grind setting, and cold water ratio. "Extraction time" here is steep duration in hours, not seconds.
+- ColdBrew: the primary time metric is steep_time_hours (below). If < 12 hours, likely under-extracted (weak, watery); if > 24 hours, may be over-extracted (bitter, astringent). Target 14–18 hours for a balanced concentrate. Focus on steep duration, coarse grind, and cold-water ratio.
 - FrenchPress: focus on 4-minute steep, coarse grind, and immersion ratio.
 - MokaPot: pressurised brew with shorter time expectations; standard Moka parameters apply.`
     : '';
@@ -76,7 +76,7 @@ Shot data:
 - USER NOTES: "${shot.notes || 'none'}"  ← read this second
 - Brew method: ${brewMethod}
 - Dose: ${shot.dose}g | Yield: ${shot.yield}g | Ratio: ${ratio}
-- Extraction time: ${shot.extraction_time}s
+- Extraction time: ${brewMethod === 'ColdBrew' ? `${shot.steep_time_hours ?? 'not recorded'} hours (steep time)` : `${shot.extraction_time ?? 'not recorded'}s`}
 - Brew temp: ${shot.brew_temp ?? 'not recorded'}°C
 - Flavor tags: ${shot.flavor_tags?.join(', ') || 'none tagged'}
 

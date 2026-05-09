@@ -57,8 +57,9 @@ export default function HomePage() {
   const avgScore    = scoredShots.length > 0
     ? (scoredShots.reduce((sum, s) => sum + (s.overall_score ?? 0), 0) / scoredShots.length).toFixed(1)
     : null;
-  const avgTime = shots.length > 0
-    ? Math.round(shots.reduce((sum, s) => sum + s.extraction_time, 0) / shots.length)
+  const timedShots = shots.filter((s) => s.extraction_time != null);
+  const avgTime = timedShots.length > 0
+    ? Math.round(timedShots.reduce((sum, s) => sum + (s.extraction_time as number), 0) / timedShots.length)
     : null;
 
   return (

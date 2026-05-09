@@ -21,6 +21,7 @@ interface FormState {
   dose: string;
   yieldG: string;
   extraction_time: string;
+  steep_time_hours: string;
   brew_temp: string;
   flavor_tags: FlavorTag[];
   overall_score: number | null;
@@ -487,7 +488,7 @@ export default function ShotForm({
   weather?: { temp: number; humidity: number } | null;
 }) {
   const [form, setForm] = useState<FormState>({
-    dose: '', yieldG: '', extraction_time: '', brew_temp: '',
+    dose: '', yieldG: '', extraction_time: '', steep_time_hours: '', brew_temp: '',
     flavor_tags: [], overall_score: null, notes: '',
     grind_setting: '', brew_method: 'Espresso', has_milk: false,
   });
@@ -644,10 +645,11 @@ export default function ShotForm({
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({
-          dose:            parseFloat(form.dose),
-          yield:           parseFloat(form.yieldG),
-          extraction_time: parseInt(form.extraction_time),
-          brew_temp:       form.brew_temp ? parseFloat(form.brew_temp) : null,
+          dose:             parseFloat(form.dose),
+          yield:            parseFloat(form.yieldG),
+          extraction_time:  form.brew_method === 'ColdBrew' ? null : (parseInt(form.extraction_time) || null),
+          steep_time_hours: form.brew_method === 'ColdBrew' ? (parseFloat(form.steep_time_hours) || null) : null,
+          brew_temp:        form.brew_temp ? parseFloat(form.brew_temp) : null,
           flavor_tags:     form.flavor_tags,
           overall_score:   form.overall_score,
           notes:           form.notes || null,
@@ -680,6 +682,7 @@ export default function ShotForm({
   }
 
   const isEspresso = form.brew_method === 'Espresso';
+  const isColdBrew = form.brew_method === 'ColdBrew';
 
   // Relative weather nudge — only fires when delta vs last good shot is significant
   const weatherNudge: string | null = (() => {
@@ -1003,17 +1006,34 @@ export default function ShotForm({
         ) : (
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Brew Time (s)</Label>
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                placeholder={form.brew_method === 'FrenchPress' ? '240' : '180'}
-                value={form.extraction_time}
-                onChange={(e) => setForm((f) => ({ ...f, extraction_time: e.target.value }))}
-                className={FIELD_CLS}
-                style={{ fontSize: '16px' }}
-              />
+              {isColdBrew ? (
+                <>
+                  <Label>Steep Time (hrs)</Label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="16"
+                    value={form.steep_time_hours}
+                    onChange={(e) => setForm((f) => ({ ...f, steep_time_hours: e.target.value }))}
+                    className={FIELD_CLS}
+                    style={{ fontSize: '16px' }}
+                  />
+                </>
+              ) : (
+                <>
+                  <Label>Brew Time (s)</Label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder={form.brew_method === 'FrenchPress' ? '240' : '180'}
+                    value={form.extraction_time}
+                    onChange={(e) => setForm((f) => ({ ...f, extraction_time: e.target.value }))}
+                    className={FIELD_CLS}
+                    style={{ fontSize: '16px' }}
+                  />
+                </>
+              )}
             </div>
             <div>
               <Label>Temp (°C)</Label>

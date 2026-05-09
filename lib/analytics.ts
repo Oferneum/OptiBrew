@@ -19,11 +19,11 @@ function stdDev(values: number[]): number {
 
 export function computeSuccessZone(shots: Shot[]): SuccessZone {
   const balanced = shots.filter(
-    (s) => s.flavor_tags.includes('Balanced') && (s.overall_score ?? 0) >= 7,
+    (s) => s.flavor_tags.includes('Balanced') && (s.overall_score ?? 0) >= 7 && s.extraction_time != null,
   );
   if (balanced.length < 3) return SCA_DEFAULTS;
 
-  const times = balanced.map((s) => s.extraction_time);
+  const times  = balanced.map((s) => s.extraction_time as number);
   const ratios = balanced.map((s) => s.brew_ratio);
 
   return {
