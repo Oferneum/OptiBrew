@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -63,9 +63,16 @@ export default function NewBagPage() {
   const [scanError, setScanError] = useState<string | null>(null);
   const [saving,    setSaving]    = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [activeMachine, setActiveMachine] = useState('');
+  const [activeGrinder, setActiveGrinder] = useState('');
 
   const frontRef = useRef<HTMLInputElement>(null);
   const backRef  = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setActiveMachine(localStorage.getItem('activeMachineName') || '');
+    setActiveGrinder(localStorage.getItem('activeGrinderName') || '');
+  }, []);
 
   function selectImage(slot: 'front' | 'back', file: File) {
     const preview = URL.createObjectURL(file);
@@ -86,6 +93,8 @@ export default function NewBagPage() {
       const fd = new FormData();
       fd.append('image', frontBlob, 'front.jpg');
       if (backBlob) fd.append('image', backBlob, 'back.jpg');
+      if (activeMachine) fd.append('activeMachine', activeMachine);
+      if (activeGrinder) fd.append('activeGrinder', activeGrinder);
       const res = await fetch('/api/scan-bag', { method: 'POST', body: fd, headers: await authHeaders() });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));

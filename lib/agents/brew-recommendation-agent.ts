@@ -20,7 +20,7 @@ export async function getStartupRecommendation(
     const gear = userContext.equipment
       .map((e) => e.grinder_name ? `${e.machine_name} with ${e.grinder_name}` : e.machine_name)
       .join(', ');
-    equipmentLine = `User's equipment: ${gear}. Give machine-specific parameters (e.g. PID temp, pre-infusion, dose for their basket size).`;
+    equipmentLine = `The user brews at home ONLY on: ${gear}. You MUST tailor your recipe recommendation specifically to this equipment. Do NOT mention or recommend any other machine or grinder. Give machine-specific parameters for their exact setup (e.g. PID temp, pre-infusion time, dose for their basket size, grind setting for their grinder).`;
   } else {
     equipmentLine = 'No equipment data — recommend the best brew method for these beans with generic high-quality parameters.';
   }

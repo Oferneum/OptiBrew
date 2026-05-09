@@ -33,15 +33,22 @@ export default function RetryableRecommendation({
   async function handleRetry() {
     setRetrying(true);
     setError(null);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12_000);
     try {
       const res = await fetch(`/api/shots/${shotId}/reanalyze`, {
         method: 'POST',
         headers: await authHeaders(),
+        signal: controller.signal,
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? 'Retry failed — try again in a moment'); return; }
       setRec(data.recommendation);
+    } catch (err) {
+      const isAbort = err instanceof Error && err.name === 'AbortError';
+      setError(isAbort ? 'Analysis timed out — tap retry to try again' : 'Retry failed — try again in a moment');
     } finally {
+      clearTimeout(timeoutId);
       setRetrying(false);
     }
   }

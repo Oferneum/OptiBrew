@@ -9,6 +9,10 @@ export async function POST(req: Request) {
   const files    = formData.getAll('image') as File[];
   if (files.length === 0) return NextResponse.json({ error: 'No images provided' }, { status: 400 });
 
+  // Active rig sent by the client from localStorage (single source of truth)
+  const activeMachine = (formData.get('activeMachine') as string) || null;
+  const activeGrinder = (formData.get('activeGrinder') as string) || null;
+
   const images: ImageInput[] = await Promise.all(
     files.map(async (file) => ({
       data:     Buffer.from(await file.arrayBuffer()).toString('base64'),
@@ -22,17 +26,22 @@ export async function POST(req: Request) {
     const db = getRequestClient(req);
     const { data: { user } } = await db.auth.getUser();
     if (user) {
-      const [equipRes, beansRes] = await Promise.all([
-        db.from('equipment_profiles').select('machine_name, grinder_name'),
-        db.from('beans')
-          .select('roaster, origin, bag_name')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(5),
-      ]);
+      const { data: beansData } = await db
+        .from('beans')
+        .select('roaster, origin, bag_name')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      // Prefer the client-provided active rig over fetching all registered profiles —
+      // the AI should only see the machine the user is actually brewing on today.
+      const equipment: UserContext['equipment'] = activeMachine
+        ? [{ machine_name: activeMachine, grinder_name: activeGrinder }]
+        : [];
+
       userContext = {
-        equipment:   equipRes.data  ?? [],
-        recentBeans: beansRes.data  ?? [],
+        equipment,
+        recentBeans: beansData ?? [],
       };
     }
   } catch { /* context failure must not block the scan */ }
