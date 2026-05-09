@@ -29,7 +29,7 @@ async function callModel(modelName: string, prompt: string): Promise<string> {
 
 const ANALYSIS_TIMEOUT_MS = 12_000;
 
-export async function analyzeShot(shot: Shot, trendSummary: string = '', weatherContext?: string): Promise<string> {
+export async function analyzeShot(shot: Shot, trendSummary: string = '', weatherContext?: string, basketName?: string | null): Promise<string> {
   if (!genAI) {
     console.error('[Dialed AI] GEMINI_API_KEY is not set');
     return 'AI configuration missing.';
@@ -48,6 +48,10 @@ export async function analyzeShot(shot: Shot, trendSummary: string = '', weather
 
   const weatherBlock = weatherContext
     ? `\nEnvironmental context: ${weatherContext} — weave this naturally into your diagnosis as an extraction factor; do not repeat the numbers verbatim.`
+    : '';
+
+  const basketBlock = basketName
+    ? `\nEquipment note: The user has a ${basketName} precision basket installed. Precision baskets (IMS, VST, Pullman, Pesado, Weber, Wafo, etc.) have tighter tolerances and often higher flow rates than stock baskets. Do NOT penalize slightly faster extraction times (e.g. 22–26s for espresso) if the taste score is high — this is expected and desirable behavior with a precision basket.`
     : '';
 
   const brewMethodBlock = !isEspresso
@@ -80,7 +84,7 @@ Shot data:
 - Brew temp: ${shot.brew_temp ?? 'not recorded'}°C
 - Flavor tags: ${shot.flavor_tags?.join(', ') || 'none tagged'}
 
-${trendBlock}${weatherBlock}${brewMethodBlock}`;
+${trendBlock}${weatherBlock}${basketBlock}${brewMethodBlock}`;
 
   async function runWithFallback(): Promise<string> {
     // ── Primary: gemini-2.5-flash ──────────────────────────────────────────

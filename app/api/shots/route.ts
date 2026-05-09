@@ -88,14 +88,25 @@ export async function POST(req: Request) {
 
     if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
 
-    // ── 2: AI + gamification in parallel (shot already persisted above) ──────
+    // ── 2: Fetch basket_name from active equipment profile ────────────────────
+    let basketName: string | null = null;
+    if (body.equipment_id) {
+      const { data: equip } = await db
+        .from('equipment_profiles')
+        .select('basket_name')
+        .eq('id', body.equipment_id)
+        .single();
+      basketName = (equip as { basket_name?: string | null } | null)?.basket_name ?? null;
+    }
+
+    // ── 3: AI + gamification in parallel (shot already persisted above) ──────
     const [recommendation, newBadges, streakResult] = await Promise.all([
-      analyzeShot(shot as Shot, trendSummary ?? '', weatherContext),
+      analyzeShot(shot as Shot, trendSummary ?? '', weatherContext, basketName),
       checkNewBadges(user.id, db),
       updateStreak(user.id, db),
     ]);
 
-    // ── 3: Backfill recommendation onto the saved shot ────────────────────────
+    // ── 4: Backfill recommendation onto the saved shot ────────────────────────
     await db.from('shots').update({ recommendation }).eq('id', shot.id);
 
     return NextResponse.json(
