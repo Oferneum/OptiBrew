@@ -1,17 +1,16 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
 import { getRequestClient } from '@/lib/supabase';
 
-export async function GET(req: NextRequest, ctx: RouteContext<'/api/shots/[id]'>) {
-  const { id } = await ctx.params;
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const db = getRequestClient(req);
   const { data, error } = await db.from('shots').select('*').eq('id', id).single();
   if (error) return NextResponse.json({ error: error.message }, { status: 404 });
   return NextResponse.json(data);
 }
 
-export async function PATCH(req: NextRequest, ctx: RouteContext<'/api/shots/[id]'>) {
-  const { id } = await ctx.params;
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const db = getRequestClient(req);
   const body = await req.json();
   const { data, error } = await db
@@ -24,8 +23,8 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<'/api/shots/[id]
   return NextResponse.json(data);
 }
 
-export async function DELETE(req: NextRequest, ctx: RouteContext<'/api/shots/[id]'>) {
-  const { id } = await ctx.params;
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const db = getRequestClient(req);
   const { error } = await db.from('shots').delete().eq('id', id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
