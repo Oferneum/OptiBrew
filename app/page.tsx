@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import useSWR from 'swr';
 import { supabase } from '@/lib/supabase';
 import PageLoader from '@/components/PageLoader';
 import ShotCard from '@/components/ShotCard';
@@ -29,27 +29,22 @@ function EmptyState() {
   );
 }
 
+async function fetchHomeShots(): Promise<Shot[]> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return [];
+
+  const { data, error } = await supabase
+    .from('shots')
+    .select('*')
+    .eq('user_id', session.user.id)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  return error ? [] : ((data ?? []) as Shot[]);
+}
+
 export default function HomePage() {
-  const [shots, setShots]     = useState<Shot[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function load() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { setLoading(false); return; }
-
-      const { data, error } = await supabase
-        .from('shots')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      setShots(error ? [] : ((data ?? []) as Shot[]));
-      setLoading(false);
-    }
-    load();
-  }, []);
+  const { data: shots = [], isLoading } = useSWR('home/shots', fetchHomeShots);
 
   const recent = shots.slice(0, 2);
 
@@ -89,7 +84,7 @@ export default function HomePage() {
       </Link>
 
       {/* ── Stats ─────────────────────────────────── */}
-      {!loading && shots.length > 0 && (
+      {!isLoading && shots.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: 'Shots',     value: shots.length.toString() },
@@ -151,7 +146,7 @@ export default function HomePage() {
           )}
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <PageLoader />
         ) : recent.length === 0 ? (
           <div className="glass rounded-3xl py-8 px-6 flex flex-col items-center text-center space-y-4">

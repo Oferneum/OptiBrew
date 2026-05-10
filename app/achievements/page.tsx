@@ -1,51 +1,59 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import useSWR from 'swr';
 import { supabase } from '@/lib/supabase';
 import { BADGE_DEFS } from '@/lib/achievements';
 import { BADGE_SVGS } from '@/components/BadgeSVGs';
 import PageLoader from '@/components/PageLoader';
 
+type BadgeRow = { badge_id: string; unlocked_at: string };
+type StatsRow = { current_streak: number; longest_streak: number };
+
+type AchievementsData = {
+  unlockedIds: Set<string>;
+  unlockDates: Record<string, string>;
+  streak: { current: number; longest: number } | null;
+};
+
+async function fetchAchievements(): Promise<AchievementsData> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { unlockedIds: new Set(), unlockDates: {}, streak: null };
+
+  const [{ data: badges }, { data: stats }] = await Promise.all([
+    supabase
+      .from('user_badges')
+      .select('badge_id, unlocked_at')
+      .eq('user_id', session.user.id),
+    supabase
+      .from('user_stats')
+      .select('current_streak, longest_streak')
+      .eq('user_id', session.user.id)
+      .maybeSingle(),
+  ]);
+
+  const unlockedIds = new Set((badges ?? []).map((b: BadgeRow) => b.badge_id));
+  const unlockDates: Record<string, string> = {};
+  for (const b of (badges ?? []) as BadgeRow[]) {
+    unlockDates[b.badge_id] = b.unlocked_at;
+  }
+  const s = stats as StatsRow | null;
+  return {
+    unlockedIds,
+    unlockDates,
+    streak: s ? { current: s.current_streak, longest: s.longest_streak } : null,
+  };
+}
+
 export default function AchievementsPage() {
-  const [unlockedIds, setUnlockedIds]   = useState<Set<string>>(new Set());
-  const [unlockDates, setUnlockDates]   = useState<Record<string, string>>({});
-  const [streak, setStreak]             = useState<{ current: number; longest: number } | null>(null);
-  const [loading, setLoading]           = useState(true);
+  const { data, isLoading } = useSWR('achievements', fetchAchievements);
 
-  useEffect(() => {
-    async function load() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { setLoading(false); return; }
+  const unlockedIds = data?.unlockedIds ?? new Set<string>();
+  const unlockDates = data?.unlockDates ?? {};
+  const streak      = data?.streak      ?? null;
+  const unlocked    = BADGE_DEFS.filter((b) => unlockedIds.has(b.id));
+  const locked      = BADGE_DEFS.filter((b) => !unlockedIds.has(b.id));
 
-      const [{ data: badges }, { data: stats }] = await Promise.all([
-        supabase
-          .from('user_badges')
-          .select('badge_id, unlocked_at')
-          .eq('user_id', session.user.id),
-        supabase
-          .from('user_stats')
-          .select('current_streak, longest_streak')
-          .eq('user_id', session.user.id)
-          .maybeSingle(),
-      ]);
-
-      const ids   = new Set((badges ?? []).map((b: { badge_id: string }) => b.badge_id));
-      const dates: Record<string, string> = {};
-      for (const b of (badges ?? []) as { badge_id: string; unlocked_at: string }[]) {
-        dates[b.badge_id] = b.unlocked_at;
-      }
-      setUnlockedIds(ids);
-      setUnlockDates(dates);
-      if (stats) setStreak({ current: (stats as { current_streak: number; longest_streak: number }).current_streak, longest: (stats as { current_streak: number; longest_streak: number }).longest_streak });
-      setLoading(false);
-    }
-    load();
-  }, []);
-
-  const unlocked = BADGE_DEFS.filter((b) => unlockedIds.has(b.id));
-  const locked   = BADGE_DEFS.filter((b) => !unlockedIds.has(b.id));
-
-  if (loading) return <PageLoader />;
+  if (isLoading) return <PageLoader />;
 
   return (
     <div className="p-4 space-y-6 pb-28">
@@ -90,9 +98,9 @@ export default function AchievementsPage() {
           </div>
           <div className="grid grid-cols-3 gap-3">
             {unlocked.map((badge) => {
-              const Icon     = BADGE_SVGS[badge.id];
-              const dateStr  = unlockDates[badge.id];
-              const date     = dateStr
+              const Icon    = BADGE_SVGS[badge.id];
+              const dateStr = unlockDates[badge.id];
+              const date    = dateStr
                 ? new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                 : null;
               return (
