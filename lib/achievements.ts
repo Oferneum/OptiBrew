@@ -112,104 +112,67 @@ export const BADGE_DEFS: BadgeDef[] = [
   },
 ];
 
-// ── Badge checking ────────────────────────────────────────────────────────────
+// ── Shared types (exported so unit tests can import them) ─────────────────────
 
-export async function checkNewBadges(
-  userId: string,
-  db: SupabaseClient,
-): Promise<string[]> {
-  // Badges the user already holds
-  const { data: held } = await db
-    .from('user_badges')
-    .select('badge_id')
-    .eq('user_id', userId);
+export type ShotRow = {
+  bean_id:       string | null;
+  overall_score: number | null;
+  dose:          number | null;
+  yield:         number | null;
+  created_at:    string;
+  brew_method:   string | null;
+};
 
-  const heldSet = new Set(
-    (held ?? []).map((b: { badge_id: string }) => b.badge_id),
-  );
+export type BeanJoin    = { origin: string; roaster: string | null };
+export type BeanJoinRow = { beans: BeanJoin | BeanJoin[] | null };
 
-  // Two parallel fetches cover all badge conditions
-  const [
-    { data: shotRows },
-    { data: joinRows },
-  ] = await Promise.all([
-    db.from('shots')
-      .select('bean_id, overall_score, dose, yield, created_at, brew_method')
-      .eq('user_id', userId),
-    db.from('shots')
-      .select('beans(origin, roaster)')
-      .eq('user_id', userId)
-      .not('bean_id', 'is', null),
-  ]);
+// ── Pure badge evaluation (no DB access — fully unit-testable) ────────────────
 
-  type ShotRow = {
-    bean_id:       string | null;
-    overall_score: number | null;
-    dose:          number | null;
-    yield:         number | null;
-    created_at:    string;
-    brew_method:   string | null;
-  };
-
-  type BeanJoin = { origin: string; roaster: string | null };
-  type BeanJoinRow = { beans: BeanJoin | BeanJoin[] | null };
-
-  const shots = (shotRows ?? []) as ShotRow[];
-  const beanJoinRows = (joinRows ?? []) as BeanJoinRow[];
+export function computeEarnedBadges(
+  shots:        ShotRow[],
+  beanJoinRows: BeanJoinRow[],
+  heldSet:      ReadonlySet<string>,
+): string[] {
   const earned: string[] = [];
-
   const check = (id: string, cond: boolean) => {
     if (!heldSet.has(id) && cond) earned.push(id);
   };
 
-  // ── origin + roaster sets (from bean join) ──────────────────────────────────
-  const origins = new Set<string>();
-  const roasters = new Set<string>();
+  const origins    = new Set<string>();
+  const roasters   = new Set<string>();
+  const brewMethods = new Set<string>();
+  const beanCounts: Record<string, number> = {};
+  const dayCounts:  Record<string, number> = {};
+
   for (const s of beanJoinRows) {
     const b = s.beans;
     if (!b) continue;
     const bean = Array.isArray(b) ? b[0] : b;
     if (!bean) continue;
-    if (bean.origin) origins.add(bean.origin);
+    if (bean.origin)  origins.add(bean.origin);
     if (bean.roaster) roasters.add(bean.roaster);
   }
 
-  // ── brew method set ─────────────────────────────────────────────────────────
-  const brewMethods = new Set<string>();
   for (const s of shots) {
     if (s.brew_method) brewMethods.add(s.brew_method);
-  }
-
-  // ── bean shot counts (for Scientist) ───────────────────────────────────────
-  const beanCounts: Record<string, number> = {};
-  for (const s of shots) {
-    if (!s.bean_id) continue;
-    beanCounts[s.bean_id] = (beanCounts[s.bean_id] ?? 0) + 1;
-  }
-
-  // ── day counts (for Dialer) ─────────────────────────────────────────────────
-  const dayCounts: Record<string, number> = {};
-  for (const s of shots) {
+    if (s.bean_id)     beanCounts[s.bean_id] = (beanCounts[s.bean_id] ?? 0) + 1;
     const day = s.created_at.slice(0, 10);
     dayCounts[day] = (dayCounts[day] ?? 0) + 1;
   }
 
-  // ── checks ──────────────────────────────────────────────────────────────────
-  check('first-drip',    shots.length >= 1);
-  check('bean-counter',  shots.length >= 50);
-  check('century-mark',  shots.length >= 100);
-  check('globetrotter',  origins.size >= 5);
-  check('terroir-hunter', origins.size >= 10);
+  check('first-drip',     shots.length >= 1);
+  check('bean-counter',   shots.length >= 50);
+  check('century-mark',   shots.length >= 100);
+  check('globetrotter',   origins.size  >= 5);
+  check('terroir-hunter', origins.size  >= 10);
   check('roasters-dozen', roasters.size >= 12);
-  check('method-actor',  brewMethods.size >= 4);
-  check('scientist',     Math.max(0, ...Object.values(beanCounts)) >= 10);
-  check('dialer',        Math.max(0, ...Object.values(dayCounts)) >= 5);
+  check('method-actor',   brewMethods.size >= 4);
+  check('scientist',      Math.max(0, ...Object.values(beanCounts)) >= 10);
+  check('dialer',         Math.max(0, ...Object.values(dayCounts))  >= 5);
 
   check('dawn-patrol', shots.some((s) => new Date(s.created_at).getUTCHours() < 6));
   check('night-owl',   shots.some((s) => new Date(s.created_at).getUTCHours() >= 21));
-
-  const coldBrewCount = shots.filter((s) => s.brew_method === 'ColdBrew').length;
-  check('cold-front', coldBrewCount >= 5);
+  check('cold-front',  shots.filter((s) => s.brew_method === 'ColdBrew').length >= 5);
 
   check(
     'golden-ratio',
@@ -230,6 +193,42 @@ export async function checkNewBadges(
   );
 
   check('perfectionist', shots.some((s) => s.overall_score === 10));
+
+  return earned;
+}
+
+// ── Badge checking (DB adapter — thin wrapper around computeEarnedBadges) ─────
+
+export async function checkNewBadges(
+  userId: string,
+  db: SupabaseClient,
+): Promise<string[]> {
+  const { data: held } = await db
+    .from('user_badges')
+    .select('badge_id')
+    .eq('user_id', userId);
+
+  const heldSet = new Set(
+    (held ?? []).map((b: { badge_id: string }) => b.badge_id),
+  );
+
+  const [
+    { data: shotRows },
+    { data: joinRows },
+  ] = await Promise.all([
+    db.from('shots')
+      .select('bean_id, overall_score, dose, yield, created_at, brew_method')
+      .eq('user_id', userId),
+    db.from('shots')
+      .select('beans(origin, roaster)')
+      .eq('user_id', userId)
+      .not('bean_id', 'is', null),
+  ]);
+
+  const shots        = (shotRows ?? []) as ShotRow[];
+  const beanJoinRows = (joinRows  ?? []) as BeanJoinRow[];
+
+  const earned = computeEarnedBadges(shots, beanJoinRows, heldSet);
 
   if (earned.length > 0) {
     await db
