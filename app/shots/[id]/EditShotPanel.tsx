@@ -149,7 +149,7 @@ export default function EditShotPanel({
       */}
       <div
         className="relative bg-[#FFFBF4] rounded-t-3xl flex flex-col"
-        style={{ maxHeight: '88dvh' }}
+        style={{ height: '92dvh' }}
       >
         {/* Drag handle — flex-none so it never grows/shrinks */}
         <div className="flex-none flex justify-center pt-3 pb-1">
@@ -182,11 +182,15 @@ export default function EditShotPanel({
           -webkit-overflow-scrolling:touch → momentum scrolling on iOS
         */}
         <div
-          className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4 space-y-5"
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4"
           style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
         >
+          {/* Inner column — shrink-0 on every section prevents iOS from
+              compressing form rows when the keyboard is open */}
+          <div className="flex flex-col gap-5">
+
           {/* Dose + Yield */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="shrink-0 grid grid-cols-2 gap-3">
             <div>
               <Label>Dose (g)</Label>
               <input
@@ -214,7 +218,7 @@ export default function EditShotPanel({
           </div>
 
           {/* Time + Temp */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="shrink-0 grid grid-cols-2 gap-3">
             <div>
               <Label>{isColdBrew ? 'Steep Time (hrs)' : 'Extraction (s)'}</Label>
               {isColdBrew ? (
@@ -254,7 +258,7 @@ export default function EditShotPanel({
           </div>
 
           {/* Grind */}
-          <div>
+          <div className="shrink-0">
             <Label>Grind Setting</Label>
             <input
               type="text"
@@ -267,7 +271,7 @@ export default function EditShotPanel({
           </div>
 
           {/* Score */}
-          <div>
+          <div className="shrink-0">
             <Label>Score</Label>
             <div className="flex gap-2 flex-wrap">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => {
@@ -291,7 +295,7 @@ export default function EditShotPanel({
           </div>
 
           {/* Flavor tags */}
-          <div>
+          <div className="shrink-0">
             <Label>Taste</Label>
             <div className="flex flex-wrap gap-2">
               {FLAVOR_OPTIONS.map((tag) => {
@@ -315,7 +319,7 @@ export default function EditShotPanel({
           </div>
 
           {/* Notes */}
-          <div>
+          <div className="shrink-0">
             <Label>Notes</Label>
             <textarea
               rows={3}
@@ -327,14 +331,13 @@ export default function EditShotPanel({
             />
           </div>
 
-          {/* Save / Cancel — live inside the scroll area so the iOS keyboard
-              can never push them off-screen behind a fixed footer */}
-          <div className="border-t border-[#EDE4D3] pt-4 flex gap-2.5">
+          {/* Save / Cancel */}
+          <div className="shrink-0 border-t border-[#EDE4D3] pt-4 flex gap-2.5">
             <button
               type="button"
               onClick={onClose}
               disabled={busy}
-              className="flex-1 py-4 min-h-[56px] rounded-2xl text-sm font-black uppercase tracking-wide bg-[#F3EFEA] text-[#7A6858] transition-all active:scale-[0.98] disabled:opacity-40 touch-manipulation"
+              className="flex-1 py-4 min-h-[56px] rounded-2xl text-sm font-black uppercase tracking-wide bg-[#F3EFEA] text-[#7A6858] ring-2 ring-[#C8B49A] transition-all active:scale-[0.98] disabled:opacity-40 touch-manipulation"
             >
               Cancel
             </button>
@@ -342,14 +345,14 @@ export default function EditShotPanel({
               type="button"
               onClick={handleSave}
               disabled={busy}
-              className="flex-1 py-4 min-h-[56px] rounded-2xl text-sm font-black uppercase tracking-wide bg-[#5D4037] text-[#FFFBF4] shadow-xl shadow-[#5D4037]/25 transition-all active:scale-[0.98] disabled:opacity-60 touch-manipulation"
+              className="flex-1 py-4 min-h-[56px] rounded-2xl text-sm font-black uppercase tracking-wide bg-[#5D4037] text-[#FFFBF4] ring-2 ring-[#5D4037] shadow-xl shadow-[#5D4037]/25 transition-all active:scale-[0.98] disabled:opacity-60 touch-manipulation"
             >
               {saving ? 'Saving…' : 'Save'}
             </button>
           </div>
 
           {/* Delete — below Save so it's harder to hit by mistake */}
-          <div>
+          <div className="shrink-0">
             <button
               type="button"
               onClick={handleDelete}
@@ -361,14 +364,19 @@ export default function EditShotPanel({
           </div>
 
           {error && (
-            <p className="text-red-600 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 font-black">
-              {error}
-            </p>
+            <div className="shrink-0">
+              <p className="text-red-600 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 font-black">
+                {error}
+              </p>
+            </div>
           )}
 
-          {/* Generous bottom padding so the last button clears the home-indicator bar */}
-          <div className="pb-10" />
-        </div>
+          {/* 160 px of dead space — guarantees the last button can be scrolled
+              well clear of the keyboard (≈ 300 px tall on most iPhones) */}
+          <div className="shrink-0 pb-40" />
+
+          </div>{/* end inner flex column */}
+        </div>{/* end scroll body */}
       </div>
     </div>
   );
