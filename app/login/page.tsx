@@ -1,7 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+
+// Google OAuth returns 403 "disallowed_useragent" in embedded WebViews.
+// Detect them on mount and warn before the user attempts sign-in.
+function detectWebView(ua: string): { restricted: boolean; isIOS: boolean } {
+  const restricted =
+    // Social app in-app browsers
+    /FBAN|FBAV|FB_IAB|FB4A/i.test(ua) ||   // Facebook
+    /Instagram/i.test(ua)              ||   // Instagram
+    /Twitter/i.test(ua)                ||   // X / Twitter
+    /LinkedInApp/i.test(ua)            ||   // LinkedIn
+    /MicroMessenger/i.test(ua)         ||   // WeChat
+    /BytedanceWebview|musical_ly/i.test(ua) || // TikTok
+    /Snapchat/i.test(ua)               ||
+    /Pinterest/i.test(ua)              ||
+    // Android generic WebView flag
+    /; wv\)/i.test(ua);
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+  return { restricted, isIOS };
+}
 
 function GoogleIcon() {
   return (
@@ -17,6 +36,12 @@ function GoogleIcon() {
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [webView, setWebView] = useState<{ restricted: boolean; isIOS: boolean } | null>(null);
+
+  useEffect(() => {
+    const result = detectWebView(navigator.userAgent);
+    if (result.restricted) setWebView(result);
+  }, []);
 
   async function signInWithGoogle() {
     console.log('Button clicked');
@@ -87,27 +112,51 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={signInWithGoogle}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-3 bg-white border border-[#C8B49A] text-[#2C1E16] font-bold py-4 px-6 rounded-2xl min-h-[56px] text-sm tracking-wide transition-all active:scale-[0.97] disabled:opacity-60 shadow-sm touch-manipulation"
-        >
-          {loading ? (
-            <svg className="spin w-5 h-5 text-[#7A6858]" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.25" />
-              <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-            </svg>
-          ) : (
-            <GoogleIcon />
-          )}
-          {loading ? 'Redirecting…' : 'Continue with Google'}
-        </button>
+        {webView ? (
+          /* ── Restricted WebView warning ── */
+          <div className="space-y-3">
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-4 text-center space-y-2">
+              <p className="text-2xl">🔒</p>
+              <p className="text-amber-900 font-black text-sm uppercase tracking-wide">
+                Open in {webView.isIOS ? 'Safari' : 'Chrome'}
+              </p>
+              <p className="text-amber-800 text-xs leading-relaxed">
+                Google sign-in is blocked in this browser.{' '}
+                {webView.isIOS
+                  ? 'Tap the share icon ⬆ at the bottom of the screen, then choose "Open in Safari".'
+                  : 'Tap the menu ⋮ in the top-right corner, then choose "Open in Chrome".'}
+              </p>
+            </div>
+            <p className="text-[#A1A1AA] text-[11px] text-center">
+              This is a Google restriction — not a bug in Dialed.
+            </p>
+          </div>
+        ) : (
+          /* ── Normal sign-in button ── */
+          <>
+            <button
+              type="button"
+              onClick={signInWithGoogle}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 bg-white border border-[#C8B49A] text-[#2C1E16] font-bold py-4 px-6 rounded-2xl min-h-[56px] text-sm tracking-wide transition-all active:scale-[0.97] disabled:opacity-60 shadow-sm touch-manipulation"
+            >
+              {loading ? (
+                <svg className="spin w-5 h-5 text-[#7A6858]" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.25" />
+                  <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                </svg>
+              ) : (
+                <GoogleIcon />
+              )}
+              {loading ? 'Redirecting…' : 'Continue with Google'}
+            </button>
 
-        {error && (
-          <p className="text-red-600 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 font-bold text-center">
-            {error}
-          </p>
+            {error && (
+              <p className="text-red-600 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 font-bold text-center">
+                {error}
+              </p>
+            )}
+          </>
         )}
       </div>
     </div>
