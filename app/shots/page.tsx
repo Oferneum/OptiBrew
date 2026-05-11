@@ -1,38 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import useSWR from 'swr';
 import { supabase } from '@/lib/supabase';
 import PageLoader from '@/components/PageLoader';
 import ShotCard from '@/components/ShotCard';
 import Link from 'next/link';
 import type { Shot } from '@/lib/types';
 
+async function fetchShots(): Promise<Shot[]> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return [];
+
+  const { data, error } = await supabase
+    .from('shots')
+    .select('*, beans(roaster, origin, bag_name)')
+    .eq('user_id', session.user.id)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Shot[];
+}
+
 export default function ShotsPage() {
-  const [shots, setShots]     = useState<Shot[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState<string | null>(null);
-
-  useEffect(() => {
-    async function load() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { setLoading(false); return; }
-
-      const { data, error: fetchError } = await supabase
-        .from('shots')
-        .select('*, beans(roaster, origin, bag_name)')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (fetchError) {
-        setError(fetchError.message);
-      } else {
-        setShots((data ?? []) as Shot[]);
-      }
-      setLoading(false);
-    }
-    load();
-  }, []);
+  const { data: shots = [], isLoading, error } = useSWR('shots/list', fetchShots);
 
   return (
     <div className="p-4 space-y-4">
@@ -43,10 +34,10 @@ export default function ShotsPage() {
         </Link>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <PageLoader />
       ) : error ? (
-        <div className="p-4 text-red-600 text-sm">Failed to load shots: {error}</div>
+        <div className="p-4 text-red-600 text-sm">Failed to load shots: {(error as Error).message}</div>
       ) : shots.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="mb-5 opacity-20">

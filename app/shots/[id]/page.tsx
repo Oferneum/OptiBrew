@@ -1,8 +1,9 @@
 import { supabase } from '@/lib/supabase';
 import RetryableRecommendation from '@/components/RetryableRecommendation';
-import DeleteButton from './DeleteButton';
+import ShotActions from './ShotActions';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import type { Shot } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,9 +58,7 @@ export default async function ShotDetailPage({ params }: { params: Promise<{ id:
           <RetryableRecommendation shotId={shot.id} initialRec={shot.recommendation} />
         </div>
 
-        <div className="pt-4 border-t border-[#C8B49A]">
-          <DeleteButton id={shot.id} />
-        </div>
+        <ShotActions shot={shot as Shot} />
       </div>
     </main>
   );
