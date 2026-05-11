@@ -35,22 +35,23 @@ export default function EditShotPanel({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving]   = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError]     = useState<string | null>(null);
 
-  const [dose, setDose] = useState(String(shot.dose ?? ''));
-  const [yieldG, setYieldG] = useState(String(shot.yield ?? ''));
+  const [dose, setDose]                   = useState(String(shot.dose ?? ''));
+  const [yieldG, setYieldG]               = useState(String(shot.yield ?? ''));
   const [extractionTime, setExtractionTime] = useState(
     shot.brew_method === 'ColdBrew' ? '' : String(shot.extraction_time ?? ''),
   );
   const [steepHours, setSteepHours] = useState(
     shot.brew_method === 'ColdBrew' ? String(shot.steep_time_hours ?? '') : '',
   );
-  const [brewTemp, setBrewTemp] = useState(String(shot.brew_temp ?? ''));
-  const [grindSetting, setGrindSetting] = useState(shot.grind_setting ?? '');
-  const [score, setScore] = useState<number | null>(shot.overall_score ?? null);
-  const [flavorTags, setFlavorTags] = useState<FlavorTag[]>((shot.flavor_tags ?? []) as FlavorTag[]);
-  const [notes, setNotes] = useState(shot.notes ?? '');
+  const [brewTemp, setBrewTemp]           = useState(String(shot.brew_temp ?? ''));
+  const [grindSetting, setGrindSetting]   = useState(shot.grind_setting ?? '');
+  const [score, setScore]                 = useState<number | null>(shot.overall_score ?? null);
+  const [flavorTags, setFlavorTags]       = useState<FlavorTag[]>((shot.flavor_tags ?? []) as FlavorTag[]);
+  const [notes, setNotes]                 = useState(shot.notes ?? '');
 
   function toggleFlavor(tag: FlavorTag) {
     setFlavorTags((tags) =>
@@ -65,8 +66,8 @@ export default function EditShotPanel({
       const body: Record<string, unknown> = {
         dose:          parseFloat(dose)   || null,
         yield:         parseFloat(yieldG) || null,
-        brew_temp:     brewTemp      ? parseFloat(brewTemp)     : null,
-        grind_setting: grindSetting  || null,
+        brew_temp:     brewTemp     ? parseFloat(brewTemp)     : null,
+        grind_setting: grindSetting || null,
         overall_score: score,
         flavor_tags:   flavorTags,
         notes:         notes || null,
@@ -90,11 +91,10 @@ export default function EditShotPanel({
 
       const updated = (await res.json()) as Shot;
 
-      // Instantly update both SWR caches with the new data.
       const patcher = (prev: Shot[] | undefined) =>
         prev?.map((s) => (s.id === updated.id ? { ...s, ...updated } : s));
-      mutate('home/shots',  patcher, { revalidate: false });
-      mutate('shots/list',  patcher, { revalidate: false });
+      mutate('home/shots', patcher, { revalidate: false });
+      mutate('shots/list', patcher, { revalidate: false });
 
       router.refresh();
       onClose();
@@ -106,29 +106,58 @@ export default function EditShotPanel({
     }
   }
 
+  async function handleDelete() {
+    if (!window.confirm('Delete this shot? This cannot be undone.')) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/shots/${shot.id}`, {
+        method: 'DELETE',
+        headers: await authHeaders(),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string }).error ?? `Delete failed (${res.status})`);
+      }
+      mutate('home/shots', (prev: Shot[] | undefined) => prev?.filter((s) => s.id !== shot.id), { revalidate: false });
+      mutate('shots/list', (prev: Shot[] | undefined) => prev?.filter((s) => s.id !== shot.id), { revalidate: false });
+      router.push('/shots');
+    } catch (err) {
+      Sentry.captureException(err);
+      setError(err instanceof Error ? err.message : 'Delete failed');
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   const isColdBrew = shot.brew_method === 'ColdBrew';
+  const busy = saving || deleting;
 
   return (
-    /* ── Full-screen overlay ── */
     <div
       className="fixed inset-0 z-50 flex flex-col justify-end"
       style={{ background: 'rgba(5,5,5,0.65)' }}
     >
-      {/* Tap outside to close */}
+      {/* Tap-outside backdrop */}
       <div className="absolute inset-0" onClick={onClose} />
 
-      {/* ── Bottom sheet ── */}
+      {/*
+        Bottom sheet.
+        NO overflow-hidden here — that would clip the child's scroll region on iOS.
+        The rounded corners work via border-radius alone.
+        max-height uses dvh so it shrinks when the soft keyboard appears.
+      */}
       <div
-        className="relative bg-[#FFFBF4] rounded-t-3xl overflow-hidden flex flex-col"
-        style={{ maxHeight: '92dvh' }}
+        className="relative bg-[#FFFBF4] rounded-t-3xl flex flex-col"
+        style={{ maxHeight: '88dvh' }}
       >
-        {/* Drag handle */}
-        <div className="flex justify-center pt-3 pb-1">
+        {/* Drag handle — flex-none so it never grows/shrinks */}
+        <div className="flex-none flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-[#C8B49A]" />
         </div>
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-[#EDE4D3]">
+        {/* Header — flex-none */}
+        <div className="flex-none flex items-center justify-between px-5 py-3 border-b border-[#EDE4D3]">
           <h2 className="text-[#2C1E16] font-black text-lg uppercase tracking-tight">
             Edit Shot
           </h2>
@@ -143,9 +172,19 @@ export default function EditShotPanel({
           </button>
         </div>
 
-        {/* Scrollable body */}
-        <div className="overflow-y-auto px-5 py-4 space-y-5 flex-1">
-
+        {/*
+          Scrollable body.
+          flex-1   → takes all remaining vertical space
+          min-h-0  → overrides the default flex min-height:auto so the div
+                     can actually shrink and overflow-y-auto kicks in
+          overscroll-contain → prevents the page behind from scrolling when
+                               the user reaches the top/bottom of the sheet
+          -webkit-overflow-scrolling:touch → momentum scrolling on iOS
+        */}
+        <div
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4 space-y-5"
+          style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+        >
           {/* Dose + Yield */}
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -174,7 +213,7 @@ export default function EditShotPanel({
             </div>
           </div>
 
-          {/* Time */}
+          {/* Time + Temp */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>{isColdBrew ? 'Steep Time (hrs)' : 'Extraction (s)'}</Label>
@@ -251,7 +290,7 @@ export default function EditShotPanel({
             </div>
           </div>
 
-          {/* Flavor */}
+          {/* Flavor tags */}
           <div>
             <Label>Taste</Label>
             <div className="flex flex-wrap gap-2">
@@ -288,26 +327,42 @@ export default function EditShotPanel({
             />
           </div>
 
+          {/* Danger zone */}
+          <div className="border-t border-[#EDE4D3] pt-4">
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={busy}
+              className="w-full py-3.5 min-h-[44px] rounded-2xl text-sm font-semibold bg-[#FAF0F0] text-[#9B3030] border border-[#E8C0C0] transition-all active:scale-[0.98] disabled:opacity-40 touch-manipulation"
+            >
+              {deleting ? 'Deleting…' : 'Delete Shot'}
+            </button>
+          </div>
+
           {error && (
             <p className="text-red-600 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 font-black">
               {error}
             </p>
           )}
+
+          {/* Bottom padding so the last item clears the keyboard on iOS */}
+          <div className="h-2" />
         </div>
 
-        {/* Fixed footer */}
-        <div className="flex gap-2.5 px-5 py-4 border-t border-[#EDE4D3] bg-[#FFFBF4]">
+        {/* Footer — flex-none so it stays pinned at the bottom */}
+        <div className="flex-none flex gap-2.5 px-5 py-4 border-t border-[#EDE4D3] bg-[#FFFBF4]">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-4 min-h-[56px] rounded-2xl text-sm font-black uppercase tracking-wide bg-[#F3EFEA] text-[#7A6858] transition-all active:scale-[0.98] touch-manipulation"
+            disabled={busy}
+            className="flex-1 py-4 min-h-[56px] rounded-2xl text-sm font-black uppercase tracking-wide bg-[#F3EFEA] text-[#7A6858] transition-all active:scale-[0.98] disabled:opacity-40 touch-manipulation"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleSave}
-            disabled={saving}
+            disabled={busy}
             className="flex-1 py-4 min-h-[56px] rounded-2xl text-sm font-black uppercase tracking-wide bg-[#5D4037] text-[#FFFBF4] shadow-xl shadow-[#5D4037]/25 transition-all active:scale-[0.98] disabled:opacity-60 touch-manipulation"
           >
             {saving ? 'Saving…' : 'Save'}
