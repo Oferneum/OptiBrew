@@ -115,17 +115,26 @@ export default function LoginPage() {
         {webView ? (
           /* ── Restricted WebView warning ── */
           <div className="space-y-3">
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-4 text-center space-y-2">
-              <p className="text-2xl">🔒</p>
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-5 text-center space-y-2.5">
+              <p className="text-2xl">😕</p>
               <p className="text-amber-900 font-black text-sm uppercase tracking-wide">
-                Open in {webView.isIOS ? 'Safari' : 'Chrome'}
+                Can&apos;t sign in here
               </p>
               <p className="text-amber-800 text-xs leading-relaxed">
-                Google sign-in is blocked in this browser.{' '}
-                {webView.isIOS
-                  ? 'Tap the share icon ⬆ at the bottom of the screen, then choose "Open in Safari".'
-                  : 'Tap the menu ⋮ in the top-right corner, then choose "Open in Chrome".'}
+                You opened Dialed inside another app&apos;s browser. Google doesn&apos;t
+                allow sign-in from there — <span className="font-bold">your account and
+                data are completely fine</span>, this is just a browser limitation.
               </p>
+              <div className="border-t border-amber-200 pt-2.5">
+                <p className="text-amber-900 font-black text-xs uppercase tracking-wider mb-1">
+                  How to fix it
+                </p>
+                <p className="text-amber-800 text-xs leading-relaxed">
+                  {webView.isIOS
+                    ? 'Tap the share icon ⬆ at the bottom of the screen, then choose "Open in Safari".'
+                    : 'Tap the menu ⋮ in the top-right corner, then choose "Open in Chrome".'}
+                </p>
+              </div>
             </div>
             <p className="text-[#A1A1AA] text-[11px] text-center">
               This is a Google restriction — not a bug in Dialed.
