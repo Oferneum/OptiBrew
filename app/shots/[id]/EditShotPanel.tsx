@@ -327,8 +327,29 @@ export default function EditShotPanel({
             />
           </div>
 
-          {/* Danger zone */}
-          <div className="border-t border-[#EDE4D3] pt-4">
+          {/* Save / Cancel — live inside the scroll area so the iOS keyboard
+              can never push them off-screen behind a fixed footer */}
+          <div className="border-t border-[#EDE4D3] pt-4 flex gap-2.5">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={busy}
+              className="flex-1 py-4 min-h-[56px] rounded-2xl text-sm font-black uppercase tracking-wide bg-[#F3EFEA] text-[#7A6858] transition-all active:scale-[0.98] disabled:opacity-40 touch-manipulation"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={busy}
+              className="flex-1 py-4 min-h-[56px] rounded-2xl text-sm font-black uppercase tracking-wide bg-[#5D4037] text-[#FFFBF4] shadow-xl shadow-[#5D4037]/25 transition-all active:scale-[0.98] disabled:opacity-60 touch-manipulation"
+            >
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          </div>
+
+          {/* Delete — below Save so it's harder to hit by mistake */}
+          <div>
             <button
               type="button"
               onClick={handleDelete}
@@ -345,28 +366,8 @@ export default function EditShotPanel({
             </p>
           )}
 
-          {/* Bottom padding so the last item clears the keyboard on iOS */}
-          <div className="h-2" />
-        </div>
-
-        {/* Footer — flex-none so it stays pinned at the bottom */}
-        <div className="flex-none flex gap-2.5 px-5 py-4 border-t border-[#EDE4D3] bg-[#FFFBF4]">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={busy}
-            className="flex-1 py-4 min-h-[56px] rounded-2xl text-sm font-black uppercase tracking-wide bg-[#F3EFEA] text-[#7A6858] transition-all active:scale-[0.98] disabled:opacity-40 touch-manipulation"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={busy}
-            className="flex-1 py-4 min-h-[56px] rounded-2xl text-sm font-black uppercase tracking-wide bg-[#5D4037] text-[#FFFBF4] shadow-xl shadow-[#5D4037]/25 transition-all active:scale-[0.98] disabled:opacity-60 touch-manipulation"
-          >
-            {saving ? 'Saving…' : 'Save'}
-          </button>
+          {/* Generous bottom padding so the last button clears the home-indicator bar */}
+          <div className="pb-10" />
         </div>
       </div>
     </div>
