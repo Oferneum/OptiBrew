@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import PageLoader from '@/components/PageLoader';
+import NotificationRegister from '@/components/NotificationRegister';
 import type { EquipmentProfile } from '@/lib/types';
 
 async function authHeaders(): Promise<Record<string, string>> {
@@ -359,6 +360,9 @@ export default function SettingsPage() {
         <p className={`${LABEL_CLS} mb-1`}>Configuration</p>
         <h1 className="text-[#2C1E16] font-black text-3xl tracking-tight leading-none">Settings</h1>
       </div>
+
+      {/* ── Notifications ── */}
+      <NotificationRegister />
 
       {/* ── Account ── */}
       <div className="glass rounded-3xl px-5 py-4 space-y-3">

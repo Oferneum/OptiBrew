@@ -18,3 +18,16 @@ export function getRequestClient(req: Request) {
   const token = req.headers.get('Authorization')?.replace('Bearer ', '');
   return token ? createAuthClient(token) : supabase;
 }
+
+/**
+ * Service-role client — bypasses RLS entirely.
+ * Only use in server-only contexts (cron jobs, admin routes).
+ * Never expose this client or its token to the browser.
+ */
+export function createServiceClient() {
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceKey) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set');
+  return createClient(url, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
