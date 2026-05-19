@@ -50,7 +50,7 @@ export default function NotificationModal({ loading, onEnable, onDismiss }: Prop
           Never miss a shot
         </h2>
         <p className="text-[#7A6858] text-sm text-center leading-relaxed mb-7">
-          Get a gentle nudge when you haven't logged in 48 hours.
+          Get a gentle nudge when you haven&apos;t logged in 48 hours.
           One tap keeps your streak alive and your extraction on track.
         </p>
 
@@ -79,7 +79,7 @@ export default function NotificationModal({ loading, onEnable, onDismiss }: Prop
                 <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.25" />
                 <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
               </svg>
-              Enabling…
+              Enabling...
             </>
           ) : (
             'Enable Notifications'
