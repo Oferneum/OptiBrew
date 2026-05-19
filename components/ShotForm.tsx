@@ -482,7 +482,7 @@ export default function ShotForm({
   onError,
   weather,
 }: {
-  onSuccess: (shot: Shot, recommendation: string, newBadges: string[], streakResult: StreakResult | null) => void;
+  onSuccess: (shot: Shot, recommendation: string | null, newBadges: string[], streakResult: StreakResult | null) => void;
   onSubmitting?: () => void;
   onError?: (err: string) => void;
   weather?: { temp: number; humidity: number } | null;

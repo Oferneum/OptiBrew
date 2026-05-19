@@ -14,7 +14,7 @@ import type { StreakResult } from '@/lib/achievements';
 
 export default function NewShotPage() {
   const router = useRouter();
-  const [result, setResult]           = useState<{ shot: Shot; recommendation: string; newBadges: string[]; streakResult: StreakResult | null } | null>(null);
+  const [result, setResult]           = useState<{ shot: Shot; recommendation: string | null; newBadges: string[]; streakResult: StreakResult | null } | null>(null);
   const [showModal, setShowModal]     = useState(false);
   const [submitting, setSubmitting]   = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
