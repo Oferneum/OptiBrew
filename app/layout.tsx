@@ -3,6 +3,7 @@ import { Space_Mono, Heebo } from 'next/font/google';
 import './globals.css';
 import Nav from '@/components/Nav';
 import PostHogProvider from '@/components/PostHogProvider';
+import NotificationPrompt from '@/components/NotificationPrompt';
 
 const heebo = Heebo({
   subsets: ['hebrew', 'latin'],
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </main>
           <Nav />
+          <NotificationPrompt />
         </PostHogProvider>
       </body>
     </html>
