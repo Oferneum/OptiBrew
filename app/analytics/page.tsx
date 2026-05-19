@@ -385,9 +385,6 @@ export default function AnalyticsPage() {
                   </p>
                 )}
               </div>
-              {shots.length >= 2 && (
-                <span className="text-[10px] text-[#7A6858] readout">trend line shown</span>
-              )}
             </div>
             <DialInChart shots={chartPoints} />
           </div>

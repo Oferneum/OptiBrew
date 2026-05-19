@@ -115,9 +115,14 @@ export default function DialInChart({ shots }: { shots: ShotPoint[] }) {
     );
   }
 
-  // Build chart points with deterministic jitter to separate overlapping dots
+  // X domain — clamp jitter to stay inside visible chart area
+  const X_MIN = 15;
+  const X_MAX = 45;
+
+  // Build chart points with deterministic jitter to separate overlapping dots.
+  // Jitter is clamped to the domain so dots never bleed off the edge.
   const chartPoints: ChartPoint[] = shots.map((s, i) => ({
-    x:              s.extraction_time + jitter(i * 17.3 + s.extraction_time, 0.9),
+    x:              Math.max(X_MIN, Math.min(X_MAX, s.extraction_time + jitter(i * 17.3 + s.extraction_time, 0.9))),
     y:              Math.max(1, Math.min(10, s.overall_score + jitter(i * 31.7 + s.overall_score, 0.08))),
     rawX:           s.extraction_time,
     rawY:           s.overall_score,
@@ -129,12 +134,21 @@ export default function DialInChart({ shots }: { shots: ShotPoint[] }) {
     equipment_name: s.equipment_name,
   }));
 
-  // Sweet spot: extraction time range where the user typically scores >= 8
-  const highScored = shots.filter((s) => s.overall_score >= 8);
-  const sweetSpot = highScored.length > 0 ? {
-    x1: Math.min(...highScored.map((s) => s.extraction_time)) - 1,
-    x2: Math.max(...highScored.map((s) => s.extraction_time)) + 1,
-  } : null;
+  // Sweet spot: IQR (P25–P75) of extraction times for shots scoring >= 8.
+  // Using percentiles instead of min/max prevents single outliers from
+  // stretching the zone across the entire chart.
+  const highScored = shots
+    .filter((s) => s.overall_score >= 8)
+    .map((s) => s.extraction_time)
+    .sort((a, b) => a - b);
+
+  const sweetSpot = (() => {
+    if (highScored.length === 0) return null;
+    if (highScored.length === 1) return { x1: highScored[0] - 1, x2: highScored[0] + 1, label: `${highScored[0]}s` };
+    const p25 = highScored[Math.floor(highScored.length * 0.25)];
+    const p75 = highScored[Math.ceil(highScored.length * 0.75 - 1)];
+    return { x1: p25 - 0.5, x2: p75 + 0.5, label: `${p25}–${p75}s` };
+  })();
 
   return (
     <div>
@@ -142,7 +156,7 @@ export default function DialInChart({ shots }: { shots: ShotPoint[] }) {
         <div className="flex items-center gap-1.5 mb-3 px-1">
           <div className="w-3 h-3 rounded-sm" style={{ background: '#4A7C59', opacity: 0.5 }} />
           <span className="text-[10px] font-bold uppercase tracking-widest text-[#4A7C59]">
-            Sweet spot: {sweetSpot.x1 + 1}–{sweetSpot.x2 - 1}s
+            Sweet spot: {sweetSpot.label}
           </span>
         </div>
       )}
@@ -152,8 +166,9 @@ export default function DialInChart({ shots }: { shots: ShotPoint[] }) {
           <XAxis
             type="number"
             dataKey="x"
-            domain={[15, 45]}
+            domain={[X_MIN, X_MAX]}
             name="Extraction Time"
+            tickFormatter={(v: number) => String(Math.round(v))}
             tick={{ fill: '#AFA096', fontSize: 10, fontFamily: 'var(--font-space-mono)' }}
             tickLine={false}
             axisLine={{ stroke: '#E8E2D9' }}
