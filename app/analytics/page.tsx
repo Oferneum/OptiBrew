@@ -269,7 +269,7 @@ export default function AnalyticsPage() {
 
     let q = supabase
       .from('shots')
-      .select('extraction_time, overall_score, grind_setting, dose, yield, user_id, beans(roaster, origin, bag_name)')
+      .select('extraction_time, overall_score, grind_setting, dose, yield, notes, user_id, beans(roaster, origin, bag_name)')
       .not('overall_score', 'is', null)
       .not('extraction_time', 'is', null)
       .neq('brew_method', 'ColdBrew')
@@ -291,6 +291,7 @@ export default function AnalyticsPage() {
         grind_setting:   s.grind_setting   ?? null,
         dose:            s.dose            ?? null,
         yield:           (s as Record<string, unknown>).yield as number ?? null,
+        notes:           (s as Record<string, unknown>).notes as string ?? null,
         user_id:         s.user_id         ?? null,
         bean_label:      b
           ? (b.bag_name ? `${b.roaster} · ${b.bag_name}` : `${b.roaster} · ${b.origin}`)
@@ -312,6 +313,7 @@ export default function AnalyticsPage() {
     grind_setting:   s.grind_setting,
     dose:            s.dose,
     yield:           s.yield,
+    notes:           s.notes,
     bean_label:      s.bean_label,
   }));
 
