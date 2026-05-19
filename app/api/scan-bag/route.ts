@@ -1,49 +1,77 @@
 import { NextResponse } from 'next/server';
 import { orchestrateBagScan } from '@/lib/agents/orchestrator';
 import { getRequestClient }   from '@/lib/supabase';
+import { scanLimiter, isRateLimited } from '@/lib/rate-limit';
 import type { ImageInput }    from '@/lib/agents/vision-agent';
 import type { UserContext }   from '@/lib/types';
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_MIME  = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
 export async function POST(req: Request) {
+  // H1-fix: require authentication before touching the AI
+  const db = getRequestClient(req);
+  const { data: { user }, error: authError } = await db.auth.getUser();
+  if (!user || authError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  // H3-fix: per-user rate limit (5 scans / 10 min)
+  if (await isRateLimited(scanLimiter, `scan:${user.id}`)) {
+    return NextResponse.json(
+      { error: 'Too many scans — please wait a few minutes before trying again.' },
+      { status: 429 },
+    );
+  }
+
   const formData = await req.formData();
   const files    = formData.getAll('image') as File[];
-  if (files.length === 0) return NextResponse.json({ error: 'No images provided' }, { status: 400 });
 
-  // Active rig sent by the client from localStorage (single source of truth)
+  // H1-fix: file count, size, and MIME type validation
+  if (files.length === 0) {
+    return NextResponse.json({ error: 'No image provided' }, { status: 400 });
+  }
+  if (files.length > 1) {
+    return NextResponse.json({ error: 'Only one image per scan is allowed' }, { status: 400 });
+  }
+
+  const file = files[0];
+
+  if (file.size > MAX_FILE_SIZE) {
+    return NextResponse.json({ error: 'Image must be 5 MB or smaller' }, { status: 400 });
+  }
+
+  const mime = file.type;
+  if (!ALLOWED_MIME.has(mime)) {
+    return NextResponse.json(
+      { error: 'Unsupported image format — please use JPEG, PNG, or WebP' },
+      { status: 400 },
+    );
+  }
+
   const activeMachine = (formData.get('activeMachine') as string) || null;
   const activeGrinder = (formData.get('activeGrinder') as string) || null;
 
-  const images: ImageInput[] = await Promise.all(
-    files.map(async (file) => ({
+  const images: ImageInput[] = [
+    {
       data:     Buffer.from(await file.arrayBuffer()).toString('base64'),
-      mimeType: file.type || 'image/jpeg',
-    })),
-  );
+      mimeType: mime,
+    },
+  ];
 
   // Fetch user context for personalised recommendation (best-effort — never blocks the scan)
   let userContext: UserContext | undefined;
   try {
-    const db = getRequestClient(req);
-    const { data: { user } } = await db.auth.getUser();
-    if (user) {
-      const { data: beansData } = await db
-        .from('beans')
-        .select('roaster, origin, bag_name')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
+    const { data: beansData } = await db
+      .from('beans')
+      .select('roaster, origin, bag_name')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
 
-      // Prefer the client-provided active rig over fetching all registered profiles —
-      // the AI should only see the machine the user is actually brewing on today.
-      const equipment: UserContext['equipment'] = activeMachine
-        ? [{ machine_name: activeMachine, grinder_name: activeGrinder }]
-        : [];
+    const equipment: UserContext['equipment'] = activeMachine
+      ? [{ machine_name: activeMachine, grinder_name: activeGrinder }]
+      : [];
 
-      userContext = {
-        equipment,
-        recentBeans: beansData ?? [],
-      };
-    }
+    userContext = { equipment, recentBeans: beansData ?? [] };
   } catch { /* context failure must not block the scan */ }
 
   try {

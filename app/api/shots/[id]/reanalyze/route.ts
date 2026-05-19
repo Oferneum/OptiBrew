@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getRequestClient } from '@/lib/supabase';
 import { analyzeShot } from '@/lib/recommendations';
 import { getShotContext } from '@/lib/context-builder';
+import { aiLimiter, isRateLimited } from '@/lib/rate-limit';
 import type { Shot } from '@/lib/types';
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -10,6 +11,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const db = getRequestClient(req);
     const { data: { user }, error: authError } = await db.auth.getUser();
     if (!user || authError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    // H3-fix: per-user rate limit (shared AI quota: 10 req / 10 min)
+    if (await isRateLimited(aiLimiter, `ai:${user.id}`)) {
+      return NextResponse.json(
+        { error: 'Too many requests — please wait a few minutes before trying again.' },
+        { status: 429 },
+      );
+    }
 
     const { data: shot, error: fetchErr } = await db
       .from('shots').select('*').eq('id', id).eq('user_id', user.id).single();
