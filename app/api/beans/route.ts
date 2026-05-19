@@ -1,5 +1,16 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { supabase, getRequestClient } from '@/lib/supabase';
+
+const BeanInsertSchema = z.object({
+  roaster:      z.string().min(1).max(200),
+  bag_name:     z.string().max(200).optional().nullable(),
+  origin:       z.string().min(1).max(200),
+  roast_date:   z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD').optional().nullable(),
+  is_active:    z.boolean().default(true),
+  price_paid:   z.number().min(0).max(100_000).optional().nullable(),
+  weight_grams: z.number().min(1).max(10_000).optional().nullable(),
+});
 
 // Global community read — no auth required, RLS SELECT is USING (true)
 export async function GET() {
@@ -13,7 +24,13 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const db = getRequestClient(req);
-  const body = await req.json();
+  const raw = await req.json();
+
+  const parsed = BeanInsertSchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+  const body = parsed.data;
 
   const { data: { user }, error: authError } = await db.auth.getUser();
   if (!user || authError) {
@@ -34,8 +51,8 @@ export async function POST(req: Request) {
       roaster:      body.roaster,
       bag_name:     body.bag_name     ?? null,
       origin:       body.origin,
-      roast_date:   body.roast_date,
-      is_active:    body.is_active ?? true,
+      roast_date:   body.roast_date   ?? null,
+      is_active:    body.is_active,
       price_paid:   body.price_paid   ?? null,
       weight_grams: body.weight_grams ?? null,
       user_id:      user.id,

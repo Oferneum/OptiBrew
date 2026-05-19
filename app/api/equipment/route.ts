@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getRequestClient } from '@/lib/supabase';
+
+const EquipmentInsertSchema = z.object({
+  machine_name: z.string().min(1).max(200),
+  grinder_name: z.string().max(200).optional().nullable(),
+});
 
 export async function GET(req: Request) {
   const db = getRequestClient(req);
@@ -13,7 +19,13 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const db = getRequestClient(req);
-  const body = await req.json();
+  const raw = await req.json();
+
+  const parsed = EquipmentInsertSchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+  const body = parsed.data;
 
   const { data: { user }, error: authError } = await db.auth.getUser();
   if (!user || authError) {

@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase as anonClient } from '@/lib/supabase';
 import type { Shot } from '@/lib/types';
 
 export interface ShotContext {
@@ -8,18 +8,20 @@ export interface ShotContext {
 
 /**
  * Fetches the last 3–5 shots for a specific bean + equipment combination.
- * Used to give BaristaBrain trend awareness: e.g. if the user already ground
- * finer on the last two shots, recommend a temperature change instead.
+ * Pass userId to scope results to the requesting user's own shots only —
+ * prevents cross-user context leakage. Falls back to community-wide when
+ * userId is omitted (backward-compatible anon usage).
  */
 export async function getShotContext(
   beanId: string | null | undefined,
   equipmentId: string | null | undefined,
+  userId?: string | null,
 ): Promise<ShotContext> {
   if (!beanId && !equipmentId) {
     return { recentShots: [], trendSummary: null };
   }
 
-  let query = supabase
+  let query = anonClient
     .from('shots')
     .select('*')
     .order('created_at', { ascending: false })
@@ -27,6 +29,7 @@ export async function getShotContext(
 
   if (beanId)      query = query.eq('bean_id', beanId);
   if (equipmentId) query = query.eq('equipment_id', equipmentId);
+  if (userId)      query = query.eq('user_id', userId);
 
   const { data, error } = await query;
 

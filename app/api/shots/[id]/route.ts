@@ -1,5 +1,20 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getRequestClient } from '@/lib/supabase';
+
+const FLAVOR_TAGS = ['Sour', 'Bitter', 'Balanced', 'Dry'] as const;
+
+const ShotUpdateSchema = z.object({
+  dose:             z.number().positive().max(50).optional(),
+  yield:            z.number().positive().max(200).optional(),
+  extraction_time:  z.number().int().min(0).max(600).optional().nullable(),
+  steep_time_hours: z.number().min(0).max(72).optional().nullable(),
+  brew_temp:        z.number().min(50).max(115).optional().nullable(),
+  grind_setting:    z.string().max(100).optional().nullable(),
+  overall_score:    z.number().int().min(1).max(10).optional().nullable(),
+  flavor_tags:      z.array(z.enum(FLAVOR_TAGS)).max(10).optional(),
+  notes:            z.string().max(1000).optional().nullable(),
+});
 
 // Fields a user is permitted to update on their own shot.
 // Excludes identity columns (id, user_id, created_at), sensor captures
@@ -34,12 +49,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { data: { user }, error: authError } = await db.auth.getUser();
   if (!user || authError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = await req.json();
+  const raw = await req.json();
+
+  const parsed = ShotUpdateSchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
 
   // C1-fix: strip every field not in the allowlist (prevents mass assignment
   // and stops a user re-assigning user_id to another account)
   const update = Object.fromEntries(
-    Object.entries(body as Record<string, unknown>).filter(([k]) => SHOT_UPDATE_ALLOWLIST.has(k)),
+    Object.entries(parsed.data as Record<string, unknown>).filter(([k]) => SHOT_UPDATE_ALLOWLIST.has(k)),
   );
 
   if (Object.keys(update).length === 0) {

@@ -1,5 +1,17 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getRequestClient } from '@/lib/supabase';
+
+const BeanUpdateSchema = z.object({
+  roaster:      z.string().min(1).max(200).optional(),
+  bag_name:     z.string().max(200).optional().nullable(),
+  origin:       z.string().min(1).max(200).optional(),
+  roast_date:   z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD').optional().nullable(),
+  price_paid:   z.number().min(0).max(100_000).optional().nullable(),
+  weight_grams: z.number().min(1).max(10_000).optional().nullable(),
+  is_active:    z.boolean().optional(),
+  notes:        z.string().max(1000).optional().nullable(),
+});
 
 export async function PATCH(
   req: Request,
@@ -7,11 +19,16 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const db = getRequestClient(req);
-  const body = await req.json();
+  const raw = await req.json();
 
-  const allowed = ['roaster', 'bag_name', 'origin', 'roast_date', 'price_paid', 'weight_grams', 'is_active', 'notes'];
+  const parsed = BeanUpdateSchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const allowed = new Set(['roaster', 'bag_name', 'origin', 'roast_date', 'price_paid', 'weight_grams', 'is_active', 'notes']);
   const update = Object.fromEntries(
-    Object.entries(body).filter(([k]) => allowed.includes(k)),
+    Object.entries(parsed.data as Record<string, unknown>).filter(([k]) => allowed.has(k)),
   );
 
   const { data, error } = await db

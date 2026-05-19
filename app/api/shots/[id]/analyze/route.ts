@@ -22,7 +22,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     .from('shots').select('*').eq('id', id).eq('user_id', user.id).single();
   if (!shot || fetchErr) return new Response('Shot not found', { status: 404 });
 
-  const { trendSummary } = await getShotContext(shot.bean_id, shot.equipment_id);
+  const { trendSummary } = await getShotContext(shot.bean_id, shot.equipment_id, user.id);
 
   let weatherContext: string | undefined;
   if (shot.bean_id && shot.humidity != null && shot.ambient_temp != null) {
