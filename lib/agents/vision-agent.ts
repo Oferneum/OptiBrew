@@ -35,6 +35,7 @@ export async function scanBagImage(images: ImageInput[]): Promise<BagScanResult>
   "tasting_notes": "specific flavour descriptors if listed"
 }
 
+IMPORTANT: Read "bag_name" as the exact text printed on the bag (e.g. "Red", "Blue", "Summer Blend"). Do NOT infer it from the bag's artwork, colors, or your prior knowledge of the brand. If two photos are provided, trust the image that most clearly shows the product name.
 Use empty string "" for any field not visible or unclear. Return only the JSON object.`;
 
   const result = await model.generateContent([...imageParts, { text: prompt }]);

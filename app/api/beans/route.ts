@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { supabase, getRequestClient } from '@/lib/supabase';
 
+function toTitleCase(str: string): string {
+  return str.trim().toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 const BeanInsertSchema = z.object({
   roaster:      z.string().min(1).max(200),
   bag_name:     z.string().max(200).optional().nullable(),
@@ -10,6 +14,7 @@ const BeanInsertSchema = z.object({
   is_active:    z.boolean().default(true),
   price_paid:   z.number().min(0).max(100_000).optional().nullable(),
   weight_grams: z.number().min(1).max(10_000).optional().nullable(),
+  force:        z.boolean().optional().default(false),
 });
 
 // Global community read — no auth required, RLS SELECT is USING (true)
@@ -37,18 +42,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: dupes } = await db.rpc('search_beans', {
-    query: `${body.roaster} ${body.origin}`,
-    threshold: 0.6,
-  });
-  if (dupes && dupes.length > 0) {
-    return NextResponse.json({ conflict: true, match: dupes[0] }, { status: 409 });
+  const normalizedRoaster = toTitleCase(body.roaster);
+
+  if (!body.force) {
+    const dupQuery = [normalizedRoaster, body.bag_name, body.origin].filter(Boolean).join(' ');
+    const { data: dupes } = await db.rpc('search_beans', {
+      query: dupQuery,
+      threshold: 0.85,
+    });
+    if (dupes && dupes.length > 0) {
+      return NextResponse.json({ conflict: true, match: dupes[0] }, { status: 409 });
+    }
   }
 
   const { data, error } = await db
     .from('beans')
     .insert({
-      roaster:      body.roaster,
+      roaster:      normalizedRoaster,
       bag_name:     body.bag_name     ?? null,
       origin:       body.origin,
       roast_date:   body.roast_date   ?? null,

@@ -58,11 +58,12 @@ export default function NewBagPage() {
   const [form, setForm]         = useState<NewBagForm>({ bag_name: '', roaster: '', origin: '', price_paid: '', weight_grams: '' });
   const [scanFront, setScanFront] = useState<ScanSlot | null>(null);
   const [scanBack,  setScanBack]  = useState<ScanSlot | null>(null);
-  const [scanning,  setScanning]  = useState(false);
-  const [scanRec,   setScanRec]   = useState<string | null>(null);
-  const [scanError, setScanError] = useState<string | null>(null);
-  const [saving,    setSaving]    = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const [scanning,       setScanning]       = useState(false);
+  const [scanRec,        setScanRec]        = useState<string | null>(null);
+  const [scanError,      setScanError]      = useState<string | null>(null);
+  const [saving,         setSaving]         = useState(false);
+  const [saveError,      setSaveError]      = useState<string | null>(null);
+  const [conflictMatch,  setConflictMatch]  = useState<{ roaster: string; bag_name?: string; origin: string } | null>(null);
   const [activeMachine, setActiveMachine] = useState('');
   const [activeGrinder, setActiveGrinder] = useState('');
 
@@ -114,10 +115,11 @@ export default function NewBagPage() {
     }
   }
 
-  async function saveBag() {
+  async function saveBag(force = false) {
     if (!form.origin.trim() || !form.roaster.trim()) return;
     setSaving(true);
     setSaveError(null);
+    setConflictMatch(null);
     try {
       const res = await fetch('/api/beans', {
         method: 'POST',
@@ -130,9 +132,15 @@ export default function NewBagPage() {
           is_active:    true,
           price_paid:   form.price_paid   ? parseFloat(form.price_paid)   : null,
           weight_grams: form.weight_grams ? parseFloat(form.weight_grams) : null,
+          ...(force ? { force: true } : {}),
         }),
       });
-      if (!res.ok && res.status !== 409) {
+      if (res.status === 409) {
+        const body = await res.json().catch(() => ({}));
+        setConflictMatch((body as { match?: { roaster: string; bag_name?: string; origin: string } }).match ?? { roaster: form.roaster.trim(), origin: form.origin.trim() });
+        return;
+      }
+      if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         setSaveError((body as { error?: string }).error || 'Failed to save — please try again');
         return;
@@ -304,14 +312,36 @@ export default function NewBagPage() {
           </div>
         )}
 
+        {conflictMatch && (
+          <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 space-y-3">
+            <p className="text-amber-800 text-sm font-semibold">
+              Similar bean already in your list:{' '}
+              <span className="font-black">
+                {conflictMatch.roaster}{conflictMatch.bag_name ? ` · ${conflictMatch.bag_name}` : ''} ({conflictMatch.origin})
+              </span>
+            </p>
+            <p className="text-amber-700 text-xs">This is a different bag? Tap below to save it anyway.</p>
+            <button
+              type="button"
+              onClick={() => saveBag(true)}
+              disabled={saving}
+              className="w-full flex items-center justify-center gap-2 bg-amber-600 text-white font-black uppercase tracking-widest py-3 rounded-xl text-sm active:scale-95 transition-all disabled:opacity-50 touch-manipulation"
+            >
+              {saving ? <><Spinner /><span>Saving…</span></> : <span>Save Anyway</span>}
+            </button>
+          </div>
+        )}
+
+        {!conflictMatch && (
         <button
           type="button"
-          onClick={saveBag}
+          onClick={() => saveBag()}
           disabled={saving || !canSave}
           className="w-full flex items-center justify-center gap-2 bg-[#5D4037] text-[#FFFBF4] font-black uppercase tracking-widest py-4 rounded-2xl text-sm shadow-lg shadow-[#5D4037]/25 active:scale-95 transition-all disabled:opacity-40 touch-manipulation"
         >
           {saving ? <><Spinner /><span>Saving…</span></> : <span>Save to My Inventory</span>}
         </button>
+        )}
       </div>
 
     </div>

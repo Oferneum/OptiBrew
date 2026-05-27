@@ -29,33 +29,30 @@ export async function POST(req: Request) {
   if (files.length === 0) {
     return NextResponse.json({ error: 'No image provided' }, { status: 400 });
   }
-  if (files.length > 1) {
-    return NextResponse.json({ error: 'Only one image per scan is allowed' }, { status: 400 });
-  }
-
-  const file = files[0];
-
-  if (file.size > MAX_FILE_SIZE) {
-    return NextResponse.json({ error: 'Image must be 5 MB or smaller' }, { status: 400 });
-  }
-
-  const mime = file.type;
-  if (!ALLOWED_MIME.has(mime)) {
-    return NextResponse.json(
-      { error: 'Unsupported image format — please use JPEG, PNG, or WebP' },
-      { status: 400 },
-    );
+  if (files.length > 2) {
+    return NextResponse.json({ error: 'Maximum 2 images per scan' }, { status: 400 });
   }
 
   const activeMachine = (formData.get('activeMachine') as string) || null;
   const activeGrinder = (formData.get('activeGrinder') as string) || null;
 
-  const images: ImageInput[] = [
-    {
+  const images: ImageInput[] = [];
+  for (const file of files) {
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'Each image must be 5 MB or smaller' }, { status: 400 });
+    }
+    const mime = file.type;
+    if (!ALLOWED_MIME.has(mime)) {
+      return NextResponse.json(
+        { error: 'Unsupported image format — please use JPEG, PNG, or WebP' },
+        { status: 400 },
+      );
+    }
+    images.push({
       data:     Buffer.from(await file.arrayBuffer()).toString('base64'),
       mimeType: mime,
-    },
-  ];
+    });
+  }
 
   // Fetch user context for personalised recommendation (best-effort — never blocks the scan)
   let userContext: UserContext | undefined;
