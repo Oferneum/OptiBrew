@@ -151,6 +151,10 @@ export default function SettingsPage() {
   const [activeId, setActiveId]           = useState<string | null>(null);
   const [activeMachine, setActiveMachine] = useState('');
   const [activeGrinder, setActiveGrinder] = useState('');
+  // Tracks what was last explicitly persisted so rigDirty doesn't depend on
+  // the async DB profiles load (which caused the false UNSAVED badge on reload).
+  const [savedMachine, setSavedMachine]   = useState('');
+  const [savedGrinder, setSavedGrinder]   = useState('');
   const [rigSaving, setRigSaving]         = useState(false);
   const [rigSaved, setRigSaved]           = useState(false);
   const [mounted, setMounted]             = useState(false);
@@ -183,6 +187,9 @@ export default function SettingsPage() {
     setActiveId(id);
     setActiveMachine(machine);
     setActiveGrinder(grinder);
+    // Mirror the persisted values so rigDirty starts as false on reload.
+    setSavedMachine(machine);
+    setSavedGrinder(grinder);
     setBrewMethodPref(localStorage.getItem('defaultBrewMethod') ?? 'Espresso');
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUserEmail(session?.user?.email ?? null);
@@ -218,17 +225,17 @@ export default function SettingsPage() {
     [profiles],
   );
 
-  const savedProfile = profiles.find((p) => p.id === activeId);
   const rigDirty =
     Boolean(activeMachine) &&
-    (activeMachine !== (savedProfile?.machine_name ?? '') ||
-      activeGrinder !== (savedProfile?.grinder_name ?? ''));
+    (activeMachine !== savedMachine || activeGrinder !== savedGrinder);
 
   function persistRig(profileId: string) {
     localStorage.setItem('activeEquipmentId', profileId);
     localStorage.setItem('activeMachineName', activeMachine);
     localStorage.setItem('activeGrinderName', activeGrinder);
     setActiveId(profileId);
+    setSavedMachine(activeMachine);
+    setSavedGrinder(activeGrinder);
   }
 
   async function handleSetRig() {
