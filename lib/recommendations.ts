@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import type { Shot } from './types';
+import type { Shot, BeanContext } from './types';
+import { getBeanContext, formatGraphContextBlock } from './knowledge-graph';
 
 const PRIMARY_MODEL  = 'gemini-2.5-flash';
 const FALLBACK_MODEL = 'gemini-2.5-flash-lite';
@@ -45,6 +46,7 @@ function buildPrompt(
   trendSummary: string,
   weatherContext?: string,
   basketName?: string | null,
+  beanContext?: BeanContext | null,
 ): string {
   const ratio = shot.dose && shot.yield
     ? `1:${(shot.yield / shot.dose).toFixed(2)}`
@@ -83,7 +85,9 @@ function buildPrompt(
 - MokaPot: pressurised brew with shorter time expectations; standard Moka parameters apply.`
     : '';
 
-  return `You are Dialed, a Head Barista with 15 years of specialty coffee experience. Analyze this shot and give a precise, honest 2-sentence response.
+  const graphBlock = beanContext ? formatGraphContextBlock(beanContext) : '';
+
+  return `You are Dialed, a Head Barista with 15 years of specialty coffee experience. Analyze this shot and give a precise, honest 2-sentence response.${graphBlock}
 
 PERSONA: Direct, professional, and technically accurate. Never use flattery, empty praise, or softening language when the user has reported a problem. Do NOT say things like "hitting a sweet spot", "solid foundation", "great start", or "you're on the right track" if the score is below 8 or the notes describe a flaw. Be respectful and clear — like a trusted expert who values the user's time.
 
@@ -137,13 +141,24 @@ export async function analyzeShot(
   trendSummary: string = '',
   weatherContext?: string,
   basketName?: string | null,
+  machineName?: string | null,
+  grinderName?: string | null,
 ): Promise<string> {
   if (!genAI) {
     console.error('[Dialed AI] GEMINI_API_KEY is not set');
     return 'AI configuration missing.';
   }
 
-  const prompt = buildPrompt(shot, trendSummary, weatherContext, basketName);
+  const beanContext = await Promise.race([
+    getBeanContext({
+      origin:      shot.beans?.origin,
+      machineName: machineName ?? undefined,
+      grinderName: grinderName ?? undefined,
+    }),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+  ]);
+
+  const prompt = buildPrompt(shot, trendSummary, weatherContext, basketName, beanContext);
 
   async function runWithFallback(): Promise<string> {
     try {
@@ -185,13 +200,24 @@ export async function* streamAnalysis(
   trendSummary: string = '',
   weatherContext?: string,
   basketName?: string | null,
+  machineName?: string | null,
+  grinderName?: string | null,
 ): AsyncGenerator<string> {
   if (!genAI) {
     yield 'AI configuration missing.';
     return;
   }
 
-  const prompt = buildPrompt(shot, trendSummary, weatherContext, basketName);
+  const beanContext = await Promise.race([
+    getBeanContext({
+      origin:      shot.beans?.origin,
+      machineName: machineName ?? undefined,
+      grinderName: grinderName ?? undefined,
+    }),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+  ]);
+
+  const prompt = buildPrompt(shot, trendSummary, weatherContext, basketName, beanContext);
 
   async function* tryStream(modelName: string): AsyncGenerator<string> {
     const model  = genAI!.getGenerativeModel({ model: modelName });

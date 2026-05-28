@@ -108,3 +108,29 @@ export interface UserContext {
   equipment:   Array<{ machine_name: string; grinder_name?: string | null }>;
   recentBeans: Array<{ roaster: string; origin: string; bag_name?: string | null }>;
 }
+
+export interface BrewingRule {
+  rule_id: string;
+  description: string;
+  dictates: {
+    parameter: string;
+    direction: string;
+    value_range: string;
+    unit: string;
+  };
+  pid_specificity: {
+    requires_pid: boolean | null;
+    reason: string | null;
+    non_pid_alternative: string | null;
+  };
+  confidence: number;
+  source: string;
+}
+
+export interface BeanContext {
+  expected_flavors: string[];
+  applicable_rules: BrewingRule[];
+  equipment_features: string[];
+  grind_profile: string | null;
+  reasoning: string;
+}

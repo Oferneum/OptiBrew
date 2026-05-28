@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { BagScanResult, UserContext } from '../types';
+import { getBeanContext, formatGraphContextBlock } from '../knowledge-graph';
 
 const PRIMARY_MODEL  = 'gemini-2.5-flash';
 const FALLBACK_MODEL = 'gemini-2.5-flash-lite';
@@ -34,6 +35,18 @@ export async function getStartupRecommendation(
     tasteLine = `\nUser's recent coffee history: ${history}. If this new bag differs meaningfully (origin, process, roast level), briefly acknowledge the contrast in sentence 2.`;
   }
 
+  // Fetch graph context (3s timeout — graceful degradation if DB is slow)
+  const beanCtx = await Promise.race([
+    getBeanContext({
+      origin:      bean.origin,
+      process:     bean.process,
+      machineName: userContext?.equipment?.[0]?.machine_name,
+      grinderName: userContext?.equipment?.[0]?.grinder_name ?? undefined,
+    }),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+  ]);
+  const graphBlock = beanCtx ? formatGraphContextBlock(beanCtx) : '';
+
   const prompt = `You are Dialed, a personal barista consultant. Based on the details below, give a first-shot recommendation tailored to this specific user.
 
 Rules:
@@ -44,7 +57,7 @@ Rules:
 - Tone: Direct, confident, personal — like a coach who knows you. No fluff.
 - Plain text only. No markdown, no quotation marks, no bolding.
 
-${equipmentLine}${tasteLine}
+${equipmentLine}${tasteLine}${graphBlock}
 
 Bean details:
 - Roaster: ${bean.roaster || 'Unknown'}
