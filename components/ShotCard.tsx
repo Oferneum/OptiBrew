@@ -1,11 +1,12 @@
 import type { Shot } from '@/lib/types';
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleString('he-IL', {
-    day: 'numeric',
+  return new Date(iso).toLocaleString('en-US', {
     month: 'short',
+    day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    hour12: false,
   });
 }
 
@@ -40,7 +41,7 @@ export default function ShotCard({ shot }: { shot: Shot }) {
       <div className="flex justify-between items-start gap-2">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[#7A6858] text-xs font-mono tracking-wide">{formatDate(shot.created_at)}</span>
+            <span dir="ltr" className="text-[#7A6858] text-xs font-mono tracking-wide">{formatDate(shot.created_at)}</span>
             {quality && (
               <span className={`px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest rounded-full bg-gradient-to-r ${quality.gradient} text-white`}>
                 {quality.text}
@@ -64,20 +65,21 @@ export default function ShotCard({ shot }: { shot: Shot }) {
       </div>
 
       {/* Metrics */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1">
-        <span className="readout text-sm font-bold text-[#2C1E16]">{shot.dose}g → {shot.yield}g</span>
-        {ratio && (
-          <span className="readout text-sm font-black text-[#5D4037]">
-            {ratio}
-          </span>
-        )}
-        <span className="readout text-sm text-[#2C1E16]">{shot.extraction_time}s</span>
-        {shot.brew_temp != null && (
-          <span className="readout text-sm text-[#7A6858]">{shot.brew_temp}°C</span>
-        )}
-        {shot.grind_setting && (
-          <span className="readout text-sm text-[#7A6858]">⌀{shot.grind_setting}</span>
-        )}
+      <div className="glass-display rounded-xl px-3 py-2">
+        <div className="flex items-center justify-evenly text-center divide-x divide-[#C8B49A]">
+          {[
+            { label: 'Dose',  value: `${shot.dose}g`,           color: 'text-[#2C1E16]' },
+            { label: 'Yield', value: `${shot.yield}g`,          color: 'text-[#2C1E16]' },
+            ...(ratio            ? [{ label: 'Ratio', value: ratio,                      color: 'text-[#5D4037]' }] : []),
+            ...(shot.extraction_time != null ? [{ label: 'Time',  value: `${shot.extraction_time}s`, color: 'text-[#2C1E16]' }] : []),
+            ...(shot.brew_temp   != null ? [{ label: 'Temp',  value: `${shot.brew_temp}°C`,      color: 'text-[#7A6858]' }] : []),
+          ].map(({ label, value, color }) => (
+            <div key={label} className="flex-1 px-1">
+              <p className="text-[9px] font-black uppercase tracking-wider text-[#7A6858]">{label}</p>
+              <p className={`readout text-sm font-black ${color}`}>{value}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Flavor tags */}

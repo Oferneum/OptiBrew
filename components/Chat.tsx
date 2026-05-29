@@ -22,16 +22,16 @@ export default function Chat() {
   }
 
   return (
-    <div className="flex flex-col h-full max-w-md mx-auto">
+    <div className="flex flex-col h-full">
 
       {/* ── Message list ───────────────────────────────── */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.length === 0 && (
           <div className="text-center py-16 space-y-2">
-            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#A1A1AA]">
+            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#7A6858]">
               BrewAgent
             </p>
-            <p className="text-white/40 text-sm">
+            <p className="text-[#7A6858] text-sm">
               Ask me anything about your brew.
             </p>
           </div>
@@ -49,8 +49,8 @@ export default function Chat() {
                 className={`
                   max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed
                   ${m.role === 'user'
-                    ? 'bg-gradient-to-br from-[#FF4500] to-[#FFC107] text-black font-semibold rounded-br-sm'
-                    : 'glass text-white rounded-bl-sm'
+                    ? 'bg-gradient-to-br from-[#FF4500] to-[#FFC107] text-white font-semibold rounded-br-sm'
+                    : 'glass text-[#2C1E16] rounded-bl-sm'
                   }
                 `}
               >
@@ -88,17 +88,15 @@ export default function Chat() {
           inputMode="text"
           style={{ fontSize: '16px' }}
           className="
-            flex-1 bg-white/5 border border-white/10 rounded-2xl
-            px-4 py-3 text-white placeholder:text-white/30
-            focus:outline-none focus:border-[#FF4500]/50
-            disabled:opacity-50 min-h-[44px]
+            flex-1 glass-input rounded-2xl px-4 py-3
+            focus:outline-none disabled:opacity-50 min-h-[44px]
           "
         />
         <button
           type="submit"
           disabled={isLoading || !input.trim()}
           className="
-            btn-crema min-h-[44px] px-5 rounded-2xl font-black text-sm uppercase
+            btn-crema min-h-[44px] px-5 rounded-2xl text-sm uppercase
             tracking-wider disabled:opacity-40 disabled:scale-100
           "
         >
