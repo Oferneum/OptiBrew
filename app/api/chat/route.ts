@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     );
 
     const result = streamText({
-      model: google('gemini-1.5-flash'),
+      model: google('gemini-2.5-flash'),
       system:
         "You are DIALED's BrewAgent, a professional specialty coffee assistant. Always reply in English, even if the user prompts in another language.",
       messages: await convertToModelMessages(messages),
