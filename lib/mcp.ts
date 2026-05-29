@@ -6,16 +6,19 @@ export async function getMcpClient(): Promise<Client> {
   if (!serverUrl) throw new Error('MCP_SERVER_URL environment variable is not set');
 
   const parsedUrl = new URL(serverUrl);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const transport = new SSEClientTransport(parsedUrl, {
     eventSourceInit: {
-      // Railway's proxy rejects requests where Node's eventsource appends `:443`
-      // to the Host header. Override fetch to pin the hostname without the port.
-      fetch: (url, init) =>
+      // The TS EventSourceInit interface omits `headers`, but the underlying
+      // Node.js eventsource package accepts it. Cast to any to fix the 421 on
+      // the initial GET /sse handshake caused by Railway rejecting Host: host:443.
+      headers: { Host: parsedUrl.hostname },
+      fetch: (url: string | URL, init: RequestInit) =>
         fetch(url, {
           ...init,
           headers: { ...(init?.headers as Record<string, string>), Host: parsedUrl.hostname },
         }),
-    },
+    } as any,
   });
 
   const client = new Client(
