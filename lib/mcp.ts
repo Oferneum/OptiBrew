@@ -1,10 +1,14 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
-import { fetch as undiciFetch, Agent } from 'undici';
+import { fetch as undiciFetch, Agent, Pool } from 'undici';
 
-// Railway's proxy uses HTTP/2 and returns 421 when Node's default fetch
-// attempts to reuse an HTTP/2 connection. Force HTTP/1.1 via an undici Agent.
-const h1Agent = new Agent({ allowH2: false });
+// undici's Agent silently ignores allowH2 — it must be passed via a custom
+// factory so each Pool/Client is created with HTTP/2 disabled. This forces
+// HTTP/1.1 on the TLS handshake, preventing Railway's proxy from returning
+// 421 Misdirected Request due to HTTP/2 connection coalescing.
+const h1Agent = new Agent({
+  factory: (origin, opts) => new Pool(origin, { ...opts, allowH2: false }),
+});
 
 export async function getMcpClient(): Promise<Client> {
   const serverUrl = process.env.MCP_SERVER_URL;
