@@ -1,11 +1,11 @@
 export const maxDuration = 60;
 
 import { streamText, convertToModelMessages, dynamicTool, jsonSchema, stepCountIs } from 'ai';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createOpenAI } from '@ai-sdk/openai';
 import { getMcpClient } from '@/lib/mcp';
 
-const google = createGoogleGenerativeAI({
-  apiKey: process.env.GEMINI_API_KEY,
+const openai = createOpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 type McpContentPart = { type: string; text?: string };
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     );
 
     const result = streamText({
-      model: google('gemini-2.5-flash'),
+      model: openai('gpt-4o-mini'),
       system: [
         "You are DIALED's BrewAgent, a professional and concise specialty coffee assistant.",
         "",
