@@ -1,3 +1,5 @@
+export const maxDuration = 60;
+
 import { streamText, convertToModelMessages, dynamicTool, jsonSchema, stepCountIs } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { getMcpClient } from '@/lib/mcp';

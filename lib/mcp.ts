@@ -17,6 +17,7 @@ class NodeHttpsSseTransport implements Transport {
   private readonly _sseUrl: URL;
   private _postUrl: URL | null = null;
   private _req: ReturnType<typeof https.request> | null = null;
+  private _keepalive: ReturnType<typeof setInterval> | null = null;
 
   constructor(url: URL) {
     this._sseUrl = url;
@@ -68,8 +69,13 @@ class NodeHttpsSseTransport implements Transport {
             }
           });
 
-          res.on('end',   () => this.onclose?.());
-          res.on('error', (e) => this.onerror?.(e));
+          // Ping the server every 20s so Railway's proxy doesn't drop the idle SSE socket
+          this._keepalive = setInterval(() => {
+            try { this._req?.socket?.write(':ping\n\n'); } catch { /* ignore */ }
+          }, 20_000);
+
+          res.on('end',   () => { this._stopKeepalive(); this.onclose?.(); });
+          res.on('error', (e) => { this._stopKeepalive(); this.onerror?.(e); });
         },
       );
 
@@ -78,7 +84,12 @@ class NodeHttpsSseTransport implements Transport {
     });
   }
 
+  private _stopKeepalive() {
+    if (this._keepalive) { clearInterval(this._keepalive); this._keepalive = null; }
+  }
+
   async close(): Promise<void> {
+    this._stopKeepalive();
     this._req?.destroy();
     this.onclose?.();
   }
