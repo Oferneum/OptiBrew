@@ -83,7 +83,7 @@ const links = [
   { href: '/shots',         label: 'History', Icon: ClockIcon  },
   { href: '/beans',         label: 'Beans',   Icon: BeanIcon   },
   { href: '/analytics',     label: 'Charts',  Icon: ChartIcon  },
-  { href: '/chat',          label: 'Brew AI', Icon: ChatIcon   },
+  { href: '/chat',          label: 'Bean',    Icon: ChatIcon   },
   { href: '/achievements',  label: 'Awards',  Icon: TrophyIcon },
   { href: '/settings',      label: 'Settings',Icon: GearIcon   },
 ];

@@ -89,6 +89,32 @@ export default async function HomePage() {
         <span className="text-4xl font-black leading-none text-white/60">+</span>
       </Link>
 
+      {/* ── Bean AI Entry ─────────────────────────── */}
+      <Link
+        href="/chat"
+        className="flex items-center gap-4 glass rounded-2xl px-5 py-4 active:scale-[0.98] transition-all duration-200"
+      >
+        <div className="w-11 h-11 rounded-xl bg-[#2C1E16] flex items-center justify-center shrink-0">
+          <svg viewBox="0 0 44 56" fill="none" className="w-6 h-8">
+            <ellipse cx="22" cy="29" rx="16" ry="21" fill="#5D4037" />
+            <ellipse cx="16" cy="18" rx="5" ry="8" fill="#7B5B4A" opacity="0.45" transform="rotate(-18 16 18)" />
+            <path d="M22 8 C15 22 15 36 22 50" stroke="#3C2A21" strokeWidth="2.5" strokeLinecap="round" />
+            <circle cx="16" cy="27" r="3"   fill="#FAF3E6" />
+            <circle cx="28" cy="27" r="3"   fill="#FAF3E6" />
+            <circle cx="17" cy="28" r="1.5" fill="#2C1E16" />
+            <circle cx="29" cy="28" r="1.5" fill="#2C1E16" />
+            <circle cx="17.8" cy="27.2" r="0.6" fill="white" opacity="0.8" />
+            <circle cx="29.8" cy="27.2" r="0.6" fill="white" opacity="0.8" />
+            <path d="M15 35 Q22 42 29 35" stroke="#FAF3E6" strokeWidth="2" strokeLinecap="round" fill="none" />
+          </svg>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[#2C1E16] font-black text-sm uppercase tracking-wide leading-none">Ask Bean</p>
+          <p className="text-[#7A6858] text-xs mt-0.5">Get a personalised recommendation</p>
+        </div>
+        <span className="text-[#5D4037] font-bold text-lg leading-none">→</span>
+      </Link>
+
       {/* ── Stats ─────────────────────────────────── */}
       {shots.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
