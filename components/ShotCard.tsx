@@ -74,7 +74,7 @@ export default function ShotCard({ shot }: { shot: Shot }) {
             ...(shot.extraction_time != null ? [{ label: 'Time',  value: `${shot.extraction_time}s`, color: 'text-[#2C1E16]' }] : []),
             ...(shot.brew_temp   != null ? [{ label: 'Temp',  value: `${shot.brew_temp}°C`,      color: 'text-[#7A6858]' }] : []),
           ].map(({ label, value, color }) => (
-            <div key={label} className="flex-1 px-1">
+            <div key={label} className="flex-1 flex flex-col items-center px-1">
               <p className="text-[9px] font-black uppercase tracking-wider text-[#7A6858]">{label}</p>
               <p className={`readout text-sm font-black ${color}`}>{value}</p>
             </div>

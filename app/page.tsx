@@ -10,10 +10,10 @@ export const dynamic = 'force-dynamic';
 function GlowOrb({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" fill="none">
-      <circle cx="24" cy="24" r="3.5" fill="#FF4500" />
-      <circle cx="24" cy="24" r="9"  stroke="#FF4500" strokeWidth="0.75" strokeOpacity="0.45" />
-      <circle cx="24" cy="24" r="16" stroke="#FF4500" strokeWidth="0.5"  strokeOpacity="0.22" />
-      <circle cx="24" cy="24" r="23" stroke="#FFC107" strokeWidth="0.5"  strokeOpacity="0.10" />
+      <circle cx="24" cy="24" r="3.5" fill="#5D4037" />
+      <circle cx="24" cy="24" r="9"  stroke="#5D4037" strokeWidth="0.75" strokeOpacity="0.45" />
+      <circle cx="24" cy="24" r="16" stroke="#5D4037" strokeWidth="0.5"  strokeOpacity="0.22" />
+      <circle cx="24" cy="24" r="23" stroke="#8D6E63" strokeWidth="0.5"  strokeOpacity="0.10" />
     </svg>
   );
 }
@@ -21,20 +21,20 @@ function GlowOrb({ className }: { className?: string }) {
 function EmptyState() {
   return (
     <svg viewBox="0 0 120 120" fill="none" className="w-28 h-28">
-      <circle cx="60" cy="60" r="56" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
-      <circle cx="60" cy="60" r="42" stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
-      <circle cx="60" cy="60" r="28" stroke="rgba(255,255,255,0.09)" strokeWidth="1" />
-      <circle cx="60" cy="60" r="12" fill="rgba(255,69,0,0.15)" />
-      <circle cx="60" cy="60" r="6"  fill="rgba(255,69,0,0.40)" />
-      <circle cx="60" cy="60" r="3"  fill="#FF4500" />
-      <circle cx="60" cy="4"  r="2.5" fill="#FFC107" opacity="0.75" />
-      <circle cx="116" cy="60" r="2"  fill="#FF4500" opacity="0.50" />
-      <circle cx="4"   cy="60" r="2"  fill="#7B1FA2" opacity="0.60" />
-      <circle cx="60" cy="116" r="2.5" fill="#FFC107" opacity="0.40" />
-      <line x1="60" y1="0"   x2="60" y2="9"   stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
-      <line x1="120" y1="60" x2="111" y2="60" stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
-      <line x1="0"   y1="60" x2="9"   y2="60" stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
-      <line x1="60"  y1="120" x2="60" y2="111" stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
+      <circle cx="60" cy="60" r="56" stroke="rgba(44,30,22,0.05)" strokeWidth="1" />
+      <circle cx="60" cy="60" r="42" stroke="rgba(44,30,22,0.07)" strokeWidth="1" />
+      <circle cx="60" cy="60" r="28" stroke="rgba(44,30,22,0.09)" strokeWidth="1" />
+      <circle cx="60" cy="60" r="12" fill="rgba(93,64,55,0.15)" />
+      <circle cx="60" cy="60" r="6"  fill="rgba(93,64,55,0.40)" />
+      <circle cx="60" cy="60" r="3"  fill="#5D4037" />
+      <circle cx="60" cy="4"  r="2.5" fill="#8D6E63" opacity="0.75" />
+      <circle cx="116" cy="60" r="2"  fill="#5D4037" opacity="0.50" />
+      <circle cx="4"   cy="60" r="2"  fill="#8D6E63" opacity="0.60" />
+      <circle cx="60" cy="116" r="2.5" fill="#8D6E63" opacity="0.40" />
+      <line x1="60" y1="0"   x2="60" y2="9"   stroke="rgba(44,30,22,0.18)" strokeWidth="1" />
+      <line x1="120" y1="60" x2="111" y2="60" stroke="rgba(44,30,22,0.18)" strokeWidth="1" />
+      <line x1="0"   y1="60" x2="9"   y2="60" stroke="rgba(44,30,22,0.18)" strokeWidth="1" />
+      <line x1="60"  y1="120" x2="60" y2="111" stroke="rgba(44,30,22,0.18)" strokeWidth="1" />
     </svg>
   );
 }
@@ -63,8 +63,8 @@ export default async function HomePage() {
       {/* ── Header ────────────────────────────────── */}
       <header className="relative pt-4">
         <GlowOrb className="absolute top-2 right-0 w-11 h-11 opacity-80" />
-        <div className="w-16 h-0.5 bg-gradient-to-r from-[#FF4500] to-[#FFC107] mb-3 rounded-full" />
-        <h1 className="text-7xl font-black uppercase tracking-tighter leading-none bg-gradient-to-r from-[#FF4500] via-white to-[#FFC107] bg-clip-text text-transparent">
+        <div className="w-16 h-0.5 bg-gradient-to-r from-[#5D4037] to-[#8D6E63] mb-3 rounded-full" />
+        <h1 className="text-7xl font-black uppercase tracking-tighter leading-none bg-gradient-to-r from-[#2C1E16] to-[#5D4037] bg-clip-text text-transparent">
           DIALED
         </h1>
         <p className="text-[11px] font-black uppercase tracking-[0.35em] text-[#A1A1AA] mt-2">
@@ -80,13 +80,13 @@ export default async function HomePage() {
       {/* ── Log Shot CTA ──────────────────────────── */}
       <Link
         href="/shots/new"
-        className="flex items-center justify-between w-full rounded-2xl px-6 py-5 bg-gradient-to-r from-[#FF4500] to-[#FFC107] shadow-xl shadow-[#FF4500]/30 active:scale-95 transition-all duration-200"
+        className="flex items-center justify-between w-full rounded-2xl px-6 py-5 bg-gradient-to-r from-[#2C1E16] to-[#5D4037] shadow-xl shadow-[#2C1E16]/30 active:scale-95 transition-all duration-200"
       >
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-black/60">Pull a shot</p>
-          <p className="text-2xl font-black uppercase tracking-tight leading-none mt-0.5 text-black">LOG SHOT</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">Pull a shot</p>
+          <p className="text-2xl font-black uppercase tracking-tight leading-none mt-0.5 text-white">LOG SHOT</p>
         </div>
-        <span className="text-4xl font-black leading-none text-black/60">+</span>
+        <span className="text-4xl font-black leading-none text-white/60">+</span>
       </Link>
 
       {/* ── Stats ─────────────────────────────────── */}
@@ -99,7 +99,7 @@ export default async function HomePage() {
           ].map(({ label, value }) => (
             <div key={label} className="glass rounded-2xl p-3 text-center">
               <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#A1A1AA]">{label}</p>
-              <p className="readout text-2xl font-black mt-0.5 bg-gradient-to-r from-[#FF4500] to-[#FFC107] bg-clip-text text-transparent">
+              <p className="readout text-2xl font-black mt-0.5 text-[#5D4037]">
                 {value}
               </p>
             </div>
@@ -111,13 +111,13 @@ export default async function HomePage() {
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#FF4500]" style={{ boxShadow: '0 0 6px #FF4500' }} />
-            <p className="text-[11px] font-black uppercase tracking-[0.25em] text-white">Recent</p>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#5D4037]" />
+            <p className="text-[11px] font-black uppercase tracking-[0.25em] text-[#2C1E16]">Recent</p>
           </div>
           {shots.length > 3 && (
             <Link
               href="/shots"
-              className="text-[11px] font-black uppercase tracking-wider text-[#FF4500] hover:opacity-70 transition-opacity"
+              className="text-[11px] font-black uppercase tracking-wider text-[#5D4037] hover:opacity-70 transition-opacity"
             >
               View all →
             </Link>
@@ -128,12 +128,12 @@ export default async function HomePage() {
           <div className="glass rounded-3xl py-12 px-6 flex flex-col items-center text-center space-y-5">
             <EmptyState />
             <div className="space-y-1.5">
-              <p className="font-black text-white uppercase tracking-tight text-xl">No shots yet</p>
+              <p className="font-black text-[#2C1E16] uppercase tracking-tight text-xl">No shots yet</p>
               <p className="text-xs text-[#A1A1AA] font-bold uppercase tracking-[0.25em]">Your espresso journal awaits</p>
             </div>
             <Link
               href="/shots/new"
-              className="bg-gradient-to-r from-[#FF4500] to-[#FFC107] text-black text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl shadow-lg shadow-[#FF4500]/30 active:scale-95 transition-all"
+              className="bg-gradient-to-r from-[#2C1E16] to-[#5D4037] text-white text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl shadow-lg shadow-[#2C1E16]/30 active:scale-95 transition-all"
             >
               Pull first shot →
             </Link>

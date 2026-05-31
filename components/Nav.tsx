@@ -60,6 +60,14 @@ function TrophyIcon() {
   );
 }
 
+function ChatIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
 function GearIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
@@ -75,6 +83,7 @@ const links = [
   { href: '/shots',         label: 'History', Icon: ClockIcon  },
   { href: '/beans',         label: 'Beans',   Icon: BeanIcon   },
   { href: '/analytics',     label: 'Charts',  Icon: ChartIcon  },
+  { href: '/chat',          label: 'Brew AI', Icon: ChatIcon   },
   { href: '/achievements',  label: 'Awards',  Icon: TrophyIcon },
   { href: '/settings',      label: 'Settings',Icon: GearIcon   },
 ];
