@@ -13,8 +13,20 @@ type McpContentPart = { type: string; text?: string };
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
-  const client = await getMcpClient();
-  const { tools: mcpTools } = await client.listTools();
+  // Connect to MCP — surface failures as readable errors instead of silent 500s
+  let client: Awaited<ReturnType<typeof getMcpClient>>;
+  let mcpTools: Awaited<ReturnType<typeof client.listTools>>['tools'];
+
+  try {
+    client = await getMcpClient();
+    ({ tools: mcpTools } = await client.listTools());
+  } catch (err) {
+    console.error('[Bean] MCP connection failed:', err);
+    return Response.json(
+      { error: 'Bean is temporarily unavailable — could not reach knowledge base.' },
+      { status: 503 },
+    );
+  }
 
   const tools = Object.fromEntries(
     mcpTools.map((t) => [
@@ -41,20 +53,20 @@ export async function POST(req: Request) {
   const result = streamText({
     model: openai('gpt-4o-mini'),
     system: [
-      "You are DIALED's BrewAgent, a professional and concise specialty coffee assistant.",
+      "You are Bean, DIALED's friendly and concise personal coffee assistant.",
       "",
-      "CRITICAL RULES FOR ANSWERING:",
+      "CRITICAL RULES:",
       "- Tool-First: Before making ANY recommendation or answering ANY question about coffee, beans, or brewing, you MUST call the appropriate tool first. Never answer from memory or training data.",
       "- Grounding: Your absolute source of truth is the data returned by your tools.",
-      "- No Hallucinations: Do NOT invent, guess, or add flavor notes, processing methods, or coffee facts that are not explicitly present in the tool's response.",
-      "- Your Role: Use your general knowledge ONLY to format the retrieved data into a natural, polite, and easily readable English sentence.",
-      "- Missing Data: If the tool returns empty or no data, simply state that you don't have information on that specific coffee in the database. Do not try to guess.",
-      "- Tone: Be highly concise. Get straight to the point.",
+      "- No Hallucinations: Do NOT invent or add flavor notes, processing methods, or coffee facts not explicitly in the tool response.",
+      "- Your Role: Use your general knowledge ONLY to format retrieved data into natural, readable English.",
+      "- Missing Data: If the tool returns empty or no matching data, say so plainly. Never guess.",
+      "- Tone: Warm, concise, friendly. Get straight to the point.",
       "- Always reply in English.",
     ].join("\n"),
     messages: await convertToModelMessages(messages),
     tools,
-    stopWhen: stepCountIs(3),
+    stopWhen: stepCountIs(5),
     onFinish: async () => {
       await client.close();
     },

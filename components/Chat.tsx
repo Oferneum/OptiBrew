@@ -30,7 +30,7 @@ function BeanFace({ className }: { className?: string }) {
 }
 
 export default function Chat() {
-  const { messages, sendMessage, status } = useChat();
+  const { messages, sendMessage, status, error } = useChat();
   const [input, setInput]       = useState('');
   const [phraseIdx, setPhraseIdx] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -90,6 +90,17 @@ export default function Chat() {
             </div>
           );
         })}
+
+        {error && (
+          <div className="flex items-end gap-2 justify-start">
+            <BeanFace className="w-7 h-9 shrink-0" />
+            <div className="glass rounded-2xl rounded-bl-sm px-4 py-3 max-w-[78%]">
+              <p className="text-sm text-red-700 font-medium">
+                Sorry, I&apos;m having trouble connecting right now. Please try again in a moment.
+              </p>
+            </div>
+          </div>
+        )}
 
         {isLoading && (
           <div className="flex items-end gap-2 justify-start">
