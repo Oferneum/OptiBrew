@@ -73,19 +73,26 @@ export default function Chat() {
           const text = m.parts.filter(isTextUIPart).map((p) => p.text).join('');
           if (!text) return null;
           const isUser = m.role === 'user';
+          const paragraphs = text.split(/\n{2,}/);
           return (
             <div key={m.id} className={`flex items-end gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
               {!isUser && <BeanFace className="w-7 h-9 shrink-0" />}
               <div
                 className={`
-                  max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-relaxed
+                  max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-relaxed space-y-2
                   ${isUser
                     ? 'bg-gradient-to-br from-[#2C1E16] to-[#5D4037] text-white font-semibold rounded-br-sm'
                     : 'glass text-[#2C1E16] rounded-bl-sm'
                   }
                 `}
               >
-                {text}
+                {paragraphs.map((para, i) => (
+                  <p key={i}>
+                    {para.split('\n').map((line, j, arr) => (
+                      <span key={j}>{line}{j < arr.length - 1 && <br />}</span>
+                    ))}
+                  </p>
+                ))}
               </div>
             </div>
           );
