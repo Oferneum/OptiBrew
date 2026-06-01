@@ -51,7 +51,8 @@ export async function POST(req: Request) {
     }
   }
 
-  const messages = rawMessages;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const messages = rawMessages as any[];
 
   // Connect to MCP — surface failures as readable errors instead of silent 500s
   let client: Awaited<ReturnType<typeof getMcpClient>>;
