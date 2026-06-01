@@ -10,8 +10,48 @@ const openai = createOpenAI({
 
 type McpContentPart = { type: string; text?: string };
 
+const MAX_MESSAGE_LENGTH = 800;
+const MAX_HISTORY_MESSAGES = 20;
+
 export async function POST(req: Request) {
-  const { messages } = await req.json();
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return Response.json({ error: 'Invalid JSON.' }, { status: 400 });
+  }
+
+  if (!body || typeof body !== 'object' || !Array.isArray((body as Record<string, unknown>).messages)) {
+    return Response.json({ error: 'Invalid request body.' }, { status: 400 });
+  }
+
+  const rawMessages = (body as Record<string, unknown[]>).messages;
+
+  if (rawMessages.length > MAX_HISTORY_MESSAGES) {
+    return Response.json({ error: 'Too many messages in history.' }, { status: 400 });
+  }
+
+  for (const msg of rawMessages) {
+    if (!msg || typeof msg !== 'object') {
+      return Response.json({ error: 'Malformed message.' }, { status: 400 });
+    }
+    const parts = (msg as Record<string, unknown>).parts;
+    if (Array.isArray(parts)) {
+      for (const part of parts) {
+        if (
+          part &&
+          typeof part === 'object' &&
+          (part as Record<string, unknown>).type === 'text' &&
+          typeof (part as Record<string, unknown>).text === 'string' &&
+          ((part as Record<string, unknown>).text as string).length > MAX_MESSAGE_LENGTH
+        ) {
+          return Response.json({ error: `Message exceeds ${MAX_MESSAGE_LENGTH} character limit.` }, { status: 400 });
+        }
+      }
+    }
+  }
+
+  const messages = rawMessages;
 
   // Connect to MCP — surface failures as readable errors instead of silent 500s
   let client: Awaited<ReturnType<typeof getMcpClient>>;
