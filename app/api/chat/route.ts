@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   );
 
   const result = streamText({
-    model: openai('gpt-4o-mini'),
+    model: openai('gpt-4o'),
     system: `You are Bean, the AI assistant inside DIALED — a personal espresso journal. You are concise, warm, and grounded entirely in data from your tools.
 
 TOOLS — call exactly the right one, every time:
