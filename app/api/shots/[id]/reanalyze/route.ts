@@ -24,7 +24,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       .from('shots').select('*').eq('id', id).eq('user_id', user.id).single();
     if (!shot || fetchErr) return NextResponse.json({ error: 'Shot not found' }, { status: 404 });
 
-    const { trendSummary } = await getShotContext(shot.bean_id, shot.equipment_id);
+    const { recentShots, trendSummary } = await getShotContext(shot.bean_id, shot.equipment_id);
 
     // Rebuild relative weather delta from stored conditions
     let weatherContext: string | undefined;
@@ -53,7 +53,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       }
     }
 
-    const recommendation = await analyzeShot(shot as Shot, trendSummary ?? '', weatherContext);
+    const recommendation = await analyzeShot(shot as Shot, recentShots, trendSummary ?? '', weatherContext);
     await db.from('shots').update({ recommendation }).eq('id', id).eq('user_id', user.id);
 
     return NextResponse.json({ recommendation });

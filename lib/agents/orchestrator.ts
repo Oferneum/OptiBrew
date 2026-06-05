@@ -26,10 +26,11 @@ export async function orchestrateBagScan(
  * Shot analysis flow: delegates to DiagnosticsAgent.
  */
 export async function orchestrateShotAnalysis(
-  shot:          Shot,
-  trendSummary?: string,
+  shot:         Shot,
+  recentShots:  Shot[],
+  trendSummary: string,
 ): Promise<string> {
-  return analyzeShot(shot, trendSummary);
+  return analyzeShot(shot, recentShots, trendSummary);
 }
 
 export { getBestBrewMethod };
