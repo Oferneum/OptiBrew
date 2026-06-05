@@ -1,8 +1,9 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { isTextUIPart } from 'ai';
+import { isTextUIPart, DefaultChatTransport } from 'ai';
 import { useRef, useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 const PHRASES = [
   'Grinding the data…',
@@ -30,7 +31,15 @@ function BeanFace({ className }: { className?: string }) {
 }
 
 export default function Chat() {
-  const { messages, sendMessage, status, error } = useChat();
+  const { messages, sendMessage, status, error } = useChat({
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      headers: async (): Promise<Record<string, string>> => {
+        const { data: { session } } = await supabase.auth.getSession();
+        return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+      },
+    }),
+  });
   const [input, setInput]       = useState('');
   const [phraseIdx, setPhraseIdx] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
