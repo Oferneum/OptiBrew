@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { supabase, createServiceClient } from '@/lib/supabase';
+import { createAuthClient } from '@/lib/supabase';
 
 const BeanUpdateSchema = z.object({
   roaster:      z.string().min(1).max(200).optional(),
@@ -19,10 +19,13 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const token = req.headers.get('Authorization')?.replace('Bearer ', '');
+  console.log('Token status:', !!token, '| token prefix:', token?.slice(0, 20));
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // Verify the JWT by passing it explicitly — avoids session issues on server
-  const { data: { user } } = await supabase.auth.getUser(token);
+  const db = createAuthClient(token);
+
+  const { data: { user }, error: authError } = await db.auth.getUser();
+  console.log('User status:', !!user, '| auth error:', authError?.message ?? 'none');
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const raw = await req.json();
@@ -37,19 +40,21 @@ export async function PATCH(
     Object.entries(parsed.data as Record<string, unknown>).filter(([k]) => allowed.has(k)),
   );
 
-  const service = createServiceClient();
-
-  const { data: bean } = await service.from('beans').select('user_id').eq('id', id).single();
-  if (!bean) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  if (bean.user_id !== user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-
-  const { data, error: updateError } = await service
+  const { error: updateError } = await db
     .from('beans')
     .update(update)
-    .eq('id', id)
+    .eq('id', id);
+
+  console.log('Update error:', updateError?.message ?? 'none');
+  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+
+  const { data, error: selectError } = await db
+    .from('beans')
     .select('*')
+    .eq('id', id)
     .single();
 
-  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+  console.log('Post-update select — data:', !!data, '| select error:', selectError?.message ?? 'none');
+  if (selectError) return NextResponse.json({ error: selectError.message }, { status: 500 });
   return NextResponse.json(data);
 }
