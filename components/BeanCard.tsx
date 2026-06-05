@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { BeanVFMData } from '@/lib/vfm-actions';
 import { supabase } from '@/lib/supabase';
@@ -39,9 +39,20 @@ interface EditState {
 
 export default function BeanCard({ bean, onSaved }: { bean: BeanVFMData; onSaved?: () => void }) {
   const router = useRouter();
-  const [editing, setEditing] = useState(false);
-  const [saving, setSaving]   = useState(false);
-  const [error, setError]     = useState<string | null>(null);
+  const [editing, setEditing]     = useState(false);
+  const [saving, setSaving]       = useState(false);
+  const [error, setError]         = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setAccessToken(session?.access_token ?? null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setAccessToken(session?.access_token ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const [draft, setDraft] = useState<EditState>({
     roaster:      bean.roaster,
@@ -72,9 +83,8 @@ export default function BeanCard({ bean, onSaved }: { bean: BeanVFMData; onSaved
     setSaving(true);
     setError(null);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+      if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
 
       const res = await fetch(`/api/beans/${bean.id}`, {
         method: 'PATCH',
