@@ -1,4 +1,21 @@
 export type FlavorTag = 'Sour' | 'Bitter' | 'Balanced' | 'Dry';
+
+export interface GrindTarget {
+  value:      number;                         // median grind setting from best shots
+  range:      [number, number];               // [min, max] across best shots
+  sampleSize: number;
+  tier:       'personal_bean' | 'personal_origin';
+  context:    string;                         // human-readable source description
+}
+
+export interface BrewParamTarget {
+  avgTemp:           number | null;
+  avgRatio:          number | null;
+  avgExtractionTime: number | null;
+  sampleSize:        number;
+  tier:              'personal_bean' | 'community_bean';
+  context:           string;
+}
 export type BrewMethod = 'Espresso' | 'MokaPot' | 'FrenchPress' | 'ColdBrew';
 
 export interface BagScanResult {

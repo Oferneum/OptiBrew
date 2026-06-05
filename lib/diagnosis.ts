@@ -1,4 +1,4 @@
-import type { Shot } from './types';
+import type { Shot, GrindTarget, BrewParamTarget } from './types';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Output
@@ -134,10 +134,51 @@ function computeThresholds(basketName: string | null | undefined, env: Environme
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// Fix-string helpers — personalise advice when targets are available
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function grindFix(
+  direction: 'finer' | 'coarser',
+  genericMagnitude: string,
+  currentGrind: string | null | undefined,
+  target: GrindTarget | null | undefined,
+): string {
+  if (!target) return `Grind ${direction} — ${genericMagnitude}`;
+
+  const current = parseGrindNumeric(currentGrind);
+  const deltaStr = current != null ? `you're at ${current}, move to` : 'target:';
+  const rangeNote = target.range[0] !== target.range[1]
+    ? ` (range ${target.range[0]}–${target.range[1]} across ${target.sampleSize} shots)`
+    : ` (${target.sampleSize} shot${target.sampleSize > 1 ? 's' : ''})`;
+  const tierNote = target.tier === 'personal_origin' ? ' — estimated from similar beans' : '';
+
+  return `${deltaStr} grind ${target.value}${rangeNote} based on ${target.context}${tierNote}`;
+}
+
+function brewTempFix(
+  direction: 'raise' | 'lower',
+  genericAdvice: string,
+  currentTemp: number | null | undefined,
+  target: BrewParamTarget | null | undefined,
+): string {
+  if (!target?.avgTemp) return genericAdvice;
+
+  const fromStr = currentTemp != null ? ` from ${currentTemp}°C` : '';
+  const communityNote = target.tier === 'community_bean' ? ' (community estimate — not your personal data)' : '';
+
+  return `${direction === 'raise' ? 'Raise' : 'Lower'} brew temp to ${target.avgTemp}°C${fromStr} — based on ${target.context}${communityNote}`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Layer 4: Modular cross-reference functions
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function diagnoseSourFast(shot: Shot, history: ShotHistory): DiagnosisResult {
+function diagnoseSourFast(
+  shot: Shot,
+  history: ShotHistory,
+  grindTarget?: GrindTarget | null,
+  brewParamTarget?: BrewParamTarget | null,
+): DiagnosisResult {
   const time = shot.extraction_time!;
   const temp = shot.brew_temp ?? null;
   const dose = shot.dose ?? null;
@@ -160,12 +201,12 @@ function diagnoseSourFast(shot: Shot, history: ShotHistory): DiagnosisResult {
       severity:  'moderate',
       problem:   `Fast sour shot at ${time}s with low brew temp (${temp}°C)`,
       rootCause: 'Under-extraction is temperature-driven — water too cold to dissolve compounds at speed',
-      fix:       'Raise brew temp 2–3°C before adjusting grind',
+      fix:       brewTempFix('raise', 'Raise brew temp 2–3°C before adjusting grind', temp, brewParamTarget),
       escalated: false,
     };
   }
 
-  // Light dose adds primary resistance variable before suggesting grind change
+  // Light dose as alternative resistance variable
   if (dose != null && dose < LIGHT_DOSE) {
     return {
       severity:  'moderate',
@@ -181,12 +222,18 @@ function diagnoseSourFast(shot: Shot, history: ShotHistory): DiagnosisResult {
     severity:  'moderate',
     problem:   `Fast sour shot at ${time}s`,
     rootCause: 'Grind is too coarse — insufficient puck resistance',
-    fix:       'Grind 2–3 steps finer',
+    fix:       grindFix('finer', '2–3 steps', shot.grind_setting, grindTarget),
     escalated: false,
+    context:   grindTarget?.tier === 'personal_origin' ? `Grind target based on similar origin beans — treat as a starting estimate.` : undefined,
   };
 }
 
-function diagnoseSourNormal(shot: Shot, history: ShotHistory, beanOrigin: string): DiagnosisResult {
+function diagnoseSourNormal(
+  shot: Shot,
+  history: ShotHistory,
+  beanOrigin: string,
+  brewParamTarget?: BrewParamTarget | null,
+): DiagnosisResult {
   const temp = shot.brew_temp ?? null;
   const isLightRoast = LIGHT_ROAST_ORIGIN_RE.test(beanOrigin);
 
@@ -195,7 +242,7 @@ function diagnoseSourNormal(shot: Shot, history: ShotHistory, beanOrigin: string
       severity:  'moderate',
       problem:   'Sour at normal extraction speed with low brew temp',
       rootCause: 'Under-extraction is temperature-driven at normal flow — not a grind issue',
-      fix:       `Raise brew temp to ${isLightRoast ? '92–94' : '90–92'}°C`,
+      fix:       brewTempFix('raise', `Raise brew temp to ${isLightRoast ? '92–94' : '90–92'}°C`, temp, brewParamTarget),
       escalated: false,
     };
   }
@@ -205,7 +252,7 @@ function diagnoseSourNormal(shot: Shot, history: ShotHistory, beanOrigin: string
       severity:  'moderate',
       problem:   'Sour at normal speed — under-extracted for this origin',
       rootCause: 'Light/washed origins require higher brew temp to develop acidity into sweetness',
-      fix:       'Raise brew temp to 93–94°C — light roasts extract slower at lower temperatures',
+      fix:       brewTempFix('raise', 'Raise brew temp to 93–94°C', temp, brewParamTarget),
       escalated: false,
     };
   }
@@ -224,12 +271,17 @@ function diagnoseSourNormal(shot: Shot, history: ShotHistory, beanOrigin: string
     severity:  'moderate',
     problem:   'Sour at normal extraction speed',
     rootCause: 'Under-extraction despite acceptable flow — temperature or puck prep is the likely cause',
-    fix:       'Raise brew temp 1–2°C; if the problem persists, improve puck prep with WDT and even distribution',
+    fix:       brewTempFix('raise', 'Raise brew temp 1–2°C; if the problem persists, improve puck prep with WDT and even distribution', temp, brewParamTarget),
     escalated: false,
   };
 }
 
-function diagnoseBitterSlow(shot: Shot, history: ShotHistory): DiagnosisResult {
+function diagnoseBitterSlow(
+  shot: Shot,
+  history: ShotHistory,
+  grindTarget?: GrindTarget | null,
+  brewParamTarget?: BrewParamTarget | null,
+): DiagnosisResult {
   const time = shot.extraction_time!;
   const temp = shot.brew_temp ?? null;
   const dose = shot.dose ?? null;
@@ -240,7 +292,7 @@ function diagnoseBitterSlow(shot: Shot, history: ShotHistory): DiagnosisResult {
       severity:  'moderate',
       problem:   `Still slow and bitter at ${time}s after grinding coarser`,
       rootCause: 'Grind adjustment alone is not resolving this — brew temp is likely the remaining variable',
-      fix:       temp != null ? `Lower brew temp by 2°C from ${temp}°C` : 'Lower brew temp by 1–2°C before making further grind changes',
+      fix:       brewTempFix('lower', temp != null ? `Lower brew temp by 2°C from ${temp}°C` : 'Lower brew temp by 1–2°C', temp, brewParamTarget),
       escalated: true,
     };
   }
@@ -251,7 +303,7 @@ function diagnoseBitterSlow(shot: Shot, history: ShotHistory): DiagnosisResult {
       severity:  'moderate',
       problem:   `Slow bitter shot at ${time}s with high brew temp (${temp}°C)`,
       rootCause: 'Over-extraction is temperature-driven — high heat increases extraction rate',
-      fix:       'Lower brew temp by 2°C before adjusting grind',
+      fix:       brewTempFix('lower', 'Lower brew temp by 2°C before adjusting grind', temp, brewParamTarget),
       escalated: false,
     };
   }
@@ -272,8 +324,9 @@ function diagnoseBitterSlow(shot: Shot, history: ShotHistory): DiagnosisResult {
     severity:  'moderate',
     problem:   `Slow over-extracted shot at ${time}s`,
     rootCause: 'Grind is too fine — excessive puck resistance',
-    fix:       'Grind 2–3 steps coarser',
+    fix:       grindFix('coarser', '2–3 steps', shot.grind_setting, grindTarget),
     escalated: false,
+    context:   grindTarget?.tier === 'personal_origin' ? 'Grind target based on similar origin beans — treat as a starting estimate.' : undefined,
   };
 }
 
@@ -368,6 +421,8 @@ export function buildDiagnosis(
   env: Environment,
   basketName: string | null | undefined,
   beanOrigin?: string | null,
+  grindTarget?: GrindTarget | null,
+  brewParamTarget?: BrewParamTarget | null,
 ): DiagnosisResult {
   const score  = shot.overall_score ?? null;
   const tags   = new Set(shot.flavor_tags ?? []);
@@ -426,7 +481,7 @@ export function buildDiagnosis(
         severity:  'critical',
         problem:   `Critical: shot ran ${time}s — alarm-level speed`,
         rootCause: 'Grind is drastically too coarse or dose is far too low for this basket',
-        fix:       'Grind significantly finer (5+ steps) and verify dose is appropriate for your basket size',
+        fix:       grindFix('finer', '5+ steps — also verify dose is appropriate for your basket size', shot.grind_setting, grindTarget),
         escalated: false,
       };
     }
@@ -464,12 +519,12 @@ export function buildDiagnosis(
   if (hasSour && hasBitter) return diagnoseBothSourBitter(shot, history);
 
   if (hasSour && time != null) {
-    if (time < t.fast) return diagnoseSourFast(shot, history);
-    return diagnoseSourNormal(shot, history, origin);
+    if (time < t.fast) return diagnoseSourFast(shot, history, grindTarget, brewParamTarget);
+    return diagnoseSourNormal(shot, history, origin, brewParamTarget);
   }
 
   if (hasBitter && time != null) {
-    if (time > t.slow) return diagnoseBitterSlow(shot, history);
+    if (time > t.slow) return diagnoseBitterSlow(shot, history, grindTarget, brewParamTarget);
     return diagnoseBitterFastOrNormal(shot);
   }
 

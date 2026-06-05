@@ -68,6 +68,13 @@ const BURR_TO_GRIND_PROFILE: Record<string, string> = {
   'Flat Burr':    'Unimodal',
 };
 
+/** Return all machine names from the features map that share the given feature (e.g. 'PID'). */
+export function getMachinesByFeature(feature: string): string[] {
+  return Object.entries(MACHINE_FEATURES)
+    .filter(([, features]) => features.includes(feature))
+    .map(([name]) => name);
+}
+
 function matchFeatures(input: string, map: Record<string, string[]>): string[] {
   const normalized = input.toLowerCase().trim();
   const exact = Object.entries(map).find(([k]) => k.toLowerCase() === normalized);
