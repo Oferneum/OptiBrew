@@ -3,6 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { BeanVFMData } from '@/lib/vfm-actions';
+import { supabase } from '@/lib/supabase';
+
+async function authHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token
+    ? { Authorization: `Bearer ${session.access_token}` }
+    : {};
+}
 
 const LABEL = 'text-[10px] uppercase tracking-[0.15em] font-bold text-[#7A6858] mb-1';
 const INPUT = 'bg-[#FAF3E6] border border-[#C8B49A] rounded-xl px-3 py-2.5 text-[#2C1E16] text-sm w-full focus:outline-none focus:ring-2 focus:ring-[#5D4037]/20 focus:border-[#5D4037] transition-all placeholder:text-[#2C1E16]/30 appearance-none outline-none';
@@ -73,8 +81,7 @@ export default function BeanCard({ bean, onSaved }: { bean: BeanVFMData; onSaved
     try {
       const res = await fetch(`/api/beans/${bean.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({
           roaster:      draft.roaster.trim(),
           bag_name:     draft.bag_name.trim() || null,

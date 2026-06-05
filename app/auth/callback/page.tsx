@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import { getSupabaseBrowser } from '@/lib/supabase-browser';
+import { supabase } from '@/lib/supabase';
 
 export default function AuthCallbackPage() {
   useEffect(() => {
-    const supabase = getSupabaseBrowser();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN') {
         subscription.unsubscribe();
         window.location.href = '/?welcome=1';
