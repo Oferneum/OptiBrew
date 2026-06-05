@@ -183,8 +183,26 @@ function diagnoseSourFast(
   const temp = shot.brew_temp ?? null;
   const dose = shot.dose ?? null;
 
-  // Grind already moved finer but shot is still fast and sour → escalate to puck prep
-  if (history.previousGrindDir === 'finer' && history.shotCount >= 2) {
+  // Went finer but shot is getting faster — check if personal target is coarser than current
+  const currentGrind    = parseGrindNumeric(shot.grind_setting);
+  const targetIsCoarser = grindTarget != null && currentGrind != null && grindTarget.value > currentGrind;
+  const wentFinerGotFaster = history.previousGrindDir === 'finer' && history.timeDelta != null && history.timeDelta < -3;
+
+  if (targetIsCoarser || (history.previousGrindDir === 'finer' && history.shotCount >= 2)) {
+    // If target is coarser: user is going the wrong way, reverse toward best setting
+    if (targetIsCoarser || wentFinerGotFaster) {
+      return {
+        severity:  'moderate',
+        problem:   `Fast sour at ${time}s — getting worse after grinding finer`,
+        rootCause: 'Finer grind is reducing puck resistance further, not increasing it — direction is wrong',
+        fix:       grindTarget
+          ? grindFix('coarser', '2–3 steps back toward your best setting', shot.grind_setting, grindTarget)
+          : 'Reverse direction — go 2–3 steps coarser',
+        escalated: true,
+        context:   `Personal best on this bean is at a coarser setting than current ${currentGrind}.`,
+      };
+    }
+    // No target data — generic puck prep escalation
     return {
       severity:  'moderate',
       problem:   `Still fast and sour at ${time}s after grinding finer`,
@@ -477,6 +495,24 @@ export function buildDiagnosis(
     }
 
     if (time < t.alarmFast) {
+      const currentGrind      = parseGrindNumeric(shot.grind_setting);
+      const targetIsCoarser   = grindTarget != null && currentGrind != null && grindTarget.value > currentGrind;
+      const wentFinerGotFaster = history.previousGrindDir === 'finer' && history.timeDelta != null && history.timeDelta < -3;
+
+      // Wrong-direction trap: user went finer but shot got faster — personal target confirms reversal
+      if (targetIsCoarser || wentFinerGotFaster) {
+        return {
+          severity:  'critical',
+          problem:   `Critical: shot ran ${time}s and is getting faster despite grinding finer`,
+          rootCause: 'You have been moving in the wrong direction — finer grind is reducing puck resistance, not increasing it',
+          fix:       grindTarget
+            ? grindFix('coarser', '3–5 steps back toward your best setting', shot.grind_setting, grindTarget)
+            : `Stop going finer — reverse 3–5 steps coarser`,
+          escalated: true,
+          context:   `Shot time dropped ${history.timeDelta != null ? Math.abs(history.timeDelta) + 's' : 'significantly'} after going finer. Your best shots on this bean were at a coarser setting.`,
+        };
+      }
+
       return {
         severity:  'critical',
         problem:   `Critical: shot ran ${time}s — alarm-level speed`,
