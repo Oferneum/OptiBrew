@@ -72,12 +72,14 @@ export async function POST(req: Request) {
   // On success: inject the correct bean name + computed diagnosis into the system
   // prompt so GPT-4o is never dependent on stale MCP user-state data.
   let userContextBlock = '';
+  let userEmail = '';
 
   try {
     const db = getRequestClient(req);
     const { data: { user } } = await db.auth.getUser();
 
     if (user) {
+      userEmail = user.email ?? '';
       const { data: latestShot } = await db
         .from('shots')
         .select('*, beans(roaster, origin, bag_name)')
@@ -144,11 +146,20 @@ export async function POST(req: Request) {
   }
 
   // ── Connect to MCP ──────────────────────────────────────────────────────────
+  // Inject identity headers so the Python MCP server can gate admin-only tools.
+  // x-user-email is always sent (empty string when logged out). x-research-secret
+  // is only sent when configured — absent for non-admins, which correctly hides
+  // the admin tool. Auth here uses the same Bearer-token client as the rest of
+  // the app (cookies are not used in this codebase).
+  const mcpHeaders: Record<string, string> = { 'x-user-email': userEmail };
+  const researchSecret = process.env.RESEARCH_INGEST_SECRET;
+  if (researchSecret) mcpHeaders['x-research-secret'] = researchSecret;
+
   let client: Awaited<ReturnType<typeof getMcpClient>>;
   let mcpTools: Awaited<ReturnType<typeof client.listTools>>['tools'];
 
   try {
-    client = await getMcpClient();
+    client = await getMcpClient(mcpHeaders);
     ({ tools: mcpTools } = await client.listTools());
   } catch (err) {
     console.error('[Bean] MCP connection failed:', err);

@@ -15,12 +15,14 @@ class NodeHttpsSseTransport implements Transport {
   onmessage?: (message: JSONRPCMessage) => void;
 
   private readonly _sseUrl: URL;
+  private readonly _extraHeaders: Record<string, string>;
   private _postUrl: URL | null = null;
   private _req: ReturnType<typeof https.request> | null = null;
   private _keepalive: ReturnType<typeof setInterval> | null = null;
 
-  constructor(url: URL) {
+  constructor(url: URL, extraHeaders: Record<string, string> = {}) {
     this._sseUrl = url;
+    this._extraHeaders = extraHeaders;
   }
 
   start(): Promise<void> {
@@ -31,7 +33,7 @@ class NodeHttpsSseTransport implements Transport {
           port:     this._sseUrl.port || 443,
           path:     this._sseUrl.pathname + this._sseUrl.search,
           method:   'GET',
-          headers:  { Accept: 'text/event-stream', 'Cache-Control': 'no-cache' },
+          headers:  { Accept: 'text/event-stream', 'Cache-Control': 'no-cache', ...this._extraHeaders },
         },
         (res) => {
           if (res.statusCode !== 200) {
@@ -109,6 +111,7 @@ class NodeHttpsSseTransport implements Transport {
           headers:  {
             'Content-Type':   'application/json',
             'Content-Length': Buffer.byteLength(body),
+            ...this._extraHeaders,
           },
         },
         (res) => {
@@ -128,11 +131,11 @@ class NodeHttpsSseTransport implements Transport {
   }
 }
 
-export async function getMcpClient(): Promise<Client> {
+export async function getMcpClient(extraHeaders: Record<string, string> = {}): Promise<Client> {
   const serverUrl = process.env.MCP_SERVER_URL;
   if (!serverUrl) throw new Error('MCP_SERVER_URL is not set');
 
-  const transport = new NodeHttpsSseTransport(new URL(serverUrl));
+  const transport = new NodeHttpsSseTransport(new URL(serverUrl), extraHeaders);
   const client    = new Client({ name: 'dialed-brew-agent', version: '1.0.0' });
 
   await client.connect(transport);
