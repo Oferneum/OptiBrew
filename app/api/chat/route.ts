@@ -93,32 +93,46 @@ export async function POST(req: Request) {
           shot.equipment_id,
           user.id,
         );
-        const history  = parseShotHistory(recentShots);
-        const env      = { ambientTemp: shot.ambient_temp, humidity: shot.humidity };
-        const diagnosis = buildDiagnosis(shot, history, env, null, shot.beans?.origin);
 
         const beanLabel = shot.beans
           ? `${shot.beans.roaster} — ${shot.beans.bag_name ?? shot.beans.origin}`
           : 'unknown';
 
-        const diagLines = [
-          `  Problem: ${diagnosis.problem}`,
-          `  Root cause: ${diagnosis.rootCause}`,
-          `  Fix: ${diagnosis.fix}`,
-          diagnosis.escalated ? '  Note: Escalated — simpler fixes already attempted.' : '',
-        ].filter(Boolean).join('\n');
+        const shotLine = `Last shot: ${shot.brew_method ?? 'Espresso'} | ${shot.dose}g → ${shot.yield}g | ${shot.extraction_time ?? 'n/a'}s | Score: ${shot.overall_score ?? 'unscored'}/10`;
+        const trendLine = trendSummary ? `Trend: ${trendSummary}` : 'Trend: no history yet';
 
-        userContextBlock = [
-          'CURRENT USER CONTEXT (authoritative — supersedes anything in MCP tool responses):',
-          `Active bean: ${beanLabel}`,
-          `Last shot: ${shot.brew_method ?? 'Espresso'} | ${shot.dose}g → ${shot.yield}g | ${shot.extraction_time ?? 'n/a'}s | Score: ${shot.overall_score ?? 'unscored'}/10`,
-          trendSummary ? `Trend: ${trendSummary}` : 'Trend: no history yet',
-          'COMPUTED DIAGNOSIS:',
-          diagLines,
-          latestShot.recommendation
-            ? `BaristaBrain analysis: ${latestShot.recommendation}`
-            : '',
-        ].filter(Boolean).join('\n');
+        if (latestShot.recommendation) {
+          // Saved BaristaBrain output already contains personalised grind/brew targets.
+          // Use it directly — do NOT re-run buildDiagnosis which lacks tiered context.
+          userContextBlock = [
+            'CURRENT USER CONTEXT (authoritative — supersedes anything in MCP tool responses):',
+            `Active bean: ${beanLabel}`,
+            shotLine,
+            trendLine,
+            'AUTHORITATIVE DIAGNOSIS (BaristaBrain — personalised, do not override or soften):',
+            latestShot.recommendation,
+          ].join('\n');
+        } else {
+          // No saved recommendation yet (shot just logged) — fall back to computed diagnosis.
+          const history  = parseShotHistory(recentShots);
+          const env      = { ambientTemp: shot.ambient_temp, humidity: shot.humidity };
+          const diagnosis = buildDiagnosis(shot, history, env, null, shot.beans?.origin);
+          const diagLines = [
+            `  Problem: ${diagnosis.problem}`,
+            `  Root cause: ${diagnosis.rootCause}`,
+            `  Fix: ${diagnosis.fix}`,
+            diagnosis.escalated ? '  Note: Escalated — simpler fixes already attempted.' : '',
+          ].filter(Boolean).join('\n');
+
+          userContextBlock = [
+            'CURRENT USER CONTEXT (authoritative — supersedes anything in MCP tool responses):',
+            `Active bean: ${beanLabel}`,
+            shotLine,
+            trendLine,
+            'COMPUTED DIAGNOSIS (no personalised data yet):',
+            diagLines,
+          ].join('\n');
+        }
 
         console.log('[Bean] injected context ──────────────────────────');
         console.log(userContextBlock);
@@ -214,11 +228,12 @@ CRITICAL RULES:
 - If a section is absent from the tool response, do not fabricate its contents.
 
 NARRATIVE OBEDIENCE — this overrides your default helpful-assistant instincts:
-- You MUST base all troubleshooting advice EXACTLY on the Fix stated in the COMPUTED DIAGNOSIS block.
-- If the diagnosis says "Grind significantly finer (5+ steps)", you MUST communicate exactly that magnitude. NEVER soften it to "1-2 steps finer" or any other generic safe range.
+- You MUST base all troubleshooting advice EXACTLY on the AUTHORITATIVE DIAGNOSIS or COMPUTED DIAGNOSIS block — whichever is present. AUTHORITATIVE DIAGNOSIS takes priority.
+- If the diagnosis says "move toward grind 41", you MUST say grind 41 — not "a few steps finer" or "grind finer". Exact numbers must be preserved.
+- If the diagnosis says "5+ steps", you MUST say 5+ steps — NEVER soften to "1-2 steps".
 - If the diagnosis says "Do not adjust grind", you MUST NOT suggest adjusting the grind.
-- You are the NARRATOR of the computed diagnosis, not the diagnostician. The fix has already been determined. Your only job is to communicate it clearly and concisely.
-- NEVER invent your own fix. NEVER default to cautious generic advice when the diagnosis is explicit. Exact wording and exact numbers from the Fix field must be preserved.
+- You are the NARRATOR of the diagnosis, not the diagnostician. The fix has already been determined. Your only job is to communicate it clearly and concisely.
+- NEVER invent your own fix. NEVER default to cautious generic advice when the diagnosis is explicit.
 
 FORMATTING — follow exactly:
 - No markdown. No asterisks, bold, italics, hashes, or bullet dashes.
