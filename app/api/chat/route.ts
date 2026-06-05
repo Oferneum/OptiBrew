@@ -115,7 +115,10 @@ export async function POST(req: Request) {
           trendSummary ? `Trend: ${trendSummary}` : 'Trend: no history yet',
           'COMPUTED DIAGNOSIS:',
           diagLines,
-        ].join('\n');
+          latestShot.recommendation
+            ? `BaristaBrain analysis: ${latestShot.recommendation}`
+            : '',
+        ].filter(Boolean).join('\n');
 
         console.log('[Bean] injected context ──────────────────────────');
         console.log(userContextBlock);
