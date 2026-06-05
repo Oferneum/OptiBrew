@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { BeanVFMData } from '@/lib/vfm-actions';
-import { supabase } from '@/lib/supabase';
 
 const LABEL = 'text-[10px] uppercase tracking-[0.15em] font-bold text-[#7A6858] mb-1';
 const INPUT = 'bg-[#FAF3E6] border border-[#C8B49A] rounded-xl px-3 py-2.5 text-[#2C1E16] text-sm w-full focus:outline-none focus:ring-2 focus:ring-[#5D4037]/20 focus:border-[#5D4037] transition-all placeholder:text-[#2C1E16]/30 appearance-none outline-none';
@@ -39,20 +38,9 @@ interface EditState {
 
 export default function BeanCard({ bean, onSaved }: { bean: BeanVFMData; onSaved?: () => void }) {
   const router = useRouter();
-  const [editing, setEditing]     = useState(false);
-  const [saving, setSaving]       = useState(false);
-  const [error, setError]         = useState<string | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setAccessToken(session?.access_token ?? null);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      setAccessToken(session?.access_token ?? null);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving]   = useState(false);
+  const [error, setError]     = useState<string | null>(null);
 
   const [draft, setDraft] = useState<EditState>({
     roaster:      bean.roaster,
@@ -83,12 +71,10 @@ export default function BeanCard({ bean, onSaved }: { bean: BeanVFMData; onSaved
     setSaving(true);
     setError(null);
     try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
-
       const res = await fetch(`/api/beans/${bean.id}`, {
         method: 'PATCH',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           roaster:      draft.roaster.trim(),
           bag_name:     draft.bag_name.trim() || null,
