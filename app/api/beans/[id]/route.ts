@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getRequestClient, createServiceClient } from '@/lib/supabase';
+import { supabase, createServiceClient } from '@/lib/supabase';
 
 const BeanUpdateSchema = z.object({
   roaster:      z.string().min(1).max(200).optional(),
@@ -18,7 +18,13 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const db = getRequestClient(req);
+  const token = req.headers.get('Authorization')?.replace('Bearer ', '');
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  // Verify the JWT by passing it explicitly — avoids session issues on server
+  const { data: { user } } = await supabase.auth.getUser(token);
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const raw = await req.json();
 
   const parsed = BeanUpdateSchema.safeParse(raw);
@@ -30,10 +36,6 @@ export async function PATCH(
   const update = Object.fromEntries(
     Object.entries(parsed.data as Record<string, unknown>).filter(([k]) => allowed.has(k)),
   );
-
-  // Verify the caller owns this bean before writing
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const service = createServiceClient();
 
