@@ -35,11 +35,11 @@ export default function ShotCard({ shot }: { shot: Shot }) {
   const ratio   = shot.brew_ratio ? `1:${shot.brew_ratio.toFixed(2)}` : null;
 
   return (
-    <div className="glass rounded-2xl p-4 space-y-3">
+    <div className="glass rounded-2xl p-4 space-y-3 overflow-hidden">
 
       {/* Header */}
       <div className="flex justify-between items-start gap-2">
-        <div className="flex flex-col gap-0.5">
+        <div className="flex flex-col gap-0.5 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span dir="ltr" className="text-[#7A6858] text-xs font-mono tracking-wide">{formatDate(shot.created_at)}</span>
             {quality && (
@@ -74,9 +74,9 @@ export default function ShotCard({ shot }: { shot: Shot }) {
             ...(shot.extraction_time != null ? [{ label: 'Time',  value: `${shot.extraction_time}s`, color: 'text-[#2C1E16]' }] : []),
             ...(shot.brew_temp   != null ? [{ label: 'Temp',  value: `${shot.brew_temp}°C`,      color: 'text-[#7A6858]' }] : []),
           ].map(({ label, value, color }) => (
-            <div key={label} className="flex-1 flex flex-col items-center px-1">
+            <div key={label} className="flex-1 flex flex-col items-center min-w-0">
               <p className="text-[9px] font-black uppercase tracking-wider text-[#7A6858]">{label}</p>
-              <p className={`readout text-sm font-black ${color}`}>{value}</p>
+              <p className={`readout text-xs font-black ${color}`}>{value}</p>
             </div>
           ))}
         </div>
