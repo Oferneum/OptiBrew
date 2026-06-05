@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getRequestClient } from '@/lib/supabase';
+import { getRequestClient, createServiceClient } from '@/lib/supabase';
 
 const BeanUpdateSchema = z.object({
   roaster:      z.string().min(1).max(200).optional(),
@@ -31,19 +31,23 @@ export async function PATCH(
     Object.entries(parsed.data as Record<string, unknown>).filter(([k]) => allowed.has(k)),
   );
 
-  const { error: updateError } = await db
+  // Verify the caller owns this bean before writing
+  const { data: { user } } = await db.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const service = createServiceClient();
+
+  const { data: bean } = await service.from('beans').select('user_id').eq('id', id).single();
+  if (!bean) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (bean.user_id !== user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  const { data, error: updateError } = await service
     .from('beans')
     .update(update)
-    .eq('id', id);
-
-  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
-
-  const { data, error: selectError } = await db
-    .from('beans')
-    .select('*')
     .eq('id', id)
+    .select('*')
     .single();
 
-  if (selectError) return NextResponse.json({ error: selectError.message }, { status: 500 });
+  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
   return NextResponse.json(data);
 }
