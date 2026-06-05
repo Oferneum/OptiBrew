@@ -21,7 +21,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     const { data: shot, error: fetchErr } = await db
-      .from('shots').select('*').eq('id', id).eq('user_id', user.id).single();
+      .from('shots').select('*, beans(roaster, origin, bag_name)').eq('id', id).eq('user_id', user.id).single();
     if (!shot || fetchErr) return NextResponse.json({ error: 'Shot not found' }, { status: 404 });
 
     const { recentShots, trendSummary } = await getShotContext(shot.bean_id, shot.equipment_id);

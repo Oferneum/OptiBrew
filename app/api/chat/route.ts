@@ -85,6 +85,7 @@ export async function POST(req: Request) {
             .filter((c) => c.type === 'text' && c.text)
             .map((c) => c.text)
             .join('\n');
+          console.log(`[Bean] tool:${t.name} result ──────────────\n`, text.slice(0, 1000), '\n──────────────────────────────────────────────────');
           return text || JSON.stringify(parts);
         },
       }),
