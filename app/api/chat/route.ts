@@ -215,7 +215,18 @@ export async function POST(req: Request) {
 - ask(query)            → your primary tool. Use this for coffee knowledge: brewing science, defect chemistry, origin characteristics, technique explanations. Always call this before answering coffee questions.
 - get_recommendations() → use this when the user asks what bean to try next, which coffee offers the best value, or wants a data-driven suggestion.
 - introspect()          → use this to understand the graph's ontology. Call when ask() returns a node type you want to reason about carefully, or when the user asks what the knowledge base contains. Not for every query.
-- seed_knowledge_graph()→ admin only. Never call unless the user explicitly asks.`,
+- seed_knowledge_graph()→ admin only. Never call unless the user explicitly asks.
+- research_and_ingest_topic(query|url) → ADMIN-ONLY, asynchronous. Use ONLY when the admin explicitly asks you to research/learn something new and add it to your knowledge. See the RESEARCH & INGESTION section below for how to handle it.`,
+
+    `RESEARCH & INGESTION — research_and_ingest_topic (admin-only, asynchronous):
+This tool is fire-and-forget: it returns a one-line acknowledgement in milliseconds and the actual scraping/extraction/graph-update runs in the background on the server (~30-90s).
+
+When the admin asks you to research/learn something new:
+1. Briefly acknowledge first, e.g. "On it — starting research and ingestion for <topic>."
+2. Call research_and_ingest_topic with query (or a direct url).
+3. The tool returns immediately. Relay that the knowledge graph is updating in the background and continue the conversation normally. Do NOT wait for or promise a completion message — there isn't one in this turn.
+4. If the tool returns the text "restricted to system administrators", the caller is not the admin; tell them this action isn't available to them and do not retry.
+5. The new knowledge becomes queryable via ask() shortly after; if the user asks about the topic moments later, it may still be ingesting.`,
 
     `HOW TO READ THE ask() RESPONSE:
 The tool returns pre-computed sections separated by ── SECTION NAME ── headers. Narrate each section in natural language — do not recalculate or second-guess it.
