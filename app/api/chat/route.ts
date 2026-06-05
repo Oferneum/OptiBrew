@@ -70,7 +70,7 @@ export async function POST(req: Request) {
   }
 
   const tools = Object.fromEntries(
-    mcpTools.map((t) => [
+    mcpTools.filter((t) => t.name !== 'log_shot').map((t) => [
       t.name,
       dynamicTool({
         description: t.description ?? t.name,
@@ -97,7 +97,6 @@ export async function POST(req: Request) {
 
 TOOLS — call exactly the right one, every time:
 - ask(query)            → your primary tool. Use this for every coffee question: brewing advice, defect diagnosis ("why was my shot sour?"), origin knowledge, technique explanations, and general coffee science. Always call this before answering anything.
-- log_shot(...)         → use this ONLY when the user says they just made a coffee and want to record it. Requires: brew_method, dose, yield_g, extraction_time, overall_score. Ask for missing values before calling.
 - get_recommendations() → use this when the user asks what bean to try next, which coffee offers the best value, or wants a data-driven suggestion.
 - introspect()          → use this when you need to understand the graph's ontology: what node types exist, how many nodes of each type are in the graph, or what relationship types are valid. Call it when ask() returns a node type or relationship you want to reason about more carefully, or when the user asks about the knowledge base itself ("what do you know about?", "what's in your graph?"). Do not call it for every query — it's an orientation tool, not a search tool.
 - seed_knowledge_graph()→ admin only. Never call this unless the user explicitly asks.
