@@ -18,12 +18,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const token = req.headers.get('Authorization')?.replace('Bearer ', '') ?? null;
-  console.log('[PATCH /api/beans/:id] id=', id, 'has_token=', !!token);
-
   const db = getRequestClient(req);
   const raw = await req.json();
-  console.log('[PATCH /api/beans/:id] payload=', JSON.stringify(raw));
 
   const parsed = BeanUpdateSchema.safeParse(raw);
   if (!parsed.success) {
@@ -35,24 +31,19 @@ export async function PATCH(
     Object.entries(parsed.data as Record<string, unknown>).filter(([k]) => allowed.has(k)),
   );
 
-  // Check the row exists and what user_id it has
-  const { data: existing } = await db.from('beans').select('id, user_id').eq('id', id).maybeSingle();
-  console.log('[PATCH /api/beans/:id] existing row=', JSON.stringify(existing));
-
-  // Check who auth.uid() resolves to for this token
-  const { data: { user } } = await db.auth.getUser();
-  console.log('[PATCH /api/beans/:id] auth.uid()=', user?.id ?? 'null (anon)');
-
-  const { data, error } = await db
+  const { error: updateError } = await db
     .from('beans')
     .update(update)
+    .eq('id', id);
+
+  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+
+  const { data, error: selectError } = await db
+    .from('beans')
+    .select('*')
     .eq('id', id)
-    .select()
-    .maybeSingle();
+    .single();
 
-  console.log('[PATCH /api/beans/:id] update result data=', JSON.stringify(data), 'error=', error?.message);
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!data) return NextResponse.json({ error: 'No rows updated — RLS blocked or id not found' }, { status: 404 });
+  if (selectError) return NextResponse.json({ error: selectError.message }, { status: 500 });
   return NextResponse.json(data);
 }
