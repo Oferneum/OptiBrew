@@ -82,16 +82,29 @@ export default function ActiveEquipmentCard() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const id = localStorage.getItem('activeEquipmentId');
+    const id      = localStorage.getItem('activeEquipmentId');
+    const machine = localStorage.getItem('activeMachineName');
+    const grinder = localStorage.getItem('activeGrinderName');
     if (!id) { setMounted(true); return; }
 
-    supabase
-      .from('equipment_profiles')
-      .select('*')
-      .eq('id', id)
-      .single()
-      .then(async ({ data: eq }) => {
-        if (!eq) { setMounted(true); return; }
+    // Optimistically hydrate from localStorage so the rig shows instantly and
+    // survives reloads even before the authenticated fetch resolves.
+    if (machine) {
+      setEquipment({ id, machine_name: machine, grinder_name: grinder || null } as EquipmentProfile);
+    }
+
+    (async () => {
+      // equipment_profiles is RLS-gated to auth.uid(); await the session so this
+      // query is authenticated and doesn't race to an empty result on cold reload.
+      await supabase.auth.getSession();
+
+      const { data: eq } = await supabase
+        .from('equipment_profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (eq) {
         setEquipment(eq as EquipmentProfile);
 
         const [grindRes, tempRes] = await Promise.all([
@@ -113,8 +126,9 @@ export default function ActiveEquipmentCard() {
 
         setGrindSetting(grindRes.data?.[0]?.grind_setting ?? null);
         setLastTemp(tempRes.data?.[0]?.brew_temp ?? null);
-        setMounted(true);
-      });
+      }
+      setMounted(true);
+    })();
   }, []);
 
   if (!mounted) return null;

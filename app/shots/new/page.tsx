@@ -28,30 +28,72 @@ export default function NewShotPage() {
     });
   }, [router]);
 
-  // Silent background weather fetch — never blocks the form, never shows errors
+  // Silent background weather fetch — never blocks the form, never shows errors.
+  // Triggers the native geolocation prompt at most ONCE per device: if permission
+  // is already granted we read position silently; if it's been denied we skip; if
+  // it's still in the "prompt" state we ask a single time, gated by a localStorage
+  // flag so a dismissed prompt doesn't reappear on every visit.
   useEffect(() => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
+
+    let cancelled = false;
+
+    const fetchWeather = async (pos: GeolocationPosition) => {
+      try {
+        const { latitude: lat, longitude: lon } = pos.coords;
+        const res = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m`,
+        );
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        const c = data?.current;
+        if (!cancelled && c?.temperature_2m != null && c?.relative_humidity_2m != null) {
+          setWeather({
+            temp:     Math.round(c.temperature_2m * 10) / 10,
+            humidity: Math.round(c.relative_humidity_2m),
+          });
+        }
+      } catch { /* silent */ }
+    };
+
+    const requestPosition = () => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => { if (!cancelled) fetchWeather(pos); },
+        () => { /* denied or dismissed — silent */ },
+        { timeout: 5000, maximumAge: 300_000 },
+      );
+    };
+
+    // Ask the native prompt only when we haven't already done so on this device.
+    const askOnce = () => {
+      if (localStorage.getItem('hasAskedLocation')) return;
+      localStorage.setItem('hasAskedLocation', '1');
+      requestPosition();
+    };
+
+    (async () => {
+      // Prefer the Permissions API so a previously-granted permission is used
+      // silently and a denial is respected without re-prompting.
+      if (navigator.permissions?.query) {
         try {
-          const { latitude: lat, longitude: lon } = pos.coords;
-          const res = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m`,
-          );
-          if (!res.ok) return;
-          const data = await res.json();
-          const c = data?.current;
-          if (c?.temperature_2m != null && c?.relative_humidity_2m != null) {
-            setWeather({
-              temp:     Math.round(c.temperature_2m * 10) / 10,
-              humidity: Math.round(c.relative_humidity_2m),
-            });
+          const status = await navigator.permissions.query({ name: 'geolocation' });
+          if (cancelled) return;
+          if (status.state === 'granted') {
+            requestPosition();          // already allowed — no prompt shown
+          } else if (status.state === 'prompt') {
+            askOnce();                  // ask exactly once
           }
-        } catch { /* silent */ }
-      },
-      () => { /* geolocation denied — silent */ },
-      { timeout: 5000, maximumAge: 300_000 },
-    );
+          // 'denied' → do nothing
+          return;
+        } catch { /* fall through to the flag-only path below */ }
+      }
+
+      // Fallback for browsers without the Permissions API (e.g. iOS Safari):
+      // gate the native prompt behind the one-time flag.
+      askOnce();
+    })();
+
+    return () => { cancelled = true; };
   }, []);
 
   if (!authChecked) return <PageLoader />;

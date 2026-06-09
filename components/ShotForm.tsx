@@ -516,25 +516,41 @@ export default function ShotForm({
   const [rigReady, setRigReady] = useState(false);
 
   useEffect(() => {
-    const id = localStorage.getItem('activeEquipmentId');
+    const id   = localStorage.getItem('activeEquipmentId');
+    const name = localStorage.getItem('activeMachineName');
     equipmentIdRef.current = id;
+    // Hydrate the rig name immediately from localStorage so it survives reloads
+    // even before (or without) the authenticated Supabase fetch below.
+    if (name) setRigName(name);
     if (!id) { setRigReady(true); return; }
-    supabase.from('equipment_profiles').select('machine_name').eq('id', id).single()
-      .then(({ data }) => {
-        if (data) {
-          setRigName(data.machine_name);
-          supabase.from('shots').select('grind_setting')
-            .eq('equipment_id', id)
-            .not('grind_setting', 'is', null)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .then(({ data: shots }) => {
-              const last = shots?.[0]?.grind_setting;
-              if (last) setForm((f) => ({ ...f, grind_setting: last }));
-            });
-        }
-        setRigReady(true);
-      });
+
+    (async () => {
+      // equipment_profiles is RLS-gated to auth.uid(). On a cold reload this effect
+      // can fire before the persisted session has rehydrated; an unauthenticated
+      // race-query returns nothing and wrongly shows "No rig configured". Awaiting
+      // getSession() ensures the request carries the user's token.
+      await supabase.auth.getSession();
+
+      const { data } = await supabase
+        .from('equipment_profiles')
+        .select('machine_name')
+        .eq('id', id)
+        .single();
+
+      if (data) {
+        setRigName(data.machine_name);
+        const { data: shots } = await supabase
+          .from('shots')
+          .select('grind_setting')
+          .eq('equipment_id', id)
+          .not('grind_setting', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        const last = shots?.[0]?.grind_setting;
+        if (last) setForm((f) => ({ ...f, grind_setting: last }));
+      }
+      setRigReady(true);
+    })();
   }, []);
 
   useEffect(() => () => {

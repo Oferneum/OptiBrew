@@ -43,7 +43,21 @@ export default function Chat() {
   const [input, setInput]       = useState('');
   const [phraseIdx, setPhraseIdx] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isLoading = status === 'streaming' || status === 'submitted';
+
+  const MAX_INPUT_HEIGHT = 200; // ~5–6 lines, then scroll
+
+  // Auto-resize the textarea to fit its content, capped at MAX_INPUT_HEIGHT.
+  // Runs on every input change (including the reset to '' after sending).
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    const next = Math.min(el.scrollHeight, MAX_INPUT_HEIGHT);
+    el.style.height = `${next}px`;
+    el.style.overflowY = el.scrollHeight > MAX_INPUT_HEIGHT ? 'auto' : 'hidden';
+  }, [input]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -55,11 +69,23 @@ export default function Chat() {
     return () => clearInterval(id);
   }, [isLoading]);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!input.trim()) return;
+  function submit() {
+    if (!input.trim() || isLoading) return;
     sendMessage({ text: input });
     setInput('');
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    submit();
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    // Enter submits; Shift+Enter inserts a newline. Ignore while an IME is composing.
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      submit();
+    }
   }
 
   return (
@@ -137,15 +163,19 @@ export default function Chat() {
         onSubmit={handleSubmit}
         className="px-4 pb-6 pt-2 flex gap-2 items-end"
       >
-        <input
+        <textarea
+          ref={textareaRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder="Ask Bean about your espresso…"
           disabled={isLoading}
+          rows={1}
           inputMode="text"
-          style={{ fontSize: '16px' }}
+          style={{ fontSize: '16px', maxHeight: MAX_INPUT_HEIGHT }}
           className="
-            flex-1 glass-input rounded-2xl px-4 py-3
+            flex-1 glass-input rounded-2xl px-4 py-3 leading-6
+            resize-none overflow-y-hidden break-words
             focus:outline-none disabled:opacity-50 min-h-[44px]
           "
         />
@@ -154,7 +184,7 @@ export default function Chat() {
           disabled={isLoading || !input.trim()}
           className="
             btn-crema min-h-[44px] px-5 rounded-2xl text-sm uppercase
-            tracking-wider disabled:opacity-40 disabled:scale-100
+            tracking-wider disabled:opacity-40 disabled:scale-100 shrink-0
           "
         >
           Send
