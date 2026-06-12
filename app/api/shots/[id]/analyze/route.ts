@@ -52,14 +52,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
   }
 
-  let basketName: string | null = null;
-  if (shot.equipment_id) {
-    const { data: equip } = await db
-      .from('equipment_profiles').select('basket_name').eq('id', shot.equipment_id).single();
-    basketName = (equip as { basket_name?: string | null } | null)?.basket_name ?? null;
-  }
-
-  const gen = streamAnalysis(shot as Shot, recentShots, trendSummary ?? '', weatherContext, basketName, undefined, undefined, grindTarget, brewParamTarget);
+  const gen = streamAnalysis(shot as Shot, recentShots, trendSummary ?? '', weatherContext, undefined, undefined, grindTarget, brewParamTarget);
   const accumulated: string[] = [];
 
   const stream = new ReadableStream({

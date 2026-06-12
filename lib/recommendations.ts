@@ -58,7 +58,6 @@ function buildPrompt(
   recentShots: Shot[],
   trendSummary: string,
   weatherContext?: string,
-  basketName?: string | null,
   beanContext?: BeanContext | null,
   grindTarget?: GrindTarget | null,
   brewParamTarget?: BrewParamTarget | null,
@@ -72,7 +71,6 @@ function buildPrompt(
 
   const safeNotes  = sanitizeForPrompt(shot.notes, 500);
   const safeGrind  = sanitizeForPrompt(shot.grind_setting, 80);
-  const safeBasket = sanitizeForPrompt(basketName, 100);
   const safeTags   = (shot.flavor_tags ?? [])
     .map((t) => sanitizeForPrompt(t, 50))
     .filter((t) => t !== 'none')
@@ -80,7 +78,7 @@ function buildPrompt(
 
   const history   = parseShotHistory(recentShots);
   const env       = { ambientTemp: shot.ambient_temp, humidity: shot.humidity };
-  const diagnosis = buildDiagnosis(shot, history, env, basketName, shot.beans?.origin, grindTarget, brewParamTarget);
+  const diagnosis = buildDiagnosis(shot, history, env, shot.beans?.origin, grindTarget, brewParamTarget);
 
   const trendBlock = trendSummary
     ? `Recent trend: ${trendSummary}`
@@ -88,10 +86,6 @@ function buildPrompt(
 
   const weatherBlock = weatherContext
     ? `\nEnvironmental context: ${weatherContext}`
-    : '';
-
-  const basketBlock = safeBasket !== 'none'
-    ? `\nEquipment: ${safeBasket} basket installed.`
     : '';
 
   const brewMethodBlock = brewMethod === 'ColdBrew'
@@ -137,7 +131,7 @@ SENTENCE RULES:
 - Grind setting: ${safeGrind}
 - Flavor tags: ${safeTags}
 
-${trendBlock}${weatherBlock}${basketBlock}${brewMethodBlock}`;
+${trendBlock}${weatherBlock}${brewMethodBlock}`;
 }
 
 // ── Blocking analyzeShot (kept for reanalyze compat) ──────────────────────────
@@ -155,7 +149,6 @@ export async function analyzeShot(
   recentShots: Shot[],
   trendSummary: string,
   weatherContext?: string,
-  basketName?: string | null,
   machineName?: string | null,
   grinderName?: string | null,
   grindTarget?: GrindTarget | null,
@@ -175,7 +168,7 @@ export async function analyzeShot(
     new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
   ]);
 
-  const prompt = buildPrompt(shot, recentShots, trendSummary, weatherContext, basketName, beanContext, grindTarget, brewParamTarget);
+  const prompt = buildPrompt(shot, recentShots, trendSummary, weatherContext, beanContext, grindTarget, brewParamTarget);
 
   console.log('[BaristaBrain] prompt ─────────────────────────────\n', prompt, '\n──────────────────────────────────────────────────');
 
@@ -219,7 +212,6 @@ export async function* streamAnalysis(
   recentShots: Shot[],
   trendSummary: string,
   weatherContext?: string,
-  basketName?: string | null,
   machineName?: string | null,
   grinderName?: string | null,
   grindTarget?: GrindTarget | null,
@@ -239,7 +231,7 @@ export async function* streamAnalysis(
     new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
   ]);
 
-  const prompt = buildPrompt(shot, recentShots, trendSummary, weatherContext, basketName, beanContext, grindTarget, brewParamTarget);
+  const prompt = buildPrompt(shot, recentShots, trendSummary, weatherContext, beanContext, grindTarget, brewParamTarget);
 
   console.log('[BaristaBrain] prompt ─────────────────────────────\n', prompt, '\n──────────────────────────────────────────────────');
 

@@ -118,7 +118,7 @@ export async function POST(req: Request) {
           // No saved recommendation yet (shot just logged) — fall back to computed diagnosis.
           const history  = parseShotHistory(recentShots);
           const env      = { ambientTemp: shot.ambient_temp, humidity: shot.humidity };
-          const diagnosis = buildDiagnosis(shot, history, env, null, shot.beans?.origin);
+          const diagnosis = buildDiagnosis(shot, history, env, shot.beans?.origin);
           const diagLines = [
             `  Problem: ${diagnosis.problem}`,
             `  Root cause: ${diagnosis.rootCause}`,

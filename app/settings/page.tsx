@@ -17,40 +17,6 @@ const FIELD_CLS =
 const LABEL_CLS = 'text-[10px] uppercase tracking-[0.15em] font-bold text-[#7A6858]';
 const BREW_METHODS = ['Espresso', 'ColdBrew', 'MokaPot', 'FrenchPress'] as const;
 
-const BASKET_OPTIONS = ['IMS Precision', 'VST Precision', 'Pullman 876', 'Pesado HE', 'Weber Unibasket', 'Wafo'];
-
-function BasketInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [open, setOpen] = useState(false);
-  const filtered = BASKET_OPTIONS.filter((b) =>
-    !value.trim() || b.toLowerCase().includes(value.toLowerCase()),
-  );
-  return (
-    <div className="relative">
-      <input
-        type="text"
-        placeholder="Search or type basket name…"
-        value={value}
-        autoComplete="off"
-        onChange={(e) => { onChange(e.target.value); setOpen(true); }}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 180)}
-        className={FIELD_CLS}
-        style={{ fontSize: '16px' }}
-      />
-      {open && filtered.length > 0 && (
-        <div className="absolute z-20 w-full mt-1 bg-[#FAF3E6] border border-[#C8B49A] rounded-xl shadow-lg overflow-hidden">
-          {filtered.map((b) => (
-            <button key={b} type="button"
-              onMouseDown={() => { onChange(b); setOpen(false); }}
-              className="w-full text-left px-4 py-3 text-[#2C1E16] text-sm font-medium hover:bg-[#F5EBD8] border-b border-[#C8B49A]/40 last:border-0 transition-colors touch-manipulation"
-            >{b}</button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── Smart search input (for Register New Equipment only) ──────
 
 function EquipmentSearchInput({
@@ -108,12 +74,6 @@ export default function SettingsPage() {
   const [userName, setUserName]   = useState<string | null>(null);
   const [brewMethodPref, setBrewMethodPref] = useState('Espresso');
 
-  // Basket state
-  const [activeBasket, setActiveBasket]     = useState('');
-  const [basketExpanded, setBasketExpanded] = useState(false);
-  const [basketSaving, setBasketSaving]     = useState(false);
-  const [basketSaved, setBasketSaved]       = useState(false);
-
   // Recalculate state
   const [recalcRunning, setRecalcRunning] = useState(false);
   const [recalcMsg, setRecalcMsg]         = useState<{ ok: boolean; text: string } | null>(null);
@@ -154,8 +114,6 @@ export default function SettingsPage() {
       localStorage.setItem('activeMachineName', p.machine_name);
       localStorage.setItem('activeGrinderName', p.grinder_name ?? '');
     }
-    setActiveBasket(p.basket_name ?? '');
-    if (p.basket_name) setBasketExpanded(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profiles, activeId]);
 
@@ -233,38 +191,6 @@ export default function SettingsPage() {
       } else { setAddError(data.error ?? 'Failed to save'); return; }
       setNewMachine(''); setNewGrinder(''); setShowAdd(false);
     } finally { setAdding(false); }
-  }
-
-  async function handleSaveBasket() {
-    if (!activeId || !activeBasket.trim()) return;
-    setBasketSaving(true);
-    const res = await fetch(`/api/equipment/${activeId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-      body: JSON.stringify({ basket_name: activeBasket.trim() }),
-    });
-    if (res.ok) {
-      setBasketSaved(true);
-      await loadProfiles();
-      setTimeout(() => setBasketSaved(false), 2000);
-    }
-    setBasketSaving(false);
-  }
-
-  async function handleRemoveBasket() {
-    if (!activeId) return;
-    setBasketSaving(true);
-    const res = await fetch(`/api/equipment/${activeId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-      body: JSON.stringify({ basket_name: null }),
-    });
-    if (res.ok) {
-      setActiveBasket('');
-      setBasketExpanded(false);
-      await loadProfiles();
-    }
-    setBasketSaving(false);
   }
 
   async function handleRecalculate() {
@@ -396,41 +322,6 @@ export default function SettingsPage() {
               {rigSaving ? 'Saving…' : rigSaved ? '✓ Rig Active' : rigDirty ? 'Set Active Rig' : 'Rig Saved'}
             </button>
 
-            {/* ── Basket (optional, collapsed) ── */}
-            {activeId && !rigDirty && (
-              <div className="border-t border-[#C8B49A]/40 pt-3">
-                {!basketExpanded && !activeBasket ? (
-                  <button type="button" onClick={() => setBasketExpanded(true)}
-                    className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#7A6858]/60 hover:text-[#5D4037] transition-colors touch-manipulation"
-                  >
-                    <span className="text-sm leading-none text-[#5D4037]">+</span>
-                    Add specialized basket
-                  </button>
-                ) : (
-                  <div className="space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <p className={`${LABEL_CLS}`}>Basket (Optional)</p>
-                      {activeBasket && (
-                        <button type="button" onClick={handleRemoveBasket}
-                          className="text-[10px] text-[#7A6858]/50 hover:text-red-600 transition-colors touch-manipulation"
-                        >Remove</button>
-                      )}
-                    </div>
-                    <BasketInput value={activeBasket} onChange={(v) => { setActiveBasket(v); setBasketSaved(false); }} />
-                    <button type="button" onClick={handleSaveBasket}
-                      disabled={basketSaving || !activeBasket.trim()}
-                      className={`w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all disabled:opacity-50 touch-manipulation ${
-                        basketSaved
-                          ? 'bg-green-500/15 text-green-700 border border-green-500/25'
-                          : 'bg-[#F5EBD8] border border-[#C8B49A] text-[#7A6858] active:scale-[0.97]'
-                      }`}
-                    >
-                      {basketSaving ? 'Saving…' : basketSaved ? '✓ Basket Saved' : 'Save Basket'}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
           </>
         )}
       </div>

@@ -74,8 +74,6 @@ export interface EquipmentProfile {
   id: string;
   created_at: string;
   machine_name: string;
-  basket_type?: string | null;
-  basket_name?: string | null;
   grinder_name?: string | null;
   grinder_setting?: string | null;
   notes?: string | null;

@@ -55,7 +55,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       }
     }
 
-    const recommendation = await analyzeShot(shot as Shot, recentShots, trendSummary ?? '', weatherContext, undefined, undefined, undefined, grindTarget, brewParamTarget);
+    const recommendation = await analyzeShot(shot as Shot, recentShots, trendSummary ?? '', weatherContext, undefined, undefined, grindTarget, brewParamTarget);
     await db.from('shots').update({ recommendation }).eq('id', id).eq('user_id', user.id);
 
     return NextResponse.json({ recommendation });

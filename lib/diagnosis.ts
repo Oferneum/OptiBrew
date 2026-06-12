@@ -54,7 +54,6 @@ const BASE: TimeThresholds = { catastrophic: 15, alarmFast: 20, fast: 25, slow: 
 const LIGHT_DOSE = 14;
 const HEAVY_DOSE = 20;
 
-const PRECISION_BASKET_RE = /ims|vst|pullman|pesado|weber|wafo/i;
 const LIGHT_ROAST_ORIGIN_RE = /ethiopia|kenya|colombia|burundi|rwanda|yirgacheffe|washed/i;
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -111,25 +110,15 @@ export function parseShotHistory(shots: Shot[]): ShotHistory {
   return { shotCount: shots.length, grindDelta, previousGrindDir, timeDelta, scoreTrajectory, persistentTags };
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Layer 3 + 6: Threshold pipeline — basket first, env offset on top
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function computeThresholds(basketName: string | null | undefined, env: Environment): TimeThresholds {
-  // Layer 3: precision basket adjusts baseline (tighter tolerances → faster flow)
-  const basketOffset = PRECISION_BASKET_RE.test(basketName ?? '') ? -3 : 0;
-
-  // Layer 6: env offsets applied on top of Layer 3 baseline — never before
+function computeThresholds(env: Environment): TimeThresholds {
   let envOffset = 0;
-  if ((env.humidity ?? 0) > 70) envOffset += 1;    // high humidity → puck swells → slower flow → relax thresholds up
-  if ((env.ambientTemp ?? 0) > 28) envOffset -= 1; // hot ambient → faster extraction → tighten thresholds down
-
-  const total = basketOffset + envOffset;
+  if ((env.humidity ?? 0) > 70) envOffset += 1;
+  if ((env.ambientTemp ?? 0) > 28) envOffset -= 1;
   return {
-    catastrophic: BASE.catastrophic + total,
-    alarmFast:    BASE.alarmFast    + total,
-    fast:         BASE.fast         + total,
-    slow:         BASE.slow         + total,
+    catastrophic: BASE.catastrophic + envOffset,
+    alarmFast:    BASE.alarmFast    + envOffset,
+    fast:         BASE.fast         + envOffset,
+    slow:         BASE.slow         + envOffset,
   };
 }
 
@@ -437,7 +426,6 @@ export function buildDiagnosis(
   shot: Shot,
   history: ShotHistory,
   env: Environment,
-  basketName: string | null | undefined,
   beanOrigin?: string | null,
   grindTarget?: GrindTarget | null,
   brewParamTarget?: BrewParamTarget | null,
@@ -477,8 +465,7 @@ export function buildDiagnosis(
     };
   }
 
-  // ── Compute effective thresholds: Layer 3 basket first, Layer 6 env on top ─
-  const t = computeThresholds(basketName, env);
+  const t = computeThresholds(env);
 
   // ── Layer 1: Alarm states ─────────────────────────────────────────────────
   if (isEspresso && time != null) {
