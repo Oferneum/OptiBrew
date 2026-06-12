@@ -56,6 +56,7 @@ Rules:
 - Always use Celsius. Never Fahrenheit.
 - Tone: Direct, confident, personal — like a coach who knows you. No fluff.
 - Plain text only. No markdown, no quotation marks, no bolding.
+- If the knowledge graph context below specifies a brew temperature for this origin or process, use that exact number — not a generic range.
 
 ${equipmentLine}${tasteLine}${graphBlock}
 
