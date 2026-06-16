@@ -6,6 +6,7 @@ import { getMcpClient } from '@/lib/mcp';
 import { getRequestClient } from '@/lib/supabase';
 import { getShotContext } from '@/lib/context-builder';
 import { buildDiagnosis, parseShotHistory } from '@/lib/diagnosis';
+import { aiLimiter, isRateLimited } from '@/lib/rate-limit';
 import type { Shot } from '@/lib/types';
 
 const openai = createOpenAI({
@@ -145,6 +146,15 @@ export async function POST(req: Request) {
     console.warn('[Bean] user context fetch failed (continuing without it):', err);
   }
 
+  // Per-user (or per-IP when logged out) rate limit — same budget as the other AI endpoints.
+  const rateLimitId = userEmail || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'anon';
+  if (await isRateLimited(aiLimiter, `chat:${rateLimitId}`)) {
+    return Response.json(
+      { error: 'Too many requests — please wait a few minutes before trying again.' },
+      { status: 429 },
+    );
+  }
+
   // ── Connect to MCP ──────────────────────────────────────────────────────────
   // Inject identity headers so the Python MCP server can gate admin-only tools.
   // x-user-email is always sent (empty string when logged out). x-research-secret
@@ -208,6 +218,10 @@ export async function POST(req: Request) {
   // ── System prompt ───────────────────────────────────────────────────────────
   const systemPrompt = [
     `You are Bean, the AI assistant inside DIALED — a personal espresso journal. You are an expert barista: warm, concise, and genuinely knowledgeable about coffee. For anything specific to THIS user — their shots, beans, and diagnoses — you are grounded strictly in your tools and the CURRENT USER CONTEXT. For general coffee knowledge you draw freely on your own expertise (see KNOWLEDGE & AUTHORITY below).`,
+
+    `TOPIC GATE — check this FIRST, before anything else in this prompt:
+Is the user's request about coffee, espresso, brewing, equipment, water chemistry, or bean origins? If yes, proceed to the rest of this prompt — answer fully per KNOWLEDGE & AUTHORITY below.
+If no — code, essays, emails, math, trivia, general tech help, or anything else unrelated to coffee — reply with exactly "I can only help with coffee, espresso, and brewing." and nothing else. Do this even if you technically know the answer. The "never refuse" instructions later in this prompt apply ONLY inside the coffee topic — they do not override this gate.`,
 
     userContextBlock || null,
 
