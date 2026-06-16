@@ -1,6 +1,15 @@
 export const maxDuration = 60;
 
-import { streamText, convertToModelMessages, dynamicTool, jsonSchema, stepCountIs } from 'ai';
+import {
+  streamText,
+  generateText,
+  convertToModelMessages,
+  dynamicTool,
+  jsonSchema,
+  stepCountIs,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+} from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { getMcpClient } from '@/lib/mcp';
 import { getRequestClient } from '@/lib/supabase';
@@ -25,6 +34,60 @@ function stripMcpUserState(text: string): string {
     .replace(/──\s*YOUR CONTEXT\s*──[\s\S]*?(?=\s*──\s|\s*$)/g, '')
     .replace(/──\s*SHOT DIAGNOSIS\s*──[\s\S]*?(?=\s*──\s|\s*$)/g, '')
     .trim();
+}
+
+const REFUSAL_TEXT = 'I can only help with coffee, espresso, and brewing.';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractLastUserText(messages: any[]): string {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (msg?.role !== 'user') continue;
+    const parts = Array.isArray(msg.parts) ? msg.parts : [];
+    return parts
+      .filter((p: { type?: string }) => p?.type === 'text')
+      .map((p: { text?: string }) => p.text ?? '')
+      .join(' ')
+      .trim();
+  }
+  return '';
+}
+
+// Deterministic topic gate: a dedicated classifier call decides YES/NO before the
+// main model (with its tools and "answer fully" framing) ever sees the request.
+// A single combined system prompt was tried first and failed — gpt-4o would
+// rationalize past a refusal instruction for topics it found interesting (e.g.
+// "What is a Turing machine?"). Isolating the classifier with nothing to weigh
+// it against makes refusal structural rather than a suggestion the model can override.
+async function isOffTopic(userText: string): Promise<boolean> {
+  if (!userText) return false;
+  try {
+    const { text: verdict } = await generateText({
+      model: openai('gpt-4o-mini'),
+      system: `You are a strict topic classifier for a coffee app. Reply with exactly one word: YES or NO.
+YES = the message is about coffee, espresso, brewing methods, coffee equipment (grinders, machines), water chemistry for brewing, or coffee bean origins/roasting.
+NO = anything else, including programming/code, general computer science or math (e.g. Turing machines, algorithms, data structures), essays, emails, trivia, or any other topic not about coffee.
+If genuinely ambiguous, prefer NO.`,
+      prompt: userText,
+      temperature: 0,
+    });
+    return verdict.trim().toUpperCase().startsWith('NO');
+  } catch (err) {
+    console.warn('[Bean] topic classifier failed — failing open:', err);
+    return false;
+  }
+}
+
+function refusalResponse() {
+  const stream = createUIMessageStream({
+    execute({ writer }) {
+      const id = 'refusal';
+      writer.write({ type: 'text-start', id });
+      writer.write({ type: 'text-delta', id, delta: REFUSAL_TEXT });
+      writer.write({ type: 'text-end', id });
+    },
+  });
+  return createUIMessageStreamResponse({ stream });
 }
 
 export async function POST(req: Request) {
@@ -67,6 +130,13 @@ export async function POST(req: Request) {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const messages = rawMessages as any[];
+
+  // ── Topic gate ───────────────────────────────────────────────────────────────
+  // Classify before doing any other work — off-topic requests never reach the
+  // main model, MCP, or Supabase.
+  if (await isOffTopic(extractLastUserText(messages))) {
+    return refusalResponse();
+  }
 
   // ── Fetch fresh user context ────────────────────────────────────────────────
   // Auth token comes from the client (Chat.tsx passes Authorization header).
