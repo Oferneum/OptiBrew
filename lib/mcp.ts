@@ -183,6 +183,6 @@ export async function fetchMcpKnowledgeBlock(
     console.warn('[BaristaBrain] MCP diagnose_shot failed — continuing without it:', err);
     return null;
   } finally {
-    try { await client?.close(); } catch { /* ignore */ }
+    try { await (client as Client | null)?.close(); } catch { /* ignore */ }
   }
 }
