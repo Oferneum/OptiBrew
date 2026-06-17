@@ -173,6 +173,7 @@ export async function POST(req: Request) {
 
         const shotLine = `Last shot: ${shot.brew_method ?? 'Espresso'} | ${shot.dose}g → ${shot.yield}g | ${shot.extraction_time ?? 'n/a'}s | Score: ${shot.overall_score ?? 'unscored'}/10`;
         const trendLine = trendSummary ? `Trend: ${trendSummary}` : 'Trend: no history yet';
+        const notesLine = shot.notes ? `User notes: ${shot.notes}` : '';
 
         if (latestShot.recommendation) {
           // Saved BaristaBrain output already contains personalised grind/brew targets.
@@ -182,9 +183,10 @@ export async function POST(req: Request) {
             `Active bean: ${beanLabel}`,
             shotLine,
             trendLine,
+            notesLine || null,
             'AUTHORITATIVE DIAGNOSIS (BaristaBrain — personalised, do not override or soften):',
             latestShot.recommendation,
-          ].join('\n');
+          ].filter(Boolean).join('\n');
         } else {
           // No saved recommendation yet (shot just logged) — fall back to computed diagnosis.
           const history  = parseShotHistory(recentShots);
@@ -202,9 +204,10 @@ export async function POST(req: Request) {
             `Active bean: ${beanLabel}`,
             shotLine,
             trendLine,
+            notesLine || null,
             'COMPUTED DIAGNOSIS (no personalised data yet):',
             diagLines,
-          ].join('\n');
+          ].filter(Boolean).join('\n');
         }
 
         console.log('[Bean] injected context ──────────────────────────');

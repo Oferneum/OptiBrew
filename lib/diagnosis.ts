@@ -456,22 +456,11 @@ export function buildDiagnosis(
   }
 
   if (score != null && score === 8 && !hasNegativeTag && !notesDescribeProblem) {
-    // At 29s+ the shot is already approaching the slow zone — finer grind would push
-    // toward over-extraction territory without any flavor signal justifying it.
-    if (isEspresso && time != null && time >= 29) {
-      return {
-        severity:  'minor',
-        problem:   'Good shot — parameters are well set',
-        rootCause: `Extraction at ${time}s is already at the longer end — grind has no more headroom to go finer`,
-        fix:       'Log these parameters as your reference for this bean; do not go finer',
-        escalated: false,
-      };
-    }
     return {
       severity:  'minor',
-      problem:   'Good shot — close but not fully dialled',
-      rootCause: 'Parameters are near-optimal but sweetness and body can still be increased',
-      fix:       'Try 1 step finer to increase sweetness and body',
+      problem:   'Solid shot',
+      rootCause: 'Parameters are well dialled for this bean and equipment combination',
+      fix:       'Log these parameters as your reference for this bean',
       escalated: false,
     };
   }
