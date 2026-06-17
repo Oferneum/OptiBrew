@@ -143,7 +143,7 @@ export async function getMcpClient(extraHeaders: Record<string, string> = {}): P
 }
 
 type McpTextPart = { type: string; text?: string };
-const MCP_KNOWLEDGE_TIMEOUT_MS = 2_000;  // diagnose_shot is a direct graph lookup — faster than ask()
+const MCP_KNOWLEDGE_TIMEOUT_MS = 7_000;  // server work ~2s; extra headroom for Railway cold starts + network
 
 /**
  * One-shot diagnose_shot() call for non-conversational use (analyze/reanalyze routes).
