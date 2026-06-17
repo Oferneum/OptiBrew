@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { BrewingRule, BeanContext, DiagnosisContext } from './types';
+import type { BrewingRule, BeanContext } from './types';
 
 // ── Static equipment feature lookup (Option A) ────────────────────────────────
 // Maps equipment model names → graph EquipmentType node names.
@@ -303,74 +303,6 @@ export async function getBeanContext(params: {
     grind_profile:      grindProfile,
     reasoning:          parts.join(' | '),
   };
-}
-
-// ── Graph → DiagnosisContext ──────────────────────────────────────────────────
-
-function parseValueRange(s: string): { lo: number; hi: number } | null {
-  const trimmed = s?.trim() ?? '';
-  const rangeMatch = trimmed.match(/^(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)$/);
-  if (rangeMatch) return { lo: parseFloat(rangeMatch[1]), hi: parseFloat(rangeMatch[2]) };
-  const singleMatch = trimmed.match(/^(\d+(?:\.\d+)?)$/);
-  if (singleMatch) { const v = parseFloat(singleMatch[1]); return { lo: v, hi: v }; }
-  return null;
-}
-
-/**
- * Derive DiagnosisContext (threshold overrides) from knowledge graph rules for a given
- * bean origin and brew method. Returns null when no matching rules exist.
- * Used to ground buildDiagnosis() in graph data rather than hardcoded BASE values.
- */
-export async function getGraphDiagnosisContext(
-  origin: string | null | undefined,
-  brewMethod?: string | null,
-): Promise<DiagnosisContext | null> {
-  if (!origin) return null;
-
-  // Fuzzy-match the free-text origin field to a graph Origin node
-  const { data: originNodes } = await supabase
-    .from('knowledge_nodes')
-    .select('id, name')
-    .eq('node_type', 'Origin');
-
-  const originLower = origin.toLowerCase();
-  const matchedNode = originNodes?.find(
-    (n) => originLower.includes(n.name.toLowerCase()) || n.name.toLowerCase().includes(originLower),
-  );
-  if (!matchedNode) return null;
-
-  const rules = await getApplicableRules({ origin: matchedNode.name });
-  if (!rules.length) return null;
-
-  const isEspressoMethod = !brewMethod || brewMethod === 'Espresso' || brewMethod === 'MokaPot';
-  const ctx: Partial<DiagnosisContext> = {};
-  const sources: string[] = [];
-
-  for (const rule of rules) {
-    const param = (rule.dictates?.parameter ?? '').toLowerCase();
-    const unit  = (rule.dictates?.unit ?? '').toLowerCase();
-    const range = parseValueRange(rule.dictates?.value_range ?? '');
-    if (!range) continue;
-
-    const isTime = param.includes('time') || unit === 's' || unit.includes('sec');
-    const isTemp = param.includes('temp') || unit.includes('°c') || unit === 'c' || unit.includes('celsius');
-
-    if (isTime && isEspressoMethod) {
-      // range is the "optimal" window — set thresholds just outside it
-      ctx.extractionTimeFast = Math.max(21, range.lo - 2);
-      ctx.extractionTimeSlow = range.hi + 3;
-      sources.push(`time: "${rule.description}"`);
-    }
-
-    if (isTemp) {
-      ctx.brewTempLow  = range.lo - 1;
-      ctx.brewTempHigh = range.hi + 1;
-      sources.push(`temp: "${rule.description}"`);
-    }
-  }
-
-  if (!sources.length) return null;
-  return { ...ctx, source: sources.join('; ') };
 }
 
 // ── Prompt formatting ─────────────────────────────────────────────────────────

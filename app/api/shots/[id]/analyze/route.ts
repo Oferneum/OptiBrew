@@ -22,8 +22,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     .from('shots').select('*, beans(roaster, origin, bag_name)').eq('id', id).eq('user_id', user.id).single();
   if (!shot || fetchErr) return new Response('Shot not found', { status: 404 });
 
-  const { recentShots, trendSummary, grindTarget, brewParamTarget, diagnosisContext } = await getShotContext(
-    shot.bean_id, shot.equipment_id, user.id, { tiered: true, brewMethod: shot.brew_method },
+  const { recentShots, trendSummary, grindTarget, brewParamTarget } = await getShotContext(
+    shot.bean_id, shot.equipment_id, user.id, { tiered: true },
   );
 
   let weatherContext: string | undefined;
@@ -52,7 +52,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
   }
 
-  const gen = streamAnalysis(shot as Shot, recentShots, trendSummary ?? '', weatherContext, undefined, undefined, grindTarget, brewParamTarget, diagnosisContext);
+  const gen = streamAnalysis(shot as Shot, recentShots, trendSummary ?? '', weatherContext, undefined, undefined, grindTarget, brewParamTarget);
   const accumulated: string[] = [];
 
   const stream = new ReadableStream({

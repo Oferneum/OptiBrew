@@ -1,4 +1,4 @@
-import type { Shot, GrindTarget, BrewParamTarget, DiagnosisContext } from './types';
+import type { Shot, GrindTarget, BrewParamTarget } from './types';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Output
@@ -47,11 +47,9 @@ interface TimeThresholds {
   alarmFast:    number;
   fast:         number;
   slow:         number;
-  tempLow:      number;
-  tempHigh:     number;
 }
 
-const BASE: TimeThresholds = { catastrophic: 15, alarmFast: 20, fast: 25, slow: 32, tempLow: 89, tempHigh: 94 };
+const BASE: TimeThresholds = { catastrophic: 15, alarmFast: 20, fast: 25, slow: 32 };
 
 const LIGHT_DOSE = 14;
 const HEAVY_DOSE = 20;
@@ -112,18 +110,15 @@ export function parseShotHistory(shots: Shot[]): ShotHistory {
   return { shotCount: shots.length, grindDelta, previousGrindDir, timeDelta, scoreTrajectory, persistentTags };
 }
 
-function computeThresholds(env: Environment, ctx?: DiagnosisContext | null): TimeThresholds {
+function computeThresholds(env: Environment): TimeThresholds {
   let envOffset = 0;
   if ((env.humidity ?? 0) > 70) envOffset += 1;
   if ((env.ambientTemp ?? 0) > 28) envOffset -= 1;
   return {
     catastrophic: BASE.catastrophic + envOffset,
     alarmFast:    BASE.alarmFast    + envOffset,
-    // Graph-derived values win over BASE+env when present
-    fast:    ctx?.extractionTimeFast ?? (BASE.fast    + envOffset),
-    slow:    ctx?.extractionTimeSlow ?? (BASE.slow    + envOffset),
-    tempLow: ctx?.brewTempLow        ?? BASE.tempLow,
-    tempHigh:ctx?.brewTempHigh       ?? BASE.tempHigh,
+    fast:         BASE.fast         + envOffset,
+    slow:         BASE.slow         + envOffset,
   };
 }
 
@@ -170,7 +165,6 @@ function brewTempFix(
 function diagnoseSourFast(
   shot: Shot,
   history: ShotHistory,
-  t: TimeThresholds,
   grindTarget?: GrindTarget | null,
   brewParamTarget?: BrewParamTarget | null,
 ): DiagnosisResult {
@@ -208,8 +202,8 @@ function diagnoseSourFast(
     };
   }
 
-  // Low brew temp is the more likely culprit than coarse grind when temp is below threshold
-  if (temp != null && temp < t.tempLow) {
+  // Low brew temp is the more likely culprit than coarse grind when temp < 89°C
+  if (temp != null && temp < 89) {
     return {
       severity:  'moderate',
       problem:   `Fast sour shot at ${time}s with low brew temp (${temp}°C)`,
@@ -245,13 +239,12 @@ function diagnoseSourNormal(
   shot: Shot,
   history: ShotHistory,
   beanOrigin: string,
-  t: TimeThresholds,
   brewParamTarget?: BrewParamTarget | null,
 ): DiagnosisResult {
   const temp = shot.brew_temp ?? null;
   const isLightRoast = LIGHT_ROAST_ORIGIN_RE.test(beanOrigin);
 
-  if (temp != null && temp < t.tempLow) {
+  if (temp != null && temp < 89) {
     return {
       severity:  'moderate',
       problem:   'Sour at normal extraction speed with low brew temp',
@@ -293,7 +286,6 @@ function diagnoseSourNormal(
 function diagnoseBitterSlow(
   shot: Shot,
   history: ShotHistory,
-  t: TimeThresholds,
   grindTarget?: GrindTarget | null,
   brewParamTarget?: BrewParamTarget | null,
 ): DiagnosisResult {
@@ -312,8 +304,8 @@ function diagnoseBitterSlow(
     };
   }
 
-  // High temp as primary cause when above threshold
-  if (temp != null && temp > t.tempHigh) {
+  // High temp as primary cause when > 94°C
+  if (temp != null && temp > 94) {
     return {
       severity:  'moderate',
       problem:   `Slow bitter shot at ${time}s with high brew temp (${temp}°C)`,
@@ -437,7 +429,6 @@ export function buildDiagnosis(
   beanOrigin?: string | null,
   grindTarget?: GrindTarget | null,
   brewParamTarget?: BrewParamTarget | null,
-  diagnosisContext?: DiagnosisContext | null,
 ): DiagnosisResult {
   const score  = shot.overall_score ?? null;
   const tags   = new Set(shot.flavor_tags ?? []);
@@ -474,7 +465,7 @@ export function buildDiagnosis(
     };
   }
 
-  const t = computeThresholds(env, diagnosisContext);
+  const t = computeThresholds(env);
 
   // ── Layer 1: Alarm states ─────────────────────────────────────────────────
   if (isEspresso && time != null) {
@@ -551,12 +542,12 @@ export function buildDiagnosis(
   if (hasSour && hasBitter) return diagnoseBothSourBitter(shot, history);
 
   if (hasSour && time != null) {
-    if (time < t.fast) return diagnoseSourFast(shot, history, t, grindTarget, brewParamTarget);
-    return diagnoseSourNormal(shot, history, origin, t, brewParamTarget);
+    if (time < t.fast) return diagnoseSourFast(shot, history, grindTarget, brewParamTarget);
+    return diagnoseSourNormal(shot, history, origin, brewParamTarget);
   }
 
   if (hasBitter && time != null) {
-    if (time > t.slow) return diagnoseBitterSlow(shot, history, t, grindTarget, brewParamTarget);
+    if (time > t.slow) return diagnoseBitterSlow(shot, history, grindTarget, brewParamTarget);
     return diagnoseBitterFastOrNormal(shot);
   }
 
