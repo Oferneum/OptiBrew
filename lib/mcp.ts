@@ -143,17 +143,16 @@ export async function getMcpClient(extraHeaders: Record<string, string> = {}): P
 }
 
 type McpTextPart = { type: string; text?: string };
-const MCP_KNOWLEDGE_TIMEOUT_MS = 4_000;
+const MCP_KNOWLEDGE_TIMEOUT_MS = 2_000;  // diagnose_shot is a direct graph lookup — faster than ask()
 
 /**
- * One-shot ask() call for non-conversational use (analyze/reanalyze routes).
- * Opens a connection, calls ask(), closes, returns the text block.
+ * One-shot diagnose_shot() call for non-conversational use (analyze/reanalyze routes).
+ * Opens a connection, calls diagnose_shot, closes, returns the text block.
  * Fails open — returns null on any error or timeout so the caller can continue.
  */
 export async function fetchMcpKnowledgeBlock(
-  origin: string | null | undefined,
-  brewMethod: string | null | undefined,
-  userEmail: string,
+  shotId: string,
+  userId: string,
 ): Promise<string | null> {
   let client: Client | null = null;
   const timeout = (ms: number) =>
@@ -161,13 +160,12 @@ export async function fetchMcpKnowledgeBlock(
 
   try {
     client = await Promise.race([
-      getMcpClient({ 'x-user-email': userEmail }),
+      getMcpClient(),
       timeout(MCP_KNOWLEDGE_TIMEOUT_MS),
     ]);
 
-    const query = `${origin ?? 'coffee'} ${brewMethod ?? 'espresso'} brewing rules extraction parameters defect chemistry`;
     const result = await Promise.race([
-      client.callTool({ name: 'ask', arguments: { query } }),
+      client.callTool({ name: 'diagnose_shot', arguments: { shot_id: shotId, user_id: userId } }),
       timeout(MCP_KNOWLEDGE_TIMEOUT_MS),
     ]);
 
@@ -179,7 +177,7 @@ export async function fetchMcpKnowledgeBlock(
 
     return text || null;
   } catch (err) {
-    console.warn('[BaristaBrain] MCP knowledge fetch failed — continuing without it:', err);
+    console.warn('[BaristaBrain] MCP diagnose_shot failed — continuing without it:', err);
     return null;
   } finally {
     try { await client?.close(); } catch { /* ignore */ }

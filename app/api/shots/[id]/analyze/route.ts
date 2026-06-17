@@ -25,7 +25,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const [{ recentShots, trendSummary, grindTarget, brewParamTarget }, mcpContext] = await Promise.all([
     getShotContext(shot.bean_id, shot.equipment_id, user.id, { tiered: true }),
-    fetchMcpKnowledgeBlock(shot.beans?.origin, shot.brew_method, user.email ?? ''),
+    fetchMcpKnowledgeBlock(shot.id, user.id),
   ]);
 
   let weatherContext: string | undefined;
