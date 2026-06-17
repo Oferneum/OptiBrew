@@ -6,6 +6,7 @@ import { fetchMcpKnowledgeBlock } from '@/lib/mcp';
 import type { Shot } from '@/lib/types';
 
 export const runtime = 'nodejs';
+export const maxDuration = 30; // MCP handshake + tool call + streaming LLM response
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

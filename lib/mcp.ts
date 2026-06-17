@@ -143,7 +143,12 @@ export async function getMcpClient(extraHeaders: Record<string, string> = {}): P
 }
 
 type McpTextPart = { type: string; text?: string };
-const MCP_KNOWLEDGE_TIMEOUT_MS = 7_000;  // server work ~2s; extra headroom for Railway cold starts + network
+
+// Single shared budget for the full round-trip: SSE handshake + tool call.
+// Two independent timeouts (old approach) allowed getMcpClient to burn up to 7s,
+// leaving callTool with a fresh 7s window — but the Vercel function may only have
+// seconds left by then. One shared 10s deadline coordinates both steps.
+const MCP_TOTAL_TIMEOUT_MS = 10_000;
 
 /**
  * One-shot diagnose_shot() call for non-conversational use (analyze/reanalyze routes).
@@ -155,18 +160,16 @@ export async function fetchMcpKnowledgeBlock(
   userId: string,
 ): Promise<string | null> {
   let client: Client | null = null;
-  const timeout = (ms: number) =>
-    new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms));
 
   try {
-    client = await Promise.race([
-      getMcpClient(),
-      timeout(MCP_KNOWLEDGE_TIMEOUT_MS),
-    ]);
-
     const result = await Promise.race([
-      client.callTool({ name: 'diagnose_shot', arguments: { shot_id: shotId, user_id: userId } }),
-      timeout(MCP_KNOWLEDGE_TIMEOUT_MS),
+      (async () => {
+        client = await getMcpClient();
+        return client.callTool({ name: 'diagnose_shot', arguments: { shot_id: shotId, user_id: userId } });
+      })(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), MCP_TOTAL_TIMEOUT_MS)
+      ),
     ]);
 
     const text = ((result as { content: McpTextPart[] }).content)
