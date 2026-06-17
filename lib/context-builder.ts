@@ -1,12 +1,13 @@
 import { supabase as anonClient } from '@/lib/supabase';
-import type { Shot, GrindTarget, BrewParamTarget } from './types';
-import { resolveEquipmentFeatures, getMachinesByFeature } from './knowledge-graph';
+import type { Shot, GrindTarget, BrewParamTarget, DiagnosisContext } from './types';
+import { resolveEquipmentFeatures, getMachinesByFeature, getGraphDiagnosisContext } from './knowledge-graph';
 
 export interface ShotContext {
-  recentShots:     Shot[];
-  trendSummary:    string | null;
-  grindTarget:     GrindTarget | null;
-  brewParamTarget: BrewParamTarget | null;
+  recentShots:      Shot[];
+  trendSummary:     string | null;
+  grindTarget:      GrindTarget | null;
+  brewParamTarget:  BrewParamTarget | null;
+  diagnosisContext: DiagnosisContext | null;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -264,9 +265,9 @@ export async function getShotContext(
   beanId:      string | null | undefined,
   equipmentId: string | null | undefined,
   userId?:     string | null,
-  options?:    { tiered?: boolean },
+  options?:    { tiered?: boolean; brewMethod?: string | null },
 ): Promise<ShotContext> {
-  const empty: ShotContext = { recentShots: [], trendSummary: null, grindTarget: null, brewParamTarget: null };
+  const empty: ShotContext = { recentShots: [], trendSummary: null, grindTarget: null, brewParamTarget: null, diagnosisContext: null };
   if (!beanId && !equipmentId) return empty;
 
   // ── Recent shots ─────────────────────────────────────────────────────────
@@ -285,7 +286,7 @@ export async function getShotContext(
   const trendSummary = shots.length >= 2 ? buildTrendSummary(shots) : null;
 
   if (!options?.tiered || !beanId || !equipmentId || !userId) {
-    return { recentShots: shots, trendSummary, grindTarget: null, brewParamTarget: null };
+    return { recentShots: shots, trendSummary, grindTarget: null, brewParamTarget: null, diagnosisContext: null };
   }
 
   // ── Step 1: fetch bean + equipment metadata in parallel ───────────────────
@@ -297,11 +298,12 @@ export async function getShotContext(
   const originKeyword = extractOriginKeyword(beanResult.data?.origin);
   const machineName   = equipResult.data?.machine_name ?? null;
 
-  // ── Step 2: similar equipment IDs + Tier 1 queries in parallel ────────────
-  const [similarEquipmentIds, grindTier1, brewTier1] = await Promise.all([
+  // ── Step 2: similar equipment IDs + Tier 1 queries + graph rules in parallel
+  const [similarEquipmentIds, grindTier1, brewTier1, diagnosisContext] = await Promise.all([
     fetchSimilarEquipmentIds(machineName),
     fetchPersonalBestGrind(beanId, equipmentId, userId),
     fetchPersonalBestBrewParams(beanId, userId),
+    getGraphDiagnosisContext(beanResult.data?.origin, options?.brewMethod).catch(() => null),
   ]);
 
   // ── Step 3: Tier 2 queries — only run if Tier 1 missed ───────────────────
@@ -315,9 +317,10 @@ export async function getShotContext(
   ]);
 
   return {
-    recentShots:     shots,
+    recentShots:      shots,
     trendSummary,
-    grindTarget:     grindTier1 ?? grindTier2,
-    brewParamTarget: brewTier1  ?? brewTier2,
+    grindTarget:      grindTier1 ?? grindTier2,
+    brewParamTarget:  brewTier1  ?? brewTier2,
+    diagnosisContext,
   };
 }

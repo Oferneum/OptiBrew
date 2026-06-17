@@ -124,6 +124,14 @@ export interface UserContext {
   recentBeans: Array<{ roaster: string; origin: string; bag_name?: string | null }>;
 }
 
+export interface DiagnosisContext {
+  extractionTimeFast?: number;  // override BASE.fast  — shots faster than this are under-extracted
+  extractionTimeSlow?: number;  // override BASE.slow  — shots slower than this are over-extracted
+  brewTempLow?:        number;  // override hardcoded 89°C — below this risks under-extraction
+  brewTempHigh?:       number;  // override hardcoded 94°C — above this risks over-extraction
+  source?:             string;  // graph rule description for logging
+}
+
 export interface BrewingRule {
   rule_id: string;
   description: string;

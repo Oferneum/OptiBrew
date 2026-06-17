@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import type { Shot, BeanContext } from './types';
+import type { Shot, BeanContext, DiagnosisContext } from './types';
 import { getBeanContext, formatGraphContextBlock } from './knowledge-graph';
 import { buildDiagnosis, parseShotHistory } from './diagnosis';
 import type { DiagnosisResult } from './diagnosis';
@@ -61,6 +61,7 @@ function buildPrompt(
   beanContext?: BeanContext | null,
   grindTarget?: GrindTarget | null,
   brewParamTarget?: BrewParamTarget | null,
+  diagnosisContext?: DiagnosisContext | null,
 ): string {
   const ratio = shot.dose && shot.yield
     ? `1:${(shot.yield / shot.dose).toFixed(2)}`
@@ -78,7 +79,7 @@ function buildPrompt(
 
   const history   = parseShotHistory(recentShots);
   const env       = { ambientTemp: shot.ambient_temp, humidity: shot.humidity };
-  const diagnosis = buildDiagnosis(shot, history, env, shot.beans?.origin, grindTarget, brewParamTarget);
+  const diagnosis = buildDiagnosis(shot, history, env, shot.beans?.origin, grindTarget, brewParamTarget, diagnosisContext);
 
   const trendBlock = trendSummary
     ? `Recent trend: ${trendSummary}`
@@ -153,6 +154,7 @@ export async function analyzeShot(
   grinderName?: string | null,
   grindTarget?: GrindTarget | null,
   brewParamTarget?: BrewParamTarget | null,
+  diagnosisContext?: DiagnosisContext | null,
 ): Promise<string> {
   if (!genAI) {
     console.error('[Dialed AI] GEMINI_API_KEY is not set');
@@ -168,7 +170,7 @@ export async function analyzeShot(
     new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
   ]);
 
-  const prompt = buildPrompt(shot, recentShots, trendSummary, weatherContext, beanContext, grindTarget, brewParamTarget);
+  const prompt = buildPrompt(shot, recentShots, trendSummary, weatherContext, beanContext, grindTarget, brewParamTarget, diagnosisContext);
 
   console.log('[BaristaBrain] prompt ─────────────────────────────\n', prompt, '\n──────────────────────────────────────────────────');
 
@@ -216,6 +218,7 @@ export async function* streamAnalysis(
   grinderName?: string | null,
   grindTarget?: GrindTarget | null,
   brewParamTarget?: BrewParamTarget | null,
+  diagnosisContext?: DiagnosisContext | null,
 ): AsyncGenerator<string> {
   if (!genAI) {
     yield 'AI configuration missing.';
@@ -231,7 +234,7 @@ export async function* streamAnalysis(
     new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
   ]);
 
-  const prompt = buildPrompt(shot, recentShots, trendSummary, weatherContext, beanContext, grindTarget, brewParamTarget);
+  const prompt = buildPrompt(shot, recentShots, trendSummary, weatherContext, beanContext, grindTarget, brewParamTarget, diagnosisContext);
 
   console.log('[BaristaBrain] prompt ─────────────────────────────\n', prompt, '\n──────────────────────────────────────────────────');
 
