@@ -141,3 +141,47 @@ export async function getMcpClient(extraHeaders: Record<string, string> = {}): P
   await client.connect(transport);
   return client;
 }
+
+type McpTextPart = { type: string; text?: string };
+const MCP_KNOWLEDGE_TIMEOUT_MS = 4_000;
+
+/**
+ * One-shot ask() call for non-conversational use (analyze/reanalyze routes).
+ * Opens a connection, calls ask(), closes, returns the text block.
+ * Fails open — returns null on any error or timeout so the caller can continue.
+ */
+export async function fetchMcpKnowledgeBlock(
+  origin: string | null | undefined,
+  brewMethod: string | null | undefined,
+  userEmail: string,
+): Promise<string | null> {
+  let client: Client | null = null;
+  const timeout = (ms: number) =>
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms));
+
+  try {
+    client = await Promise.race([
+      getMcpClient({ 'x-user-email': userEmail }),
+      timeout(MCP_KNOWLEDGE_TIMEOUT_MS),
+    ]);
+
+    const query = `${origin ?? 'coffee'} ${brewMethod ?? 'espresso'} brewing rules extraction parameters defect chemistry`;
+    const result = await Promise.race([
+      client.callTool({ name: 'ask', arguments: { query } }),
+      timeout(MCP_KNOWLEDGE_TIMEOUT_MS),
+    ]);
+
+    const text = ((result as { content: McpTextPart[] }).content)
+      .filter(p => p.type === 'text' && p.text)
+      .map(p => p.text)
+      .join('\n')
+      .trim();
+
+    return text || null;
+  } catch (err) {
+    console.warn('[BaristaBrain] MCP knowledge fetch failed — continuing without it:', err);
+    return null;
+  } finally {
+    try { await client?.close(); } catch { /* ignore */ }
+  }
+}

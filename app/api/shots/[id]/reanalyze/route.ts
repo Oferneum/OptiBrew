@@ -3,6 +3,7 @@ import { getRequestClient } from '@/lib/supabase';
 import { analyzeShot } from '@/lib/recommendations';
 import { getShotContext } from '@/lib/context-builder';
 import { aiLimiter, isRateLimited } from '@/lib/rate-limit';
+import { fetchMcpKnowledgeBlock } from '@/lib/mcp';
 import type { Shot } from '@/lib/types';
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -24,9 +25,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       .from('shots').select('*, beans(roaster, origin, bag_name)').eq('id', id).eq('user_id', user.id).single();
     if (!shot || fetchErr) return NextResponse.json({ error: 'Shot not found' }, { status: 404 });
 
-    const { recentShots, trendSummary, grindTarget, brewParamTarget } = await getShotContext(
-      shot.bean_id, shot.equipment_id, user.id, { tiered: true },
-    );
+    const [{ recentShots, trendSummary, grindTarget, brewParamTarget }, mcpContext] = await Promise.all([
+      getShotContext(shot.bean_id, shot.equipment_id, user.id, { tiered: true }),
+      fetchMcpKnowledgeBlock(shot.beans?.origin, shot.brew_method, user.email ?? ''),
+    ]);
 
     // Rebuild relative weather delta from stored conditions
     let weatherContext: string | undefined;
@@ -55,7 +57,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       }
     }
 
-    const recommendation = await analyzeShot(shot as Shot, recentShots, trendSummary ?? '', weatherContext, undefined, undefined, grindTarget, brewParamTarget);
+    const recommendation = await analyzeShot(shot as Shot, recentShots, trendSummary ?? '', weatherContext, undefined, undefined, grindTarget, brewParamTarget, mcpContext);
     await db.from('shots').update({ recommendation }).eq('id', id).eq('user_id', user.id);
 
     return NextResponse.json({ recommendation });

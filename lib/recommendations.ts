@@ -61,6 +61,7 @@ function buildPrompt(
   beanContext?: BeanContext | null,
   grindTarget?: GrindTarget | null,
   brewParamTarget?: BrewParamTarget | null,
+  mcpContext?: string | null,
 ): string {
   const ratio = shot.dose && shot.yield
     ? `1:${(shot.yield / shot.dose).toFixed(2)}`
@@ -95,8 +96,9 @@ function buildPrompt(
     : '';
 
   const graphBlock = beanContext ? formatGraphContextBlock(beanContext) : '';
+  const mcpBlock   = mcpContext  ? `\n\nKNOWLEDGE BASE (brewing rules, defect chemistry, origin profile):\n${mcpContext}` : '';
 
-  return `You are Dialed, a Head Barista with 15 years of specialty coffee experience. Give a 2-sentence diagnosis for this shot.${graphBlock}
+  return `You are Dialed, a Head Barista with 15 years of specialty coffee experience. Give a 2-sentence diagnosis for this shot.${graphBlock}${mcpBlock}
 
 PERSONA: Direct and professional. Never use flattery or softening language. Like a trusted expert who values the user's time.
 
@@ -153,6 +155,7 @@ export async function analyzeShot(
   grinderName?: string | null,
   grindTarget?: GrindTarget | null,
   brewParamTarget?: BrewParamTarget | null,
+  mcpContext?: string | null,
 ): Promise<string> {
   if (!genAI) {
     console.error('[Dialed AI] GEMINI_API_KEY is not set');
@@ -168,7 +171,7 @@ export async function analyzeShot(
     new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
   ]);
 
-  const prompt = buildPrompt(shot, recentShots, trendSummary, weatherContext, beanContext, grindTarget, brewParamTarget);
+  const prompt = buildPrompt(shot, recentShots, trendSummary, weatherContext, beanContext, grindTarget, brewParamTarget, mcpContext);
 
   console.log('[BaristaBrain] prompt ─────────────────────────────\n', prompt, '\n──────────────────────────────────────────────────');
 
@@ -216,6 +219,7 @@ export async function* streamAnalysis(
   grinderName?: string | null,
   grindTarget?: GrindTarget | null,
   brewParamTarget?: BrewParamTarget | null,
+  mcpContext?: string | null,
 ): AsyncGenerator<string> {
   if (!genAI) {
     yield 'AI configuration missing.';
@@ -231,7 +235,7 @@ export async function* streamAnalysis(
     new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
   ]);
 
-  const prompt = buildPrompt(shot, recentShots, trendSummary, weatherContext, beanContext, grindTarget, brewParamTarget);
+  const prompt = buildPrompt(shot, recentShots, trendSummary, weatherContext, beanContext, grindTarget, brewParamTarget, mcpContext);
 
   console.log('[BaristaBrain] prompt ─────────────────────────────\n', prompt, '\n──────────────────────────────────────────────────');
 
