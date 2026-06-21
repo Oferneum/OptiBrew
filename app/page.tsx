@@ -64,6 +64,29 @@ export default function HomePage() {
           </svg>
         </Link>
 
+        {/* Ask Bean */}
+        <Link
+          href="/chat"
+          className="flex items-center justify-between w-full glass rounded-2xl px-6 py-5 active:scale-95 transition-all duration-200"
+        >
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#7A6858]">Need advice?</p>
+            <p className="text-2xl font-black uppercase tracking-tight leading-none mt-0.5 text-[#2C1E16]">ASK BEAN</p>
+          </div>
+          <svg viewBox="0 0 44 56" fill="none" className="w-7 h-9">
+            <ellipse cx="22" cy="29" rx="16" ry="21" fill="#5D4037" />
+            <ellipse cx="16" cy="18" rx="5" ry="8" fill="#7B5B4A" opacity="0.45" transform="rotate(-18 16 18)" />
+            <path d="M22 8 C15 22 15 36 22 50" stroke="#3C2A21" strokeWidth="2.5" strokeLinecap="round" />
+            <circle cx="16" cy="27" r="3"   fill="#FAF3E6" />
+            <circle cx="28" cy="27" r="3"   fill="#FAF3E6" />
+            <circle cx="17" cy="28" r="1.5" fill="#2C1E16" />
+            <circle cx="29" cy="28" r="1.5" fill="#2C1E16" />
+            <circle cx="17.8" cy="27.2" r="0.6" fill="white" opacity="0.8" />
+            <circle cx="29.8" cy="27.2" r="0.6" fill="white" opacity="0.8" />
+            <path d="M15 35 Q22 42 29 35" stroke="#FAF3E6" strokeWidth="2" strokeLinecap="round" fill="none" />
+          </svg>
+        </Link>
+
       </div>
     </div>
   );
