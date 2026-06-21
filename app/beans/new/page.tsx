@@ -64,15 +64,31 @@ export default function NewBagPage() {
   const [saving,         setSaving]         = useState(false);
   const [saveError,      setSaveError]      = useState<string | null>(null);
   const [conflictMatch,  setConflictMatch]  = useState<{ roaster: string; bag_name?: string; origin: string } | null>(null);
-  const [activeMachine, setActiveMachine] = useState('');
-  const [activeGrinder, setActiveGrinder] = useState('');
+  const [activeEquipmentId, setActiveEquipmentId] = useState('');
+  const [equipmentLabel,    setEquipmentLabel]    = useState<string | null>(null);
 
   const frontRef = useRef<HTMLInputElement>(null);
   const backRef  = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setActiveMachine(localStorage.getItem('activeMachineName') || '');
-    setActiveGrinder(localStorage.getItem('activeGrinderName') || '');
+    const id = localStorage.getItem('activeEquipmentId') || '';
+    setActiveEquipmentId(id);
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      fetch('/api/equipment', { headers: { Authorization: `Bearer ${session.access_token}` } })
+        .then((r) => r.json())
+        .then((list: { id: string; machine_name: string; grinder_name?: string | null }[]) => {
+          if (!Array.isArray(list) || !list.length) return;
+          const active = (id && list.find((e) => e.id === id)) || list[0];
+          setEquipmentLabel(
+            active.grinder_name
+              ? `${active.machine_name} + ${active.grinder_name}`
+              : active.machine_name,
+          );
+        })
+        .catch(() => {});
+    });
   }, []);
 
   function selectImage(slot: 'front' | 'back', file: File) {
@@ -94,8 +110,7 @@ export default function NewBagPage() {
       const fd = new FormData();
       fd.append('image', frontBlob, 'front.jpg');
       if (backBlob) fd.append('image', backBlob, 'back.jpg');
-      if (activeMachine) fd.append('activeMachine', activeMachine);
-      if (activeGrinder) fd.append('activeGrinder', activeGrinder);
+      if (activeEquipmentId) fd.append('activeEquipmentId', activeEquipmentId);
       const res = await fetch('/api/scan-bag', { method: 'POST', body: fd, headers: await authHeaders() });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -179,6 +194,14 @@ export default function NewBagPage() {
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#7A6858] mb-1">Step 1 — Scan the bag</p>
           <p className="text-[#2C1E16]/60 text-xs">Take a photo of the front (and optionally the back) to auto-fill details and get a personalised recipe.</p>
+          <div className="mt-2 flex items-center gap-1.5">
+            <svg className="w-3 h-3 text-[#7A6858] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+            {equipmentLabel ? (
+              <p className="text-[10px] text-[#7A6858]">Recipe for <span className="font-bold text-[#5D4037]">{equipmentLabel}</span></p>
+            ) : (
+              <p className="text-[10px] text-[#7A6858]/70">No equipment set — <a href="/settings" className="underline text-[#5D4037]">add one in Settings</a> for a personalised recipe</p>
+            )}
+          </div>
         </div>
 
         {/* Two image slots */}

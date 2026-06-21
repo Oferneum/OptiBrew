@@ -33,8 +33,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Maximum 2 images per scan' }, { status: 400 });
   }
 
-  const activeMachine = (formData.get('activeMachine') as string) || null;
-  const activeGrinder = (formData.get('activeGrinder') as string) || null;
+  const activeEquipmentId = (formData.get('activeEquipmentId') as string) || null;
 
   const images: ImageInput[] = [];
   for (const file of files) {
@@ -57,6 +56,30 @@ export async function POST(req: Request) {
   // Fetch user context for personalised recommendation (best-effort — never blocks the scan)
   let userContext: UserContext | undefined;
   try {
+    // Fetch equipment from DB: prefer the active profile by ID, fall back to most recent
+    let equipmentRow: { machine_name: string; grinder_name: string | null } | null = null;
+
+    if (activeEquipmentId) {
+      const { data } = await db
+        .from('equipment_profiles')
+        .select('machine_name, grinder_name')
+        .eq('id', activeEquipmentId)
+        .eq('user_id', user.id)
+        .single();
+      equipmentRow = data ?? null;
+    }
+
+    if (!equipmentRow) {
+      const { data } = await db
+        .from('equipment_profiles')
+        .select('machine_name, grinder_name')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      equipmentRow = data ?? null;
+    }
+
     const { data: beansData } = await db
       .from('beans')
       .select('roaster, origin, bag_name')
@@ -64,11 +87,10 @@ export async function POST(req: Request) {
       .order('created_at', { ascending: false })
       .limit(5);
 
-    const equipment: UserContext['equipment'] = activeMachine
-      ? [{ machine_name: activeMachine, grinder_name: activeGrinder }]
-      : [];
-
-    userContext = { equipment, recentBeans: beansData ?? [] };
+    userContext = {
+      equipment:   equipmentRow ? [equipmentRow] : [],
+      recentBeans: beansData ?? [],
+    };
   } catch { /* context failure must not block the scan */ }
 
   try {
