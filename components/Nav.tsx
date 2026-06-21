@@ -20,14 +20,6 @@ function PlusIcon() {
   );
 }
 
-function ClockIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3 2" />
-    </svg>
-  );
-}
 
 function BeanIcon() {
   return (
@@ -49,43 +41,21 @@ function ChartIcon() {
   );
 }
 
-function TrophyIcon() {
+function PersonIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-      <path d="M8 21h8M12 17v4" />
-      <path d="M7 4H17l-1 8a5 5 0 0 1-8 0Z" />
-      <path d="M5 4H4a2 2 0 0 0-2 2v1a4 4 0 0 0 4 4h.5" />
-      <path d="M19 4h1a2 2 0 0 1 2 2v1a4 4 0 0 1-4 4h-.5" />
-    </svg>
-  );
-}
-
-function ChatIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
-  );
-}
-
-function GearIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
     </svg>
   );
 }
 
 const links = [
-  { href: '/',              label: 'Home',    Icon: HomeIcon   },
-  { href: '/shots/new',     label: 'Log',     Icon: PlusIcon   },
-  { href: '/shots',         label: 'History', Icon: ClockIcon  },
-  { href: '/beans',         label: 'Beans',   Icon: BeanIcon   },
-  { href: '/analytics',     label: 'Charts',  Icon: ChartIcon  },
-  { href: '/chat',          label: 'Bean',    Icon: ChatIcon   },
-  { href: '/achievements',  label: 'Awards',  Icon: TrophyIcon },
-  { href: '/settings',      label: 'Settings',Icon: GearIcon   },
+  { href: '/',          label: 'Home',    Icon: HomeIcon   },
+  { href: '/shots/new', label: 'Log',     Icon: PlusIcon   },
+  { href: '/beans',     label: 'Beans',   Icon: BeanIcon   },
+  { href: '/analytics', label: 'Charts',  Icon: ChartIcon  },
+  { href: '/profile',   label: 'Profile', Icon: PersonIcon },
 ];
 
 export default function Nav() {
@@ -94,10 +64,12 @@ export default function Nav() {
     <nav className="fixed bottom-4 left-0 right-0 z-50 px-4">
       <div className="max-w-lg mx-auto glass-nav rounded-2xl flex" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
         {links.map(({ href, label, Icon }) => {
+          const profilePaths = ['/shots', '/chat', '/achievements', '/settings'];
           const active =
             href === '/'          ? path === '/' :
-            href === '/shots'     ? path === '/shots' :
+            href === '/shots/new' ? path === '/shots/new' :
             href === '/analytics' ? path.startsWith('/analytics') :
+            href === '/profile'   ? path === '/profile' || profilePaths.some((p) => path.startsWith(p)) :
             path.startsWith(href);
           return (
             <Link
