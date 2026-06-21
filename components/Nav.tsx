@@ -104,7 +104,7 @@ export default function Nav() {
               key={href}
               href={href}
               className={`flex-1 flex flex-col items-center pt-3 pb-2 gap-1 text-[10px] font-medium transition-colors duration-150 ${
-                active ? 'text-[#5D4037]' : 'text-[#2C1E16]/35 hover:text-[#2C1E16]'
+                active ? 'text-[#5D4037]' : 'text-[#7A6858] hover:text-[#2C1E16]'
               }`}
             >
               <Icon />

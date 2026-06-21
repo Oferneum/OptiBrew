@@ -67,7 +67,7 @@ export default async function HomePage() {
         <h1 className="text-7xl font-black uppercase tracking-tighter leading-none bg-gradient-to-r from-[#2C1E16] to-[#5D4037] bg-clip-text text-transparent">
           DIALED
         </h1>
-        <p className="text-[11px] font-black uppercase tracking-[0.35em] text-[#A1A1AA] mt-2">
+        <p className="text-[11px] font-black uppercase tracking-[0.35em] text-[#7A6858] mt-2">
           Espresso Journal
         </p>
       </header>
@@ -124,7 +124,7 @@ export default async function HomePage() {
             { label: 'Avg Time',  value: avgTime != null ? `${avgTime}s` : '—' },
           ].map(({ label, value }) => (
             <div key={label} className="glass rounded-2xl p-3 text-center">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#A1A1AA]">{label}</p>
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#7A6858]">{label}</p>
               <p className="readout text-2xl font-black mt-0.5 text-[#5D4037]">
                 {value}
               </p>
@@ -155,7 +155,7 @@ export default async function HomePage() {
             <EmptyState />
             <div className="space-y-1.5">
               <p className="font-black text-[#2C1E16] uppercase tracking-tight text-xl">No shots yet</p>
-              <p className="text-xs text-[#A1A1AA] font-bold uppercase tracking-[0.25em]">Your espresso journal awaits</p>
+              <p className="text-xs text-[#7A6858] font-bold uppercase tracking-[0.25em]">Your espresso journal awaits</p>
             </div>
             <Link
               href="/shots/new"
