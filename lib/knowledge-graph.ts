@@ -8,6 +8,7 @@ import type { BrewingRule, BeanContext } from './types';
 const MACHINE_FEATURES: Record<string, string[]> = {
   'Lelit Anna PID':          ['PID'],
   'Lelit Anna':              ['No PID'],
+  'Lelit PL41TEM':           ['PID'],
   'Lelit Mara X':            ['PID'],
   'Lelit Mara':              ['No PID'],
   'Lelit Bianca':            ['PID'],

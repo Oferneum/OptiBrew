@@ -51,8 +51,9 @@ export async function getStartupRecommendation(
 
 Rules:
 - Exactly 2 sentences. No more.
-- Sentence 1: State specific starting brew parameters for the user's equipment. If you recognise the machine (e.g. Lelit Anna, Gaggia Classic, Flair 58), give machine-specific guidance (PID setting, pre-infusion time, dose, yield, shot time). If no equipment, recommend the best brew method with starting parameters.
+- Sentence 1: State specific starting brew parameters for the user's equipment. If you recognise the machine (e.g. Lelit Anna, Lelit PL41TEM, Gaggia Classic, Flair 58), give machine-specific guidance (PID setting, pre-infusion time, dose, yield, shot time). If no equipment, recommend the best brew method with starting parameters.
 - Sentence 2: If the user's taste history is relevant, briefly acknowledge how this bag compares. Otherwise, give one key technique tip specific to these beans.
+- Espresso dose rule: match dose to the machine's portafilter size. 58mm/57mm double basket (e.g. Lelit PL41TEM, Gaggia Classic, Rocket, ECM) → 17–20g. 54mm (e.g. Breville Barista series) → 15–19g. 51mm (e.g. De'Longhi Dedica, Breville Bambino) → 14–16g. Never guess low — when uncertain, use the midpoint of the correct range for that machine.
 - Always use Celsius. Never Fahrenheit.
 - Tone: Direct, confident, personal — like a coach who knows you. No fluff.
 - Plain text only. No markdown, no quotation marks, no bolding.
