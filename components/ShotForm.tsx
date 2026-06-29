@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { Coffee, Milk } from 'lucide-react';
 import { computeBrewRatio } from '@/lib/analytics';
@@ -32,6 +33,20 @@ interface FormState {
 }
 
 const FLAVOR_OPTIONS: FlavorTag[] = ['Sour', 'Bitter', 'Balanced', 'Dry'];
+
+// ── Animation variants ─────────────────────────────────────
+
+const formVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.06 } },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 18 },
+  visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 28 } },
+};
+
+const springPress = { type: 'spring' as const, stiffness: 500, damping: 20 };
 
 // ── Icons ──────────────────────────────────────────────────
 
@@ -301,8 +316,15 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
         <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#7A6858] text-lg">▾</span>
       </div>
 
-      {showNewBag && (
-        <div className="glass rounded-2xl p-5 space-y-4">
+      <AnimatePresence>
+        {showNewBag && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+          className="glass rounded-2xl p-5 space-y-4"
+        >
           <p className="text-[#2C1E16] font-black text-base uppercase tracking-wider">New Bag</p>
 
           {/* ── Two image slots ── */}
@@ -365,31 +387,54 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
           </div>
 
           {/* ── Scan Now button ── */}
-          {(scanFront || scanBack) && (
-            <button
-              type="button"
-              onClick={submitScan}
-              disabled={scanning || !scanFront}
-              className="w-full flex items-center justify-center gap-2 bg-[#F5EBD8] border border-[#C8B49A] text-[#2C1E16] font-bold py-3 rounded-xl text-sm uppercase tracking-wider active:scale-95 transition-all disabled:opacity-50 touch-manipulation"
-            >
-              {scanning ? <><Spinner /><span>Scanning…</span></> : <span>Scan Bag</span>}
-            </button>
-          )}
+          <AnimatePresence>
+            {(scanFront || scanBack) && (
+              <motion.button
+                type="button"
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+                whileTap={scanning ? {} : { scale: 0.96 }}
+                onClick={submitScan}
+                disabled={scanning || !scanFront}
+                className="w-full flex items-center justify-center gap-2 bg-[#F5EBD8] border border-[#C8B49A] text-[#2C1E16] font-bold py-3 rounded-xl text-sm uppercase tracking-wider transition-opacity disabled:opacity-50 touch-manipulation"
+              >
+                {scanning ? <><Spinner /><span>Scanning…</span></> : <span>Scan Bag</span>}
+              </motion.button>
+            )}
+          </AnimatePresence>
 
           {/* ── Scan error ── */}
-          {scanError && !scanning && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-              <p className="text-red-600 text-sm font-medium">{scanError}</p>
-            </div>
-          )}
+          <AnimatePresence>
+            {scanError && !scanning && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+                className="bg-red-500/10 border border-red-500/20 rounded-xl p-3"
+              >
+                <p className="text-red-600 text-sm font-medium">{scanError}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* ── Startup recommendation ── */}
-          {scanRec && !scanning && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700 mb-2">Startup Rec</p>
-              <p className="text-amber-900 text-sm leading-relaxed">{scanRec}</p>
-            </div>
-          )}
+          <AnimatePresence>
+            {scanRec && !scanning && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+                className="bg-amber-50 border border-amber-200 rounded-xl p-4"
+              >
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700 mb-2">Startup Rec</p>
+                <p className="text-amber-900 text-sm leading-relaxed">{scanRec}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* ── Fields ── */}
           <div>
@@ -452,24 +497,29 @@ function BeanSearch({ onSelect, onClear, selected }: BeanSearchProps) {
             </div>
           </div>
           <div className="flex gap-2.5 pt-1">
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.96 }}
+              transition={springPress}
               onClick={() => { setShowNewBag(false); resetScan(); }}
-              className="flex-1 bg-[#F5EBD8] border border-[#C8B49A] text-[#2C1E16] font-black py-4 min-h-[56px] rounded-xl text-sm uppercase tracking-wide active:scale-95 transition-all touch-manipulation"
+              className="flex-1 bg-[#F5EBD8] border border-[#C8B49A] text-[#2C1E16] font-black py-4 min-h-[56px] rounded-xl text-sm uppercase tracking-wide transition-colors touch-manipulation"
             >
               Cancel
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="button"
+              whileTap={saving ? {} : { scale: 0.96 }}
+              transition={springPress}
               onClick={saveNewBag}
               disabled={saving}
-              className="flex-1 bg-[#5D4037] text-[#FFFBF4] font-black py-4 min-h-[56px] rounded-xl text-sm uppercase tracking-wide shadow-lg shadow-[#5D4037]/25 active:scale-95 transition-all disabled:opacity-60 touch-manipulation"
+              className="flex-1 bg-[#5D4037] text-[#FFFBF4] font-black py-4 min-h-[56px] rounded-xl text-sm uppercase tracking-wide shadow-lg shadow-[#5D4037]/25 transition-opacity disabled:opacity-60 touch-manipulation"
             >
               {saving ? 'Saving…' : 'Add & Select'}
-            </button>
+            </motion.button>
           </div>
-        </div>
-      )}
+        </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -719,19 +769,27 @@ export default function ShotForm({
   })();
 
   return (
-    <form onSubmit={handleSubmit} className="px-4 pb-8 space-y-4">
+    <motion.form
+      onSubmit={handleSubmit}
+      variants={formVariants}
+      initial="hidden"
+      animate="visible"
+      className="px-4 pb-8 space-y-4"
+    >
 
       {/* ── Card 1: Method, Milk & Rig ─────────────────── */}
-      <div className={CARD}>
+      <motion.div variants={cardVariants} className={CARD}>
         <div>
           <Label>Brew Method</Label>
           <div className="grid grid-cols-4 gap-1.5">
             {BREW_METHODS.map(({ id, label, Icon }) => {
               const active = form.brew_method === id;
               return (
-                <button
+                <motion.button
                   key={id}
                   type="button"
+                  whileTap={{ scale: 0.88 }}
+                  transition={springPress}
                   onClick={() => {
                     if (id !== 'Espresso' && timerRunningRef.current) {
                       if (timerRAFRef.current !== null) cancelAnimationFrame(timerRAFRef.current);
@@ -741,15 +799,15 @@ export default function ShotForm({
                     }
                     setForm((f) => ({ ...f, brew_method: id }));
                   }}
-                  className={`flex flex-col items-center justify-center gap-1.5 min-h-[56px] py-2 rounded-xl border text-[9px] font-black tracking-wider uppercase transition-all duration-150 touch-manipulation ${
+                  className={`flex flex-col items-center justify-center gap-1.5 min-h-[56px] py-2 rounded-xl border text-[9px] font-black tracking-wider uppercase transition-colors duration-150 touch-manipulation ${
                     active
                       ? 'bg-[#5D4037] text-[#FFFBF4] border-transparent shadow-lg shadow-[#5D4037]/25'
-                      : 'bg-[#F5EBD8] border-[#C8B49A] text-[#7A6858] active:scale-95'
+                      : 'bg-[#F5EBD8] border-[#C8B49A] text-[#7A6858]'
                   }`}
                 >
                   <Icon size={18} strokeWidth={1.75} />
                   {label}
-                </button>
+                </motion.button>
               );
             })}
           </div>
@@ -797,10 +855,10 @@ export default function ShotForm({
             </Link>
           )
         )}
-      </div>
+      </motion.div>
 
       {/* ── Card 2: Bean & Grind ───────────────────────── */}
-      <div className={CARD}>
+      <motion.div variants={cardVariants} className={CARD}>
         <div>
           <Label>Bean</Label>
           <BeanSearch
@@ -820,11 +878,18 @@ export default function ShotForm({
             style={{ fontSize: '16px' }}
           />
         </div>
-      </div>
+      </motion.div>
 
       {/* ── Smart Dial-in (Espresso only, when prediction available) ── */}
-      {grindPrediction && isEspresso && (
-        <div className="glass-display rounded-2xl p-4 border border-[#C8B49A]">
+      <AnimatePresence>
+        {grindPrediction && isEspresso && (
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+          className="glass-display rounded-2xl p-4 border border-[#C8B49A]"
+        >
           <div className="flex items-center gap-2 mb-3">
             <div className="bg-[#5D4037] p-1 rounded-md shrink-0">
               <svg className="w-3.5 h-3.5 text-[#FFFBF4]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -848,19 +913,22 @@ export default function ShotForm({
                 <p className="text-[10px] text-[#5D4037] font-bold mt-2">⚠ {weatherNudge}</p>
               )}
             </div>
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.92 }}
+              transition={springPress}
               onClick={() => setForm((f) => ({ ...f, grind_setting: String(grindPrediction.grindSetting) }))}
-              className="shrink-0 px-4 py-2.5 bg-[#5D4037] text-[#FFFBF4] text-xs font-black uppercase tracking-wider rounded-xl active:scale-95 transition-all touch-manipulation"
+              className="shrink-0 px-4 py-2.5 bg-[#5D4037] text-[#FFFBF4] text-xs font-black uppercase tracking-wider rounded-xl transition-colors touch-manipulation"
             >
               Apply
-            </button>
+            </motion.button>
           </div>
-        </div>
-      )}
+        </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Card 3: Extraction ─────────────────────────── */}
-      <div className={CARD}>
+      <motion.div variants={cardVariants} className={CARD}>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Dose (g)</Label>
@@ -888,14 +956,22 @@ export default function ShotForm({
           </div>
         </div>
 
-        {brewRatio > 0 && (
-          <div className="bg-[#F5EBD8] border border-[#C8B49A] rounded-2xl px-4 py-3 flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#7A6858]">Brew Ratio</span>
-            <span className="readout font-black text-lg text-[#5D4037]">
-              1:{brewRatio.toFixed(2)}
-            </span>
-          </div>
-        )}
+        <AnimatePresence>
+          {brewRatio > 0 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              className="bg-[#F5EBD8] border border-[#C8B49A] rounded-2xl px-4 py-3 flex items-center justify-between"
+            >
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#7A6858]">Brew Ratio</span>
+              <span className="readout font-black text-lg text-[#5D4037]">
+                1:{brewRatio.toFixed(2)}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {isEspresso ? (
           <>
@@ -946,25 +1022,29 @@ export default function ShotForm({
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button
+                    <motion.button
                       type="button"
+                      whileTap={{ scale: 0.94 }}
+                      transition={springPress}
                       onClick={handleTimerToggle}
-                      className={`flex-1 py-4 min-h-[56px] rounded-xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 touch-manipulation ${
+                      className={`flex-1 py-4 min-h-[56px] rounded-xl font-black text-sm uppercase tracking-widest transition-colors touch-manipulation ${
                         timerRunning
                           ? 'bg-[#F5EBD8] border border-[#5D4037]/60 text-[#5D4037]'
                           : 'bg-[#5D4037] text-[#FFFBF4] shadow-lg shadow-[#5D4037]/30'
                       }`}
                     >
                       {timerRunning ? '■ Stop' : timerMs > 0 ? '▶ Resume' : '▶ Start'}
-                    </button>
+                    </motion.button>
                     {timerMs > 0 && (
-                      <button
+                      <motion.button
                         type="button"
+                        whileTap={{ scale: 0.92 }}
+                        transition={springPress}
                         onClick={handleTimerReset}
-                        className="px-5 py-4 min-h-[56px] bg-[#F5EBD8] border border-[#C8B49A] rounded-xl text-[#2C1E16] text-sm font-black uppercase tracking-widest transition-all active:scale-95 touch-manipulation"
+                        className="px-5 py-4 min-h-[56px] bg-[#F5EBD8] border border-[#C8B49A] rounded-xl text-[#2C1E16] text-sm font-black uppercase tracking-widest transition-colors touch-manipulation"
                       >
                         Reset
-                      </button>
+                      </motion.button>
                     )}
                   </div>
                   {form.extraction_time && !timerRunning && (
@@ -1065,28 +1145,30 @@ export default function ShotForm({
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* ── Card 4: Taste & Score ──────────────────────── */}
-      <div className={CARD}>
+      <motion.div variants={cardVariants} className={CARD}>
         <div>
           <Label>Taste</Label>
           <div className="flex flex-wrap gap-2">
             {FLAVOR_OPTIONS.map((tag) => {
               const active = form.flavor_tags.includes(tag);
               return (
-                <button
+                <motion.button
                   key={tag}
                   type="button"
+                  whileTap={{ scale: 0.88 }}
+                  transition={springPress}
                   onClick={() => toggleFlavor(tag)}
-                  className={`px-5 text-sm font-black uppercase tracking-wider transition-all duration-150 min-h-[56px] rounded-xl border touch-manipulation ${
+                  className={`px-5 text-sm font-black uppercase tracking-wider transition-colors duration-150 min-h-[56px] rounded-xl border touch-manipulation ${
                     active
                       ? 'bg-[#5D4037] text-[#FFFBF4] border-transparent shadow-lg shadow-[#5D4037]/25'
-                      : 'bg-[#F5EBD8] border-[#C8B49A] text-[#7A6858] active:scale-95'
+                      : 'bg-[#F5EBD8] border-[#C8B49A] text-[#7A6858]'
                   }`}
                 >
                   {tag}
-                </button>
+                </motion.button>
               );
             })}
           </div>
@@ -1098,26 +1180,28 @@ export default function ShotForm({
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => {
               const active = form.overall_score === n;
               return (
-                <button
+                <motion.button
                   key={n}
                   type="button"
+                  whileTap={{ scale: 0.82 }}
+                  transition={springPress}
                   onClick={() => setForm((f) => ({ ...f, overall_score: n }))}
-                  className={`w-12 h-12 rounded-xl border text-sm font-black transition-all duration-150 touch-manipulation ${
+                  className={`w-12 h-12 rounded-xl border text-sm font-black transition-colors duration-150 touch-manipulation ${
                     active
                       ? 'bg-[#5D4037] text-[#FFFBF4] border-transparent shadow-lg shadow-[#5D4037]/25'
-                      : 'bg-[#F5EBD8] border-[#C8B49A] text-[#7A6858] active:scale-95'
+                      : 'bg-[#F5EBD8] border-[#C8B49A] text-[#7A6858]'
                   }`}
                 >
                   {n}
-                </button>
+                </motion.button>
               );
             })}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* ── Notes ─────────────────────────────────── */}
-      <div>
+      <motion.div variants={cardVariants}>
         <Label>Notes</Label>
         <textarea
           rows={3}
@@ -1127,7 +1211,7 @@ export default function ShotForm({
           className="bg-[#FAF3E6] border border-[#C8B49A] rounded-2xl px-4 py-4 text-[#2C1E16] text-base placeholder:text-[#2C1E16]/30 resize-none w-full focus:outline-none focus:border-[#5D4037] focus:ring-2 focus:ring-[#5D4037]/15 transition-all appearance-none"
           style={{ fontSize: '16px' }}
         />
-      </div>
+      </motion.div>
 
       {error && (
         <p className="text-red-600 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 font-black">
@@ -1135,13 +1219,16 @@ export default function ShotForm({
         </p>
       )}
 
-      <button
+      <motion.button
+        variants={cardVariants}
         type="submit"
         disabled={loading}
-        className="bg-[#5D4037] rounded-2xl w-full text-[#FFFBF4] font-black py-6 text-base uppercase tracking-[0.2em] flex items-center justify-center gap-2.5 disabled:opacity-60 active:scale-95 transition-all touch-manipulation shadow-xl shadow-[#5D4037]/25"
+        whileTap={loading ? {} : { scale: 0.97 }}
+        transition={springPress}
+        className="bg-[#5D4037] rounded-2xl w-full text-[#FFFBF4] font-black py-6 text-base uppercase tracking-[0.2em] flex items-center justify-center gap-2.5 disabled:opacity-60 transition-opacity touch-manipulation shadow-xl shadow-[#5D4037]/25"
       >
         {loading ? <><Spinner /> Analyzing…</> : 'Log Shot →'}
-      </button>
-    </form>
+      </motion.button>
+    </motion.form>
   );
 }
